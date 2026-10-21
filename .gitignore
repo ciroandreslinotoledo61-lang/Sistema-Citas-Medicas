@@ -1,0 +1,15 @@
+.env
+**/.env
+**/.env.*
+!**/.env.example
+/vendor/
+/node_modules/
+**/vendor/
+**/node_modules/
+*.log
+*.zip
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+coverage/

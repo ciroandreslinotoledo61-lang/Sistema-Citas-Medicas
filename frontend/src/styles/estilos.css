@@ -1,0 +1,164 @@
+:root {
+    --fondo: #f6f8f7; --papel: #fff; --tinta: #193b37; --secundario: #5d706c;
+    --verde: #176b5b; --verde-oscuro: #105345; --menta: #e5f2ec;
+    --linea: #dce6e1; --radio: 18px; --rojo: #9d302b;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--fondo); color: var(--tinta); font-family: "Segoe UI", Arial, sans-serif; line-height: 1.6; }
+a { color: var(--verde); text-underline-offset: 4px; }
+button, input, select { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+:focus-visible { outline: 3px solid #db9a38; outline-offset: 4px; }
+[hidden] { display: none !important; }
+.contenedor { width: min(1160px, calc(100% - 64px)); margin-inline: auto; }
+main { flex: 1; }
+.cabecera { background: var(--papel); border-bottom: 1px solid var(--linea); }
+.barra-navegacion { min-height: 94px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.marca { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; color: var(--tinta); font-size: 27px; font-weight: 700; letter-spacing: -1.3px; line-height: 1.1; }
+.marca-salud { font-weight: 400; }
+.marca small { display: block; font-size: 8px; letter-spacing: 3px; margin-top: 7px; font-weight: 600; }
+.marca-simbolo { width: 42px; height: 44px; display: grid; place-items: center; background: var(--verde); color: white; border-radius: 13px 13px 13px 3px; font-size: 36px; font-weight: 400; }
+nav { display: flex; align-items: center; gap: 26px; }
+nav > a { text-decoration: none; font-size: 14px; font-weight: 600; }
+nav a[aria-current] { color: var(--verde-oscuro); text-decoration: underline; text-decoration-thickness: 2px; }
+.boton { display: inline-flex; justify-content: center; align-items: center; gap: 20px; padding: 13px 23px; border-radius: 9px; border: 1px solid var(--verde); background: var(--verde); color: white; text-decoration: none; font-weight: 600; font-size: 14px; transition: background .15s; }
+.boton:hover { background: var(--verde-oscuro); }
+.boton-secundario { background: white; border-color: var(--linea); color: var(--tinta); }
+.boton-secundario:hover { background: var(--menta); }
+.boton-pequeno { padding: 9px 16px; }
+.ancho-total { width: 100%; }
+.hero { display: grid; grid-template-columns: 1.15fr 1fr; gap: 85px; align-items: center; padding: 76px 0 70px; }
+.sobretitulo { font-size: 11px; font-weight: 700; letter-spacing: 1.7px; color: var(--verde); margin: 0 0 18px; }
+.punto-verde { width: 7px; height: 7px; background: #40a27c; border-radius: 50%; display: inline-block; margin-right: 7px; }
+h1, h2, h3, p { margin-top: 0; }
+h1 { font-size: clamp(28px, 4.4vw, 48px); line-height: 1.14; letter-spacing: -1.8px; margin-bottom: 16px; font-weight: 650; }
+.hero h1 { font-size: clamp(48px, 6vw, 78px); letter-spacing: -3px; line-height: 1.07; margin-bottom: 24px; }
+h2 { font-size: 22px; letter-spacing: -.5px; line-height: 1.3; font-weight: 650; margin-bottom: 12px; }
+.descripcion-hero { font-size: 18px; color: var(--secundario); max-width: 440px; margin-bottom: 28px; line-height: 1.8; }
+.acciones { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; margin-top: 24px; }
+.enlace { font-size: 14px; font-weight: 600; }
+.nota-hero { color: var(--secundario); font-size: 12px; margin-top: 25px; }
+.tarjeta-bienvenida { padding: 32px 36px 0; border-radius: 26px; background: #e3eee7; border: 1px solid #d1e3d7; position: relative; }
+.bienvenida-superior { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+.etiqueta { display: inline-flex; padding: 6px 10px; background: #f4faf6; border: 1px solid #ccddd2; border-radius: 6px; font-size: 9px; font-weight: 700; letter-spacing: 1px; }
+.simbolo-salud { font-size: 42px; font-weight: 300; line-height: 1; color: var(--verde); }
+.tarjeta-bienvenida > p { color: var(--secundario); font-size: 14px; margin-bottom: 22px; }
+.paso-bienvenida { display: flex; gap: 17px; padding: 17px 0; border-bottom: 1px solid #ccded2; }
+.paso-bienvenida > span { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; background: #f3f8f4; border-radius: 50%; font-size: 11px; }
+.paso-bienvenida strong { font-size: 14px; }
+.paso-bienvenida p { margin: 4px 0 0; color: var(--secundario); font-size: 12px; }
+.firma-tarjeta { padding: 19px 0; font-size: 10px; letter-spacing: .5px; }
+.franja-inicio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; border-top: 1px solid var(--linea); padding: 36px 0 50px; }
+.numero-seccion { color: var(--verde); font-size: 11px; font-weight: 700; display: block; margin-bottom: 15px; }
+.franja-inicio h2 { font-size: 17px; }
+.franja-inicio p { font-size: 13px; color: var(--secundario); max-width: 300px; }
+.pie-pagina { margin-top: auto; border-top: 1px solid var(--linea); color: var(--secundario); font-size: 11px; }
+.pie-pagina > div { display: flex; align-items: center; justify-content: space-between; min-height: 66px; gap: 16px; }
+.separador { color: #b0c6b9; padding-inline: 7px; }
+.contenido { padding-block: 45px 70px; }
+.titulo-vista { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-bottom: 30px; }
+.titulo-vista p:last-child { margin-bottom: 0; color: var(--secundario); font-size: 15px; }
+.titulo-vista .sobretitulo { margin-bottom: 14px; }
+.titulo-vista h1 { font-size: 36px; }
+.tarjeta { border: 1px solid var(--linea); border-radius: var(--radio); background: white; padding: 30px; }
+.formulario-ancho { max-width: 840px; }
+.vista-acceso { display: grid; grid-template-columns: 1fr 1fr; gap: 100px; padding: 40px 25px; align-items: center; }
+.texto-acceso > p { max-width: 340px; color: var(--secundario); }
+.texto-acceso .sobretitulo { color: var(--verde); }
+.texto-acceso h1 { font-size: 48px; margin-bottom: 24px; }
+.nota-acceso { display: flex; gap: 18px; align-items: center; margin-top: 45px; max-width: 310px; padding-top: 25px; border-top: 1px solid var(--linea); }
+.nota-acceso p { margin: 0; font-size: 12px; color: var(--secundario); }
+.formulario-acceso { padding: 36px; box-shadow: 0 12px 42px #193b3705; }
+.texto-secundario { color: var(--secundario); font-size: 14px; }
+label { display: flex; flex-direction: column; gap: 7px; font-size: 12px; font-weight: 600; margin-block: 0 18px; }
+input, select { width: 100%; padding: 12px 13px; border: 1px solid #cad8d1; border-radius: 7px; background: #fdfefd; color: var(--tinta); font-size: 14px; min-height: 46px; }
+input::placeholder { color: #7c8e87; }
+input:focus, select:focus { border-color: var(--verde); }
+input:disabled { background: var(--fondo); }
+fieldset { padding: 0; border: 0; margin: 0 0 24px; min-width: 0; }
+legend { font-size: 17px; font-weight: 600; margin-bottom: 22px; padding: 0; }
+legend span { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; width: 28px; height: 28px; background: var(--menta); font-size: 10px; color: var(--verde); margin-right: 9px; }
+.rejilla-formulario { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+.ancho-completo { grid-column: 1 / -1; }
+.ayuda { font-size: 12px; color: var(--secundario); margin-bottom: 14px; }
+.pie-formulario { margin: 24px 0 0; padding-top: 22px; border-top: 1px solid var(--linea); font-size: 12px; text-align: center; }
+.pie-formulario a { font-weight: 600; }
+.mensaje { padding: 13px 16px; border-radius: 8px; border: 1px solid var(--linea); font-size: 13px; overflow-wrap: anywhere; }
+.mensaje.error { color: var(--rojo); background: #fff1ef; border-color: #edc9c5; }
+.mensaje.exito { color: #165440; background: #edf7f1; border-color: #c5dfd0; }
+.mensaje a { font-weight: 700; }
+.enlace-volver { display: inline-block; text-decoration: none; margin-bottom: 22px; font-size: 12px; }
+.rejilla-panel { display: grid; grid-template-columns: .8fr 1.2fr; gap: 25px; }
+.tarjeta-perfil { background: #eaf2ed; }
+.tarjeta-perfil p { overflow-wrap: anywhere; font-size: 14px; }
+.tarjeta-perfil .sobretitulo { font-size: 10px; }
+.avatar { width: 54px; height: 54px; display: grid; place-items: center; border-radius: 50%; background: white; color: var(--verde); font-size: 24px; margin-bottom: 26px; }
+.insignia { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.activa { background: #e6f2e9; color: #21693e; }
+.inactiva { background: #f0f0ed; color: #62675f; }
+.acceso-modulo { display: flex; justify-content: space-between; align-items: center; gap: 15px; text-decoration: none; border-bottom: 1px solid var(--linea); padding: 20px 0; }
+.acceso-modulo h2 { font-size: 18px; margin: 0 0 7px; }
+.acceso-modulo p { font-size: 13px; color: var(--secundario); margin: 0; }
+.acceso-modulo > span { font-size: 26px; }
+.nota-panel { font-size: 13px; color: var(--secundario); margin-top: 25px; }
+.barra-busqueda { display: flex; align-items: flex-end; gap: 14px; max-width: 630px; margin-bottom: 25px; }
+.barra-busqueda label { margin: 0; }
+.crecer { flex: 1; }
+.tabla-contenedor { width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+th { background: #f5f8f6; font-size: 10px; letter-spacing: .7px; text-transform: uppercase; color: var(--secundario); font-weight: 600; padding: 14px 12px; white-space: nowrap; }
+td { padding: 18px 12px; border-bottom: 1px solid var(--linea); vertical-align: middle; overflow-wrap: anywhere; }
+.acciones-tabla { min-width: 140px; }
+.enlace-accion { display: inline-block; border: 0; background: none; padding: 4px 10px 4px 0; font-size: 12px; font-weight: 600; color: var(--verde); text-decoration: underline; text-underline-offset: 3px; }
+.paginacion { display: flex; justify-content: flex-end; align-items: center; gap: 18px; padding-top: 24px; font-size: 12px; }
+.sin-resultados { padding: 36px; text-align: center; color: var(--secundario); }
+.datos-paciente { display: grid; grid-template-columns: 1fr 1fr; gap: 23px; margin: 26px 0 0; }
+.datos-paciente dt { font-size: 11px; color: var(--secundario); }
+.datos-paciente dd { margin: 5px 0 0; font-size: 14px; overflow-wrap: anywhere; }
+.margen-superior { margin-top: 25px; }
+.estado-vacio { text-align: center; padding: 70px 24px; max-width: 750px; margin: 30px auto; }
+.estado-vacio p { color: var(--secundario); }
+.solo-lector, .saltar-contenido:not(:focus) { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.saltar-contenido:focus { position: absolute; z-index: 100; padding: 10px 18px; background: white; }
+@media (max-width: 900px) {
+    .hero { gap: 35px; padding-block: 50px; }
+    .hero h1 { font-size: 58px; }
+    .tarjeta-bienvenida { padding-inline: 24px; }
+    .vista-acceso { gap: 35px; padding: 20px 0; }
+    .texto-acceso h1 { font-size: 38px; }
+    .formulario-acceso { padding: 28px; }
+}
+@media (max-width: 680px) {
+    .contenedor { width: calc(100% - 32px); }
+    .barra-navegacion { padding-block: 18px; flex-wrap: wrap; min-height: 85px; }
+    .marca { font-size: 23px; }
+    .marca-simbolo { width: 34px; height: 37px; font-size: 30px; }
+    nav { gap: 16px; flex-wrap: wrap; }
+    nav > a { font-size: 12px; }
+    .boton-pequeno { padding: 8px 12px; font-size: 12px; }
+    .hero { grid-template-columns: 1fr; gap: 30px; padding-block: 45px; }
+    .hero h1 { font-size: 61px; }
+    .descripcion-hero { font-size: 16px; }
+    .tarjeta-bienvenida { padding: 27px 26px 0; }
+    .franja-inicio { grid-template-columns: 1fr; gap: 20px; padding-bottom: 30px; }
+    .franja-inicio p { max-width: none; }
+    .numero-seccion { margin-bottom: 8px; }
+    .contenido { padding-block: 30px 45px; }
+    .titulo-vista { align-items: flex-start; flex-direction: column; gap: 18px; }
+    .titulo-vista h1 { font-size: 31px; }
+    .tarjeta { padding: 24px 20px; }
+    .vista-acceso { grid-template-columns: 1fr; gap: 25px; padding: 10px 0; }
+    .texto-acceso h1 { font-size: 37px; }
+    .nota-acceso { display: none; }
+    .rejilla-formulario, .rejilla-panel, .datos-paciente { grid-template-columns: 1fr; }
+    .rejilla-formulario { gap: 0; }
+    .acciones { gap: 16px; }
+    .pie-pagina > div { font-size: 10px; }
+    .barra-busqueda { align-items: stretch; flex-direction: column; }
+    .barra-busqueda button { align-self: flex-end; }
+    .paginacion { justify-content: center; gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }

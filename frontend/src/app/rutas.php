@@ -1,0 +1,71 @@
+<?php
+declare(strict_types=1);
+
+require __DIR__ . '/configuracion.php';
+require dirname(__DIR__) . '/api/ClienteApiServidor.php';
+require dirname(__DIR__) . '/routes/ProteccionVista.php';
+
+$origenApi = parse_url(obtenerConfiguracionFrontend('API_URL', 'http://127.0.0.1:8000/api'));
+$origenConexion = ($origenApi['scheme'] ?? 'http') . '://' . ($origenApi['host'] ?? '127.0.0.1') .
+    (isset($origenApi['port']) ? ':' . (int) $origenApi['port'] : '');
+if (!preg_match('#^https?://[a-zA-Z0-9.:-]+$#', $origenConexion)) {
+    http_response_code(500);
+    exit('Revisa API_URL en frontend/.env.');
+}
+header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' {$origenConexion}; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: same-origin');
+header('Cache-Control: no-store');
+
+$rutaActual = rtrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/', '/') ?: '/';
+$usuarioAutenticado = null;
+$idRegistro = 0;
+$paginaActual = '';
+$tituloPagina = 'Citas Medicas';
+$moduloJavascript = '';
+$vista = '';
+
+$rutasVistas = [
+    '/' => ['inicio', 'Tu salud, mas cerca', 'inicio/inicio.php', '', null],
+    '/iniciar-sesion' => ['iniciar-sesion', 'Iniciar sesion', 'auth/iniciar-sesion.php', 'auth/iniciar-sesion.js', null],
+    '/registro-paciente' => ['registro-paciente', 'Crear cuenta de paciente', 'pacientes/formulario-registro.php', 'pacientes/registrar-paciente.js', null],
+    '/panel' => ['panel', 'Panel principal', 'panel/panel.php', '', []],
+    '/usuarios' => ['usuarios', 'Usuarios', 'usuarios/lista-usuarios.php', 'usuarios/listar-usuarios.js', ['administrador']],
+    '/usuarios/nuevo' => ['usuario-nuevo', 'Nuevo usuario', 'usuarios/formulario-usuario.php', 'usuarios/formulario-usuario.js', ['administrador']],
+    '/pacientes' => ['pacientes', 'Pacientes', 'pacientes/lista-pacientes.php', 'pacientes/listar-pacientes.js', ['administrador', 'recepcionista']],
+    '/pacientes/nuevo' => ['paciente-nuevo', 'Registrar paciente', 'pacientes/formulario-registro.php', 'pacientes/registrar-paciente.js', ['administrador', 'recepcionista']],
+    '/mi-perfil' => ['mi-perfil', 'Mi perfil', 'pacientes/detalle-paciente.php', 'pacientes/detalle-paciente.js', ['paciente']],
+];
+
+try {
+    if (isset($rutasVistas[$rutaActual])) {
+        [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] = $rutasVistas[$rutaActual];
+    } elseif (preg_match('#^/usuarios/([1-9][0-9]*)/editar$#', $rutaActual, $coincidencia)) {
+        $idRegistro = (int) $coincidencia[1];
+        [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] =
+            ['usuario-editar', 'Editar usuario', 'usuarios/formulario-usuario.php', 'usuarios/formulario-usuario.js', ['administrador']];
+    } elseif (preg_match('#^/pacientes/([1-9][0-9]*)$#', $rutaActual, $coincidencia)) {
+        $idRegistro = (int) $coincidencia[1];
+        [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] =
+            ['paciente-detalle', 'Datos del paciente', 'pacientes/detalle-paciente.php', 'pacientes/detalle-paciente.js', ['administrador', 'recepcionista']];
+    } else {
+        http_response_code(404);
+        throw new DomainException('La pagina que buscas no existe.');
+    }
+    if ($rolesPermitidos !== null) {
+        $usuarioAutenticado = ProteccionVista::exigirSesionParaVista($rolesPermitidos);
+    }
+} catch (DomainException $error) {
+    $tituloPagina = http_response_code() === 403 ? 'Acceso restringido' : 'Pagina no encontrada';
+    $mensajeErrorPagina = $error->getMessage();
+    $vista = 'inicio/error.php';
+    $moduloJavascript = '';
+} catch (Throwable) {
+    http_response_code(503);
+    $tituloPagina = 'Servicio no disponible';
+    $mensajeErrorPagina = 'No podemos conectar con el servidor. Comprueba que el backend este iniciado y vuelve a intentar.';
+    $vista = 'inicio/error.php';
+    $moduloJavascript = '';
+}
+
+require dirname(__DIR__) . '/layouts/principal.php';

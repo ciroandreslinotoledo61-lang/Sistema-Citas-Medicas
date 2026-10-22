@@ -1,33 +1,66 @@
-<section class="titulo-vista">
-    <div><p class="sobretitulo">MI ESPACIO <span class="separador">/</span> <?= escaparTextoHtml($usuarioAutenticado['nombreRol']) ?></p>
-    <h1>Hola, <?= escaparTextoHtml($usuarioAutenticado['nombresUsuario']) ?>.</h1>
-    <p>Que necesitas hacer hoy?</p></div>
-    <span class="etiqueta etiqueta-clara"><?= escaparTextoHtml(date('d/m/Y')) ?></span>
+<?php
+$codigoRol = $usuarioAutenticado['codigoRol'];
+$puedeRegistrar = in_array($codigoRol, ['administrador', 'recepcionista'], true);
+$meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+$fechaPanel = date('d') . ' ' . $meses[(int) date('n') - 1] . ' ' . date('Y');
+?>
+<section class="titulo-vista titulo-panel">
+    <div>
+        <p class="sobretitulo"><?= $puedeRegistrar ? 'VISTA GENERAL' : 'MI ESPACIO' ?></p>
+        <h1>Panel principal</h1>
+        <p>Hola, <?= escaparTextoHtml($usuarioAutenticado['nombresUsuario']) ?>. Bienvenido a tu espacio de <?= $puedeRegistrar ? 'trabajo' : 'la clinica' ?>.</p>
+    </div>
+    <span class="fecha-panel"><?= mostrarIcono('calendario') ?><time datetime="<?= date('Y-m-d') ?>"><?= escaparTextoHtml($fechaPanel) ?></time></span>
 </section>
 <div class="rejilla-panel">
-    <section class="tarjeta tarjeta-perfil">
-        <span class="avatar" aria-hidden="true"><?= escaparTextoHtml(mb_substr($usuarioAutenticado['nombresUsuario'], 0, 1)) ?></span>
-        <p class="sobretitulo">TU CUENTA</p>
-        <h2><?= escaparTextoHtml($usuarioAutenticado['nombresUsuario'] . ' ' . $usuarioAutenticado['apellidosUsuario']) ?></h2>
-        <p><?= escaparTextoHtml($usuarioAutenticado['correoUsuario']) ?></p>
-        <span class="insignia activa">Cuenta activa</span>
-    </section>
-    <section class="tarjeta">
-        <p class="sobretitulo">ACCESOS DISPONIBLES</p>
-        <?php if ($usuarioAutenticado['codigoRol'] === 'administrador'): ?>
-            <a class="acceso-modulo" href="/usuarios"><div><h2>Gestionar usuarios</h2><p>Registra cuentas y revisa sus accesos.</p></div><span aria-hidden="true">&rarr;</span></a>
-            <a class="acceso-modulo" href="/pacientes"><div><h2>Consultar pacientes</h2><p>Busca registros y actualiza contactos.</p></div><span aria-hidden="true">&rarr;</span></a>
-            <a class="acceso-modulo" href="/especialidades"><div><h2>Gestionar especialidades</h2><p>Organiza los servicios del centro.</p></div><span aria-hidden="true">&rarr;</span></a>
-            <a class="acceso-modulo" href="/medicos"><div><h2>Gestionar medicos</h2><p>Registra perfiles y asigna especialidades.</p></div><span aria-hidden="true">&rarr;</span></a>
-        <?php elseif ($usuarioAutenticado['codigoRol'] === 'recepcionista'): ?>
-            <a class="acceso-modulo" href="/pacientes"><div><h2>Consultar pacientes</h2><p>Encuentra un paciente por nombre o CI.</p></div><span aria-hidden="true">&rarr;</span></a>
-            <a class="acceso-modulo" href="/pacientes/nuevo"><div><h2>Registrar paciente</h2><p>Abre su cuenta y su historia clinica.</p></div><span aria-hidden="true">&rarr;</span></a>
-        <?php elseif ($usuarioAutenticado['codigoRol'] === 'paciente'): ?>
-            <a class="acceso-modulo" href="/mi-perfil"><div><h2>Ver mi perfil</h2><p>Consulta tus datos personales y de contacto.</p></div><span aria-hidden="true">&rarr;</span></a>
-            <p class="nota-panel">Para actualizar tus datos de contacto, comunicate con recepcion.</p>
+    <div class="contenido-panel">
+        <?php if ($modulosDisponibles !== []): ?>
+        <section aria-labelledby="titulo-directorio">
+            <div class="cabecera-seccion"><h2 id="titulo-directorio"><?= $puedeRegistrar ? 'Directorio de la clinica' : 'Tu informacion' ?></h2><span>Accesos disponibles</span></div>
+            <div class="rejilla-modulos">
+                <?php foreach ($modulosDisponibles as $modulo): ?>
+                <a class="tarjeta-modulo" href="<?= escaparTextoHtml($modulo['ruta']) ?>">
+                    <span class="icono-modulo"><?= mostrarIcono($modulo['icono']) ?></span>
+                    <h3><?= escaparTextoHtml($modulo['titulo']) ?></h3>
+                    <p><?= escaparTextoHtml($modulo['descripcion']) ?></p>
+                    <span class="pie-modulo"><?= $codigoRol === 'paciente' ? 'Consultar mi perfil' : 'Ver registros' ?> <?= mostrarIcono('flecha') ?></span>
+                </a>
+                <?php endforeach; ?>
+            </div>
+        </section>
         <?php else: ?>
-            <h2>Bienvenido al portal medico</h2>
-            <p>Tu cuenta esta habilitada. La agenda y el registro de consultas aun no estan disponibles en esta version.</p>
+        <section class="tarjeta aviso-medico">
+            <span class="icono-modulo"><?= mostrarIcono('medicos') ?></span>
+            <h2>Tu acceso medico esta habilitado</h2>
+            <p class="texto-secundario">La agenda y el registro de consultas aun no estan disponibles.</p>
+            <p class="ayuda">Puedes consultar los datos de tu cuenta en este panel. Para corregirlos, comunicate con Administracion.</p>
+        </section>
         <?php endif; ?>
-    </section>
+        <?php if ($puedeRegistrar): ?>
+        <section class="acciones-panel" aria-labelledby="titulo-acciones">
+            <div class="cabecera-seccion"><h2 id="titulo-acciones">Nuevo registro</h2></div>
+            <div class="lista-acciones">
+                <?php foreach ($modulosDisponibles as $modulo): ?>
+                <a href="<?= escaparTextoHtml($modulo['rutaRegistro']) ?>"><span><?= mostrarIcono('mas') ?><?= escaparTextoHtml($modulo['accionRegistro']) ?></span><?= mostrarIcono('flecha') ?></a>
+                <?php endforeach; ?>
+            </div>
+        </section>
+        <?php elseif ($codigoRol === 'paciente'): ?>
+        <p class="nota-informativa"><?= mostrarIcono('informacion') ?><span>Para actualizar tus datos de contacto, comunicate con recepcion.</span></p>
+        <?php endif; ?>
+    </div>
+    <aside class="resumen-panel" aria-label="Informacion de la cuenta">
+        <section class="tarjeta tarjeta-perfil">
+            <p class="sobretitulo">SESION ACTUAL</p>
+            <span class="avatar avatar-grande" aria-hidden="true"><?= escaparTextoHtml(mb_strtoupper(mb_substr($usuarioAutenticado['nombresUsuario'], 0, 1))) ?></span>
+            <h2><?= escaparTextoHtml($usuarioAutenticado['nombresUsuario'] . ' ' . $usuarioAutenticado['apellidosUsuario']) ?></h2>
+            <p class="rol-perfil"><?= escaparTextoHtml($usuarioAutenticado['nombreRol']) ?></p>
+            <p class="correo-perfil"><?= escaparTextoHtml($usuarioAutenticado['correoUsuario']) ?></p>
+            <span class="insignia activa">Cuenta activa</span>
+        </section>
+        <div class="nota-panel">
+            <?= mostrarIcono('candado') ?>
+            <div><strong>Tu sesion es personal</strong><p>Al terminar, cierra sesion si compartes este equipo.</p></div>
+        </div>
+    </aside>
 </div>

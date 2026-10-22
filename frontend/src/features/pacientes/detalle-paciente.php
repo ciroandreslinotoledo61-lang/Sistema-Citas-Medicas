@@ -6,6 +6,7 @@
 <?php if (!$esPerfilPropio): ?>
 <section class="tarjeta formulario-ancho margen-superior">
     <h2>Actualizar contacto</h2>
+    <p class="ayuda-obligatorios">Los campos con <span class="campo-obligatorio" aria-hidden="true">*</span> son obligatorios.</p>
     <form id="formulario-contacto-paciente" method="post">
         <fieldset id="campos-contacto" disabled><legend class="solo-lector">Contacto del paciente</legend>
             <?php require dirname(__DIR__, 2) . '/components/campos-contacto.php'; ?>

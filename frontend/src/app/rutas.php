@@ -26,7 +26,7 @@ $moduloJavascript = '';
 $vista = '';
 
 $rutasVistas = [
-    '/' => ['inicio', 'Tu salud, mas cerca', 'inicio/inicio.php', '', null],
+    '/' => ['inicio', 'Portal de pacientes', 'inicio/inicio.php', '', null],
     '/iniciar-sesion' => ['iniciar-sesion', 'Iniciar sesion', 'auth/iniciar-sesion.php', 'auth/iniciar-sesion.js', null],
     '/registro-paciente' => ['registro-paciente', 'Crear cuenta de paciente', 'pacientes/formulario-registro.php', 'pacientes/registrar-paciente.js', null],
     '/panel' => ['panel', 'Panel principal', 'panel/panel.php', '', []],

@@ -1,23 +1,23 @@
 <section class="hero">
     <div class="hero-texto">
-        <p class="sobretitulo"><span class="punto-verde"></span> CENTRO MEDICO VIDA SALUD</p>
-        <h1>Tu salud,<br>mas cerca.</h1>
-        <p class="descripcion-hero">Un espacio para empezar a cuidar de ti. Crea tu cuenta y manten tus datos personales al dia.</p>
-        <div class="acciones"><a class="boton" href="/registro-paciente">Crear mi cuenta <span aria-hidden="true">&rarr;</span></a><a class="enlace" href="/iniciar-sesion">Ya tengo una cuenta</a></div>
-        <p class="nota-hero">Tus datos, disponibles cuando los necesitas.</p>
+        <p class="sobretitulo">PORTAL DE PACIENTES</p>
+        <h1>Tu espacio<br>en la clinica.</h1>
+        <p class="descripcion-hero">Accede a tu cuenta y consulta tus datos personales. Si es tu primera visita al portal, puedes registrarte aqui.</p>
+        <div class="acciones"><a class="boton" href="/iniciar-sesion">Iniciar sesion <?= mostrarIcono('flecha') ?></a><a class="enlace" href="/registro-paciente">Crear cuenta de paciente</a></div>
+        <p class="nota-hero"><?= mostrarIcono('candado') ?> Un acceso personal para tu informacion.</p>
     </div>
-    <div class="tarjeta-bienvenida">
-        <div class="bienvenida-superior"><span class="etiqueta">TU ESPACIO PERSONAL</span><span class="simbolo-salud" aria-hidden="true">+</span></div>
-        <h2>Te damos la bienvenida.</h2>
-        <p>El primer paso es conocerte.</p>
-        <div class="paso-bienvenida"><span>01</span><div><strong>Crea tu cuenta</strong><p>Registra tus datos de contacto.</p></div></div>
-        <div class="paso-bienvenida"><span>02</span><div><strong>Ingresa a tu portal</strong><p>Usa tu correo y clave de acceso.</p></div></div>
-        <div class="paso-bienvenida"><span>03</span><div><strong>Consulta tu perfil</strong><p>Revisa que tus datos esten correctos.</p></div></div>
-        <div class="firma-tarjeta"><span class="punto-verde"></span> Estamos para acompanarte</div>
-    </div>
+    <aside class="tarjeta-bienvenida" aria-labelledby="titulo-bienvenida">
+        <div class="bienvenida-superior"><span class="sobretitulo">PRIMEROS PASOS</span><?= mostrarIcono('clinica') ?></div>
+        <h2 id="titulo-bienvenida">Antes de comenzar</h2>
+        <ol class="pasos-bienvenida">
+            <li><span>01</span><div><h3>Ten tus datos a mano</h3><p>Necesitaras tu CI, correo y un telefono de contacto.</p></div></li>
+            <li><span>02</span><div><h3>Crea tu cuenta</h3><p>Completa el registro y elige tu clave de acceso.</p></div></li>
+            <li><span>03</span><div><h3>Revisa tu perfil</h3><p>Ingresa y verifica tu informacion personal.</p></div></li>
+        </ol>
+    </aside>
 </section>
-<section class="franja-inicio" aria-label="Acerca del portal">
-    <div><span class="numero-seccion">01 /</span><h2>Simple desde el inicio</h2><p>Un registro claro, con la informacion necesaria para abrir tu perfil.</p></div>
-    <div><span class="numero-seccion">02 /</span><h2>Un acceso personal</h2><p>Ingresa a tu cuenta y consulta tus datos en un solo lugar.</p></div>
-    <div><span class="numero-seccion">03 /</span><h2>Cerca de ti</h2><p>El equipo de recepcion puede ayudarte a actualizar tus datos de contacto.</p></div>
+<section class="franja-inicio" aria-label="Informacion del portal">
+    <div><?= mostrarIcono('perfil') ?><div><h2>Para pacientes</h2><p>Tu informacion de registro en un solo lugar.</p></div></div>
+    <div><?= mostrarIcono('usuarios') ?><div><h2>Para el personal</h2><p>Ingresa con la cuenta asignada por Administracion.</p></div></div>
+    <div><?= mostrarIcono('informacion') ?><div><h2>Necesitas ayuda?</h2><p>Recepcion puede ayudarte a actualizar tus datos.</p></div></div>
 </section>

@@ -17,6 +17,8 @@
         <?php if ($usuarioAutenticado['codigoRol'] === 'administrador'): ?>
             <a class="acceso-modulo" href="/usuarios"><div><h2>Gestionar usuarios</h2><p>Registra cuentas y revisa sus accesos.</p></div><span aria-hidden="true">&rarr;</span></a>
             <a class="acceso-modulo" href="/pacientes"><div><h2>Consultar pacientes</h2><p>Busca registros y actualiza contactos.</p></div><span aria-hidden="true">&rarr;</span></a>
+            <a class="acceso-modulo" href="/especialidades"><div><h2>Gestionar especialidades</h2><p>Organiza los servicios del centro.</p></div><span aria-hidden="true">&rarr;</span></a>
+            <a class="acceso-modulo" href="/medicos"><div><h2>Gestionar medicos</h2><p>Registra perfiles y asigna especialidades.</p></div><span aria-hidden="true">&rarr;</span></a>
         <?php elseif ($usuarioAutenticado['codigoRol'] === 'recepcionista'): ?>
             <a class="acceso-modulo" href="/pacientes"><div><h2>Consultar pacientes</h2><p>Encuentra un paciente por nombre o CI.</p></div><span aria-hidden="true">&rarr;</span></a>
             <a class="acceso-modulo" href="/pacientes/nuevo"><div><h2>Registrar paciente</h2><p>Abre su cuenta y su historia clinica.</p></div><span aria-hidden="true">&rarr;</span></a>

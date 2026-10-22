@@ -4,11 +4,13 @@ Sistema web para el proyecto academico de citas medicas, desarrollado con PHP y 
 
 La organizacion toma como referencia CADEFAR Inventory: backend, frontend y documentacion separados; cada capa tiene una responsabilidad y cada funcion expresa lo que hace. Esta entrega mantiene PHP y PostgreSQL, como pide el proyecto. No requiere Node.js, React, Sequelize, pnpm ni Composer.
 
-## Estado actual: version 1
+## Estado actual: avance 2 (version 1.1.0)
 
-Esta es una primera entrega funcional de acceso y registro. No es todavia el sistema completo de citas.
+Esta entrega conserva el acceso, usuarios y pacientes de la V1 y agrega la gestion de Especialidades y Medicos. Los dos modulos forman un avance completo para Git.
 
-| Modulo | Incluido en V1 |
+**Si ya tienes la V1 instalada:** empieza por [Actualizar Especialidades y Medicos](docs/ai/actualizacion-especialidades-medicos.md). Aplica el parche y la migracion 002; conserva tus .env y tus registros. El ZIP de este avance es una actualizacion y requiere la V1.
+
+| Modulo | Incluido hasta este avance |
 | --- | --- |
 | Autenticacion | Iniciar sesion, cerrar sesion, verificar cuenta activa y controlar inactividad |
 | Roles | Administrador, Recepcionista, Medico y Paciente; catalogo fijo |
@@ -16,10 +18,12 @@ Esta es una primera entrega funcional de acceso y registro. No es todavia el sis
 | Pacientes | Registro publico o desde recepcion, busqueda, detalle y actualizacion de contacto |
 | Historia clinica | Creacion automatica al registrar un paciente; aun sin edicion clinica |
 | Perfil personal | Cada paciente puede consultar solamente su propio perfil |
-| Base de datos | Diseno inicial de las 11 tablas, claves foraneas e indices |
+| Especialidades | Listar, buscar, crear, editar, activar/desactivar y ver cantidad de medicos activos |
+| Medicos | Registrar cuenta y perfil, buscar, editar, asignar especialidad y activar/desactivar |
+| Base de datos | 11 tablas; migracion 002 con unicidad normalizada de especialidades y matriculas |
 | Interfaz | Paginas adaptables a computadora y celular, mensajes de error y paginacion |
 
-**Pendiente para los siguientes avances:** gestion de especialidades y medicos, horarios, turnos de 15 minutos, reserva/cancelacion de citas, consultas, tratamientos y reportes. La cuenta Medico puede iniciar sesion, pero su agenda aun no esta implementada.
+**Pendiente para los siguientes avances:** horarios, turnos de 15 minutos, reserva/cancelacion de citas, consultas, tratamientos y reportes. La cuenta Medico puede iniciar sesion, pero su agenda aun no esta implementada.
 
 Todos los nombres de archivos, comentarios, mensajes y textos incluidos se escribieron sin acentos. Los archivos usan UTF-8 sin BOM; los datos ingresados por las personas pueden contener caracteres Unicode.
 
@@ -34,7 +38,7 @@ Todos los nombres de archivos, comentarios, mensajes y textos incluidos se escri
 | Git | Registrar los avances |
 | VS Code y navegador moderno | Editar y revisar el proyecto |
 
-En Windows puedes usar PHP incluido en XAMPP. Para esta V1 se arrancan dos servidores de desarrollo con PHP; no hace falta iniciar MySQL de XAMPP. PostgreSQL se instala y ejecuta por separado.
+En Windows puedes usar PHP incluido en XAMPP. Para este proyecto se arrancan dos servidores de desarrollo con PHP; no hace falta iniciar MySQL de XAMPP. PostgreSQL se instala y ejecuta por separado.
 
 ## 2. Estructura del proyecto
 
@@ -45,7 +49,8 @@ citas-medicas/
 |   |-- scripts/
 |   |   |-- verificar-entorno.php
 |   |   |-- migrar-base-datos.php
-|   |   `-- cargar-datos-iniciales.php
+|   |   |-- cargar-datos-iniciales.php
+|   |   `-- actualizar-especialidades-medicos.php
 |   |-- public/
 |   |   `-- index.php
 |   |-- src/
@@ -84,7 +89,9 @@ citas-medicas/
 |       |   |-- inicio/
 |       |   |-- panel/
 |       |   |-- usuarios/
-|       |   `-- pacientes/
+|       |   |-- pacientes/
+|       |   |-- especialidades/
+|       |   `-- medicos/
 |       |-- layouts/
 |       |-- routes/
 |       |-- styles/
@@ -97,6 +104,8 @@ citas-medicas/
 |       |-- diccionario-datos.md
 |       |-- api.md
 |       |-- pruebas.md
+|       |-- actualizacion-especialidades-medicos.md
+|       |-- casos-uso-especialidades-medicos.md
 |       `-- plan-avances-git.md
 |-- .gitignore
 `-- README.md
@@ -106,7 +115,7 @@ Los archivos de arranque se llaman `app.php` y `server.php` porque este proyecto
 
 ## 3. Preparar el proyecto en Windows
 
-Extrae el ZIP, abre la carpeta `citas-medicas` en VS Code y abre una terminal PowerShell dentro de ella. No copies esta V1 encima de otro proyecto: revisala primero en su propia carpeta.
+Para una instalacion nueva, extrae la V1 y aplica este avance como explica la guia de actualizacion. Abre la carpeta del proyecto en VS Code y una terminal PowerShell dentro de ella. Si ya funciona tu V1, sigue solamente la guia de actualizacion.
 
 Comprueba PHP:
 
@@ -194,10 +203,11 @@ Luego, desde la raiz del proyecto:
 ```powershell
 php backend/scripts/verificar-entorno.php --conexion
 php backend/scripts/migrar-base-datos.php
+php backend/scripts/actualizar-especialidades-medicos.php
 php backend/scripts/cargar-datos-iniciales.php
 ```
 
-La migracion crea las 11 tablas dentro de una transaccion. Es una migracion inicial, no un gestor automatico de versiones: si las tablas existen, se detiene sin borrarlas. Los cambios posteriores se agregaran como nuevas migraciones.
+La migracion crea las 11 tablas dentro de una transaccion. Es una migracion inicial, no un gestor automatico de versiones: si las tablas existen, se detiene sin borrarlas. La migracion 002 agrega dos indices sin eliminar datos y se puede ejecutar nuevamente. Si detecta duplicados equivalentes anteriores, se detiene para que se revisen.
 
 El seeder requiere una base sin usuarios. Crea cuatro roles, tres especialidades, una cuenta por rol, el perfil medico de prueba y un paciente con historia clinica. Una segunda ejecucion se detiene; no reemplaza cuentas ni claves.
 
@@ -240,7 +250,7 @@ php -S 127.0.0.1:8080 -t public src/server.php
 
 Los servidores incorporados de PHP son para desarrollo local. El despliegue en nube requerira un servidor web con HTTPS, la carpeta publica correcta y configuracion de sesiones/origenes; no se publica con `php -S`.
 
-## 7. Como revisar la primera version
+## 7. Como revisar el avance actual
 
 1. Ingresa como Administrador y revisa Usuarios.
 2. Crea una cuenta de Recepcionista.
@@ -252,7 +262,18 @@ Los servidores incorporados de PHP son para desarrollo local. El despliegue en n
 8. Revisa Mi perfil. Esa cuenta no debe poder abrir Usuarios ni Pacientes.
 9. Prueba el registro publico con un correo o CI repetido: debe rechazarlo sin crear datos incompletos.
 
-La creacion de usuarios administrativos solo permite Administrador o Recepcionista. Los pacientes se crean desde su modulo. La gestion de cuentas de medicos se agrega en el siguiente avance.
+La creacion de usuarios administrativos solo permite Administrador o Recepcionista. Los pacientes se crean desde su modulo. Los medicos se registran desde Medicos; su rol se asigna automaticamente y su cuenta usa el mismo sistema de login. El estado de las cuentas medicas se cambia desde ese modulo para verificar su especialidad.
+
+Para los dos modulos nuevos:
+
+1. Ingresa como Administrador y crea una especialidad.
+2. Crea un medico con correo y matricula nuevos, asignandolo a esa especialidad.
+3. Edita sus datos y comprueba la busqueda por matricula.
+4. Intenta desactivar la especialidad: debe impedirlo mientras tenga medicos activos.
+5. Desactiva el medico; su cuenta debe perder acceso.
+6. Desactiva la especialidad e intenta reactivar el medico: debe exigir una especialidad activa.
+7. Reactiva la especialidad o reasigna el medico a otra activa; luego reactiva su cuenta.
+8. Ingresa con otro rol y comprueba que no pueda acceder a los nuevos modulos.
 
 ## 8. Pruebas
 
@@ -261,15 +282,17 @@ Desde la raiz:
 ```powershell
 php backend/tests/test_validaciones.php
 php backend/tests/test_permisos.php
+php backend/tests/test_validaciones_especialidades_medicos.php
 ```
 
 La prueba de integracion requiere una base PostgreSQL separada:
 
 ```powershell
 php backend/tests/test_registro_paciente.php
+php backend/tests/test_gestion_especialidades_medicos.php
 ```
 
-Ese ultimo comando se rechaza si `DB_NAME` no termina en `_pruebas`. Sigue [la preparacion de pruebas](docs/ai/pruebas.md) antes de ejecutarlo.
+Los comandos de integracion se rechazan si `DB_NAME` no termina en `_pruebas`. Sigue [la preparacion de pruebas](docs/ai/pruebas.md) antes de ejecutarlo.
 
 La comprobacion incluida en esta entrega distingue las pruebas ejecutadas de las pendientes. Consulta ese documento para ver los resultados y las limitaciones del entorno de revision.
 
@@ -295,39 +318,29 @@ Ejemplos de nombres que explican su responsabilidad:
 | `registrarPacienteConHistoriaClinica` | Coordinar usuario, paciente e historia dentro de una transaccion |
 | `crearHistoriaClinicaParaPaciente` | Insertar la historia asociada al paciente |
 | `actualizarContactoPaciente` | Cambiar telefono, direccion y contacto de emergencia |
+| `registrarEspecialidad` | Crear un servicio medico con nombre unico |
+| `registrarMedicoConUsuario` | Crear la cuenta y el perfil profesional en una transaccion |
+| `cambiarEstadoMedico` | Cambiar el acceso de la cuenta y validar su especialidad |
 | `exigirRolPermitido` | Comprobar si la cuenta puede realizar la accion |
 
 Los controladores no contienen SQL. Los repositorios no generan HTML. El frontend nunca recibe claves de PostgreSQL ni consulta la base directamente.
 
-## 10. Subir este primer avance a Git
+## 10. Guardar este avance en Git
 
-Si aun no existe un repositorio local, desde `citas-medicas`:
+Despues de aplicar la actualizacion y probarla, desde la carpeta de tu repositorio existente:
 
 ```powershell
-git init
-git branch -M main
-git add .gitignore README.md backend frontend docs
-git diff --cached --stat
 git status
-git commit -m "feat: agregar v1 con acceso por roles y registro de pacientes"
+git diff --stat
+git add backend frontend docs README.md
+git diff --cached --stat
+git commit -m "feat: agregar gestion de especialidades y medicos"
+git push
 ```
 
-Antes del commit, `git status` no debe mostrar los archivos `.env`. Puedes comprobar la regla:
+Revisa los archivos antes del commit; los .env no deben estar preparados. Esta actualizacion no cambia tu remoto ni tu historial. No necesitas ejecutar otra vez git init ni cargar otra vez los datos iniciales.
 
-```powershell
-git check-ignore backend/.env frontend/.env
-```
-
-Crea un repositorio remoto vacio y reemplaza `URL_DE_TU_REPOSITORIO` por su URL:
-
-```powershell
-git remote add origin URL_DE_TU_REPOSITORIO
-git push -u origin main
-```
-
-Si ya tienes un repositorio, no repitas `git init` ni `git remote add`. Revisa `git status` y `git remote -v`, integra esta entrega en una rama y conserva tu historial. No uses `push --force`.
-
-Esta V1 se puede registrar como un avance completo. Despues realiza un commit por cada cambio terminado y revisado. El [plan de avances](docs/ai/plan-avances-git.md) propone el orden para continuar.
+El [plan de avances](docs/ai/plan-avances-git.md) indica que sigue: horarios medicos y generacion de turnos.
 
 ## 11. Problemas frecuentes
 
@@ -350,6 +363,8 @@ Esta V1 se puede registrar como un avance completo. Despues realiza un commit po
 - [Diccionario de datos](docs/ai/diccionario-datos.md)
 - [Rutas de la API](docs/ai/api.md)
 - [Pruebas](docs/ai/pruebas.md)
+- [Actualizar Especialidades y Medicos](docs/ai/actualizacion-especialidades-medicos.md)
+- [Casos de uso de los nuevos modulos](docs/ai/casos-uso-especialidades-medicos.md)
 - [Plan de avances en Git](docs/ai/plan-avances-git.md)
 
 Referencias tecnicas: [PDO PostgreSQL](https://www.php.net/manual/en/ref.pdo-pgsql.php), [sesiones PHP](https://www.php.net/manual/en/features.session.security.management.php) y [servidor de desarrollo PHP](https://www.php.net/manual/en/features.commandline.webserver.php).

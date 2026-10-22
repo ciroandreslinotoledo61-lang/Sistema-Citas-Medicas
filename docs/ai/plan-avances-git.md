@@ -1,50 +1,49 @@
 # Plan de avances en Git
 
-## Primer avance: esta entrega
+## Avances disponibles
 
-Esta carpeta contiene una V1 completa para revisar y registrar en un commit. No contiene un historial Git inventado ni un remoto configurado. El README explica como crear tu propio repositorio.
+| Avance | Contenido | Mensaje sugerido |
+| --- | --- | --- |
+| 1 | Acceso por roles, cuentas administrativas y pacientes | feat: agregar v1 con acceso por roles y registro de pacientes |
+| 2 | Gestion de especialidades y medicos | feat: agregar gestion de especialidades y medicos |
 
-Commit sugerido:
+El avance 2 combina los dos pasos solicitados. Incluye codigo, migracion, pruebas, pantallas y documentacion. El ZIP es una actualizacion de la V1, con parche y archivos nuevos/modificados.
 
-```text
-feat: agregar v1 con acceso por roles y registro de pacientes
+No contiene un historial Git inventado ni un remoto configurado. Conserva tu repositorio y registra el avance despues de probarlo.
+
+## Como registrar el avance 2
+
+Consulta primero actualizacion-especialidades-medicos.md. Luego, desde tu repositorio:
+
+```powershell
+git status
+git diff --stat
+git add backend frontend docs README.md
+git diff --cached --stat
+git commit -m "feat: agregar gestion de especialidades y medicos"
+git push
 ```
 
-Incluye codigo, migracion, seeders, pruebas y documentacion. Excluye los .env reales, ZIP, dependencias locales y datos de usuarios.
+## Siguientes avances
 
-## Orden para continuar
-
-| Avance | Resultado | Commit sugerido |
+| Orden | Resultado | Commit sugerido |
 | --- | --- | --- |
-| 1 | Acceso, usuarios y pacientes | feat: agregar acceso por roles y registro de pacientes |
-| 2 | Especialidades y cuentas de medicos | feat: agregar gestion de especialidades y medicos |
-| 3 | Horarios y turnos de 15 minutos | feat: generar turnos desde horarios medicos |
-| 4 | Reserva, cancelacion y concurrencia | feat: reservar y cancelar citas con transacciones |
-| 5 | Consulta e historial autorizado | feat: registrar consultas y tratamientos |
-| 6 | Reportes y preparacion de despliegue | feat: agregar reportes y configuracion de despliegue |
+| 3 | Horarios, validacion de cruces y turnos de 15 minutos | feat: generar turnos desde horarios medicos |
+| 4 | Reserva con transaccion y control de concurrencia | feat: agregar reserva de citas |
+| 5 | Cancelacion y liberacion del turno | feat: agregar cancelacion de citas |
+| 6 | Consulta, tratamientos e historial autorizado | feat: agregar atencion medica e historial |
+| 7 | Reportes y preparacion del despliegue | feat: agregar reportes y configuracion de despliegue |
 
-Estos son avances previstos, no funciones implementadas en la V1.
+Los avances 3 a 7 no estan implementados.
 
 ## Rutina por cambio
 
-1. Crea una rama con una tarea concreta, por ejemplo `feat/horarios-medicos`.
+1. Crea una rama si quieres trabajar de forma separada, por ejemplo feat/horarios-medicos.
 2. Revisa el requisito y la regla de negocio.
-3. Implementa el cambio respetando las capas.
+3. Implementa el cambio respetando las capas y los nombres completos.
 4. Prueba la conducta nueva y sus errores relevantes.
-5. Actualiza README, API o reglas si cambio el comportamiento.
-6. Revisa `git diff`, agrega solo archivos relacionados y crea el commit.
-7. Sube la rama cuando hayas configurado tu repositorio remoto.
+5. Actualiza README, API, casos de uso o reglas cuando cambie el comportamiento.
+6. Revisa git diff y agrega los archivos relacionados.
+7. Crea un commit que describa el resultado y sube la rama.
 
-```powershell
-git switch -c feat/especialidades-medicos
-git status
-git diff
-git add RUTAS_DE_LOS_ARCHIVOS_CAMBIADOS
-git diff --cached
-git commit -m "feat: agregar gestion de especialidades y medicos"
-git push -u origin feat/especialidades-medicos
-```
-
-Reemplaza RUTAS_DE_LOS_ARCHIVOS_CAMBIADOS por rutas reales. No agregues ese texto literalmente.
-
-Si ya tienes cambios locales, revisalos antes de cambiar de rama. No reinicialices ni reemplaces el historial de tu proyecto anterior.
+Nunca agregues los .env reales, credenciales, dependencias locales ni bases con datos de personas.

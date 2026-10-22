@@ -69,6 +69,9 @@ final class UsuarioService
             $this->rolRepository->obtenerRolPorCodigo(RolesSistema::ADMINISTRADOR, true);
             $usuario = $this->usuarioRepository->obtenerUsuarioPorId($idUsuario, true)
                 ?? throw new ErrorAplicacion('El usuario no existe.', 404);
+            if ($usuario->codigoRol === RolesSistema::MEDICO) {
+                throw new ErrorAplicacion('Cambia el estado de esta cuenta desde Medicos para validar su especialidad.', 409);
+            }
             if (!$usuarioActivo && $usuario->usuarioActivo && $usuario->codigoRol === RolesSistema::ADMINISTRADOR &&
                 $this->usuarioRepository->contarAdministradoresActivos() <= 1) {
                 throw new ErrorAplicacion('Debe quedar al menos un administrador activo.', 409);

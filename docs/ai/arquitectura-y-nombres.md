@@ -55,8 +55,14 @@ La sesion guarda el id del usuario y una version de credenciales. En cada acceso
 
 Las mutaciones requieren un token CSRF. Login y logout regeneran el identificador de sesion. Las respuestas privadas usan Cache-Control no-store.
 
-## Limites de la V1
+## Limites del avance actual
 
 El limite de intentos de login es por sesion y sirve como control basico local; borrar la cookie permite iniciar otra ventana. Un despliegue publico necesita limitacion persistente por cuenta/origen, registro de eventos y monitoreo. El servidor PHP incorporado y las cuentas de prueba se usan solo en desarrollo.
 
 La base por si sola no exige que todo paciente tenga historia: esa regla se garantiza en la transaccion del servicio. La FK y el UNIQUE garantizan que una historia apunte a un paciente valido y que no existan dos historias para el mismo paciente.
+
+## Especialidades y Medicos
+
+EspecialidadService valida el catalogo y controla su estado. MedicoService registra la cuenta con UsuarioRepository y el perfil con MedicoRepository dentro de una transaccion. Para crear, reasignar o activar, bloquea la especialidad con SELECT FOR UPDATE y comprueba que este activa.
+
+cambiarEstadoEspecialidad bloquea esa misma fila antes de contar medicos activos. Este orden permite que las operaciones relacionadas compartan un punto de coordinacion. El estado del medico no se duplica: se toma de usuarios.usuario_activo.

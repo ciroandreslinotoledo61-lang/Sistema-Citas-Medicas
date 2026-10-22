@@ -17,7 +17,9 @@ function mostrarUsuariosEnTabla(usuarios) {
         const celdaAcciones = document.createElement("td");
         celdaAcciones.className = "acciones-tabla";
         celdaAcciones.append(crearEnlaceAccion("Editar", "/usuarios/" + usuario.idUsuario + "/editar"));
-        if (usuario.idUsuario !== usuarioAutenticado.idUsuario) {
+        if (usuario.codigoRol === "medico") {
+            celdaAcciones.append(crearEnlaceAccion("Gestionar medico", "/medicos"));
+        } else if (usuario.idUsuario !== usuarioAutenticado.idUsuario) {
             const botonEstado = document.createElement("button");
             botonEstado.type = "button";
             botonEstado.className = "enlace-accion";

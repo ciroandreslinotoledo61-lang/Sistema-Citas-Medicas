@@ -34,6 +34,10 @@ $rutasVistas = [
     '/usuarios/nuevo' => ['usuario-nuevo', 'Nuevo usuario', 'usuarios/formulario-usuario.php', 'usuarios/formulario-usuario.js', ['administrador']],
     '/pacientes' => ['pacientes', 'Pacientes', 'pacientes/lista-pacientes.php', 'pacientes/listar-pacientes.js', ['administrador', 'recepcionista']],
     '/pacientes/nuevo' => ['paciente-nuevo', 'Registrar paciente', 'pacientes/formulario-registro.php', 'pacientes/registrar-paciente.js', ['administrador', 'recepcionista']],
+    '/especialidades' => ['especialidades', 'Especialidades', 'especialidades/lista-especialidades.php', 'especialidades/listar-especialidades.js', ['administrador']],
+    '/especialidades/nueva' => ['especialidad-nueva', 'Nueva especialidad', 'especialidades/formulario-especialidad.php', 'especialidades/formulario-especialidad.js', ['administrador']],
+    '/medicos' => ['medicos', 'Medicos', 'medicos/lista-medicos.php', 'medicos/listar-medicos.js', ['administrador']],
+    '/medicos/nuevo' => ['medico-nuevo', 'Registrar medico', 'medicos/formulario-medico.php', 'medicos/formulario-medico.js', ['administrador']],
     '/mi-perfil' => ['mi-perfil', 'Mi perfil', 'pacientes/detalle-paciente.php', 'pacientes/detalle-paciente.js', ['paciente']],
 ];
 
@@ -44,6 +48,14 @@ try {
         $idRegistro = (int) $coincidencia[1];
         [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] =
             ['usuario-editar', 'Editar usuario', 'usuarios/formulario-usuario.php', 'usuarios/formulario-usuario.js', ['administrador']];
+    } elseif (preg_match('#^/especialidades/([1-9][0-9]*)/editar$#', $rutaActual, $coincidencia)) {
+        $idRegistro = (int) $coincidencia[1];
+        [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] =
+            ['especialidad-editar', 'Editar especialidad', 'especialidades/formulario-especialidad.php', 'especialidades/formulario-especialidad.js', ['administrador']];
+    } elseif (preg_match('#^/medicos/([1-9][0-9]*)/editar$#', $rutaActual, $coincidencia)) {
+        $idRegistro = (int) $coincidencia[1];
+        [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] =
+            ['medico-editar', 'Editar medico', 'medicos/formulario-medico.php', 'medicos/formulario-medico.js', ['administrador']];
     } elseif (preg_match('#^/pacientes/([1-9][0-9]*)$#', $rutaActual, $coincidencia)) {
         $idRegistro = (int) $coincidencia[1];
         [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] =

@@ -162,3 +162,9 @@ td { padding: 18px 12px; border-bottom: 1px solid var(--linea); vertical-align: 
     .paginacion { justify-content: center; gap: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+
+/* Avance 2: gestion de especialidades y medicos. */
+.detalle-celda { display: block; font-size: 11px; color: var(--secundario); margin-top: 5px; overflow-wrap: anywhere; }
+.separacion-formulario { margin-top: 14px; border-top: 1px solid var(--linea); padding-top: 24px; }
+.separacion-formulario h2 { font-size: 17px; margin-bottom: 22px; }
+@media (max-width: 1000px) { .barra-navegacion { flex-wrap: wrap; padding-block: 16px; } nav { flex-wrap: wrap; gap: 16px; } }

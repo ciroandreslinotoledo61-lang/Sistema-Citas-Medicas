@@ -60,7 +60,7 @@ Una historia por paciente. En V1 se crea vacia; la edicion clinica sigue pendien
 
 ## especialidades
 
-Catalogo medico. Incluye tres datos de prueba; gestion pendiente.
+Catalogo medico. Incluye tres datos de prueba; gestion implementada en el avance 2.
 
 | Campo | Tipo | Nulo | Restriccion o valor inicial |
 | --- | --- | --- | --- |
@@ -71,7 +71,7 @@ Catalogo medico. Incluye tres datos de prueba; gestion pendiente.
 
 ## medicos
 
-Perfil profesional asociado a usuario y especialidad. Gestion pendiente.
+Perfil profesional asociado a usuario y especialidad. Gestion implementada en el avance 2.
 
 | Campo | Tipo | Nulo | Restriccion o valor inicial |
 | --- | --- | --- | --- |
@@ -175,3 +175,14 @@ Indicaciones de medicamentos asociadas a una consulta. Modulo pendiente.
 | consultas | tratamientos | 1 a muchos |
 
 El esquema de las tablas clinicas es inicial. Las reglas entre medico, cita e historia, los conflictos entre horarios y las transiciones de estado requieren servicios y pruebas antes de habilitar esos modulos.
+
+## Indices del avance 2
+
+La migracion 002_unicidad_especialidades_medicos.sql agrega:
+
+| Indice | Tabla | Expresion unica |
+| --- | --- | --- |
+| uq_especialidades_nombre_normalizado | especialidades | Nombre en minusculas, sin espacios de los extremos y con espacios internos agrupados |
+| uq_medicos_matricula_normalizada | medicos | Matricula en mayusculas, sin espacios de los extremos y con espacios internos agrupados |
+
+No se agregan tablas ni columnas. medicoActivo, devuelto por la API, representa usuarios.usuario_activo. cantidadMedicosActivos es un conteo calculado, no una columna guardada.

@@ -10,7 +10,7 @@
 | RF-04 | Registrar paciente junto a usuario e historia | V1 |
 | RF-05 | Buscar pacientes y actualizar su contacto | V1 |
 | RF-06 | Permitir al paciente ver su propio perfil | V1 |
-| RF-07 | Gestionar especialidades y medicos | Siguiente avance |
+| RF-07 | Gestionar especialidades y medicos | Avance 2 |
 | RF-08 | Crear horarios y generar turnos de 15 minutos | Pendiente |
 | RF-09 | Reservar y cancelar citas sin duplicar turno | Pendiente |
 | RF-10 | Registrar consulta y tratamientos | Pendiente |
@@ -49,6 +49,21 @@
 
 ## Reglas a completar antes de reservar citas
 
-La V1 no reserva citas. El indice parcial evita duplicar un turno en estados que lo ocupan, pero el siguiente avance tambien debe bloquear el turno en una transaccion, validar su fecha, disponibilidad y medico activo, y controlar conflictos de horarios.
+El avance actual no reserva citas. El indice parcial evita duplicar un turno en estados que lo ocupan, pero el siguiente avance tambien debe bloquear el turno en una transaccion, validar su fecha, disponibilidad y medico activo, y controlar conflictos de horarios.
 
 Se debe definir y probar la politica de cancelacion, reprogramacion, no asistencia, acceso medico al historial y conservacion de datos antes de implementar sus pantallas.
+
+## Reglas del avance 2
+
+- Solo Administrador gestiona especialidades y medicos, tanto en las vistas como en la API.
+- El nombre de especialidad es unico sin distinguir mayusculas y al normalizar espacios; tambien se consideran las inactivas.
+- Las matriculas se guardan en mayusculas y son unicas al normalizar espacios.
+- Registrar un medico crea cuenta y perfil en una sola transaccion, con rol Medico fijo.
+- Crear o reasignar un medico requiere una especialidad activa.
+- Un medico inactivo puede conservar su especialidad actual inactiva al corregir nombre, correo o matricula.
+- No se puede desactivar una especialidad que tenga medicos activos.
+- Activar un medico requiere que su especialidad este activa.
+- El estado del medico se toma de usuarios.usuario_activo. El cambio invalida sesiones anteriores mediante version_credenciales.
+- Usuarios dirige los cambios de estado de cuentas medicas al modulo Medicos, evitando saltarse la regla de especialidad.
+- No hay borrado fisico de medicos ni especialidades desde la aplicacion.
+- La desactivacion de especialidad y la asignacion/activacion de medicos bloquean la misma fila de especialidad dentro de sus transacciones.

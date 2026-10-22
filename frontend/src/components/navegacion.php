@@ -9,6 +9,8 @@
             <a href="/panel" <?= $paginaActual === 'panel' ? 'aria-current="page"' : '' ?>>Mi panel</a>
             <?php if ($usuarioAutenticado['codigoRol'] === 'administrador'): ?>
                 <a href="/usuarios" <?= str_starts_with($paginaActual, 'usuario') ? 'aria-current="page"' : '' ?>>Usuarios</a>
+                <a href="/especialidades" <?= str_starts_with($paginaActual, 'especialidad') ? 'aria-current="page"' : '' ?>>Especialidades</a>
+                <a href="/medicos" <?= str_starts_with($paginaActual, 'medico') ? 'aria-current="page"' : '' ?>>Medicos</a>
             <?php endif; ?>
             <?php if (in_array($usuarioAutenticado['codigoRol'], ['administrador', 'recepcionista'], true)): ?>
                 <a href="/pacientes" <?= str_starts_with($paginaActual, 'paciente') ? 'aria-current="page"' : '' ?>>Pacientes</a>

@@ -6,9 +6,9 @@ Construir un sistema academico de citas para el Centro Medico Vida Salud usando 
 
 ## Entrega actual
 
-Version 1: autenticacion por roles, gestion de cuentas administrativas y registro/consulta/contacto de pacientes. El registro crea una historia clinica vacia. Las 11 tablas del dominio estan definidas para sostener los siguientes avances.
+Avance 2, version 1.1.0: autenticacion por roles, gestion de cuentas administrativas, pacientes, especialidades y medicos. El registro crea una historia clinica vacia. Las 11 tablas del dominio estan definidas para sostener los siguientes avances.
 
-El acceso del medico existe, pero no registra consultas todavia. No anunciar reservas, agenda, reportes, cambio de clave ni recuperacion por correo como funciones terminadas.
+El Administrador puede registrar, editar y cambiar el estado de medicos, asignandoles una especialidad. El acceso del medico existe, pero no registra consultas todavia. No anunciar reservas, agenda, reportes, cambio de clave ni recuperacion por correo como funciones terminadas.
 
 ## Condiciones de trabajo
 
@@ -30,3 +30,9 @@ El acceso del medico existe, pero no registra consultas todavia. No anunciar res
 - Dos servidores locales para conservar la separacion frontend/backend.
 - Fechas locales del centro en America/La_Paz; eventos de registro en TIMESTAMPTZ.
 - La estructura de tablas es un diseno inicial. Debe revisarse junto al diagrama academico antes de ampliar los modulos clinicos.
+
+## Actualizacion desde V1
+
+Aplicar el parche de este avance y ejecutar backend/scripts/actualizar-especialidades-medicos.php. No recrear la base ni volver a cargar el seeder. La migracion 001 se mantiene igual; la 002 agrega unicidad normalizada por nombre y matricula.
+
+El ZIP de actualizacion contiene un parche Git, los archivos nuevos/modificados y una guia. El estado del medico corresponde a usuarios.usuario_activo; no se agrega un segundo estado en medicos.

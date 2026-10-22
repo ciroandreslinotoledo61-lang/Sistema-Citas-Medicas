@@ -6,11 +6,15 @@ namespace CitasMedicas\Presentation\Routes;
 use CitasMedicas\Business\Services\AutenticacionService;
 use CitasMedicas\Business\Services\UsuarioService;
 use CitasMedicas\Business\Services\PacienteService;
+use CitasMedicas\Business\Services\EspecialidadService;
+use CitasMedicas\Business\Services\MedicoService;
 use CitasMedicas\Data\Config\ConexionPostgresql;
 use CitasMedicas\Data\Repositories\UsuarioRepository;
 use CitasMedicas\Presentation\Controllers\AutenticacionController;
 use CitasMedicas\Presentation\Controllers\UsuarioController;
 use CitasMedicas\Presentation\Controllers\PacienteController;
+use CitasMedicas\Presentation\Controllers\EspecialidadController;
+use CitasMedicas\Presentation\Controllers\MedicoController;
 use CitasMedicas\Presentation\Middlewares\VerificarRolUsuario;
 use CitasMedicas\Presentation\Middlewares\VerificarSesionUsuario;
 use CitasMedicas\Shared\Constants\RolesSistema;
@@ -26,7 +30,7 @@ final class RutasApi
         $metodo = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $ruta = rtrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/', '/');
         if ($metodo === 'GET' && $ruta === '/api/estado') {
-            RespuestaJson::enviarRespuestaJson(['datos' => ['aplicacion' => 'Citas Medicas', 'version' => '1.0.0', 'estado' => 'disponible']]);
+            RespuestaJson::enviarRespuestaJson(['datos' => ['aplicacion' => 'Citas Medicas', 'version' => '1.1.0', 'estado' => 'disponible']]);
         }
         if ($metodo === 'GET' && $ruta === '/api/autenticacion/token') {
             RespuestaJson::enviarRespuestaJson(['datos' => ['tokenCsrf' => SesionUsuario::obtenerTokenCsrf()]]);
@@ -34,8 +38,9 @@ final class RutasApi
         $rutasConocidas = [
             '/api/autenticacion/iniciar-sesion', '/api/autenticacion/cerrar-sesion', '/api/autenticacion/sesion',
             '/api/autenticacion/registro-paciente', '/api/usuarios', '/api/roles', '/api/pacientes', '/api/pacientes/mi-perfil',
+            '/api/especialidades', '/api/especialidades/activas', '/api/medicos',
         ];
-        if (!in_array($ruta, $rutasConocidas, true) && !preg_match('#^/api/(usuarios|pacientes)/[1-9][0-9]*(/estado|/contacto)?$#', $ruta)) {
+        if (!in_array($ruta, $rutasConocidas, true) && !preg_match('#^/api/(usuarios|pacientes|especialidades|medicos)/[1-9][0-9]*(/estado|/contacto)?$#', $ruta)) {
             throw new ErrorAplicacion('La ruta solicitada no existe.', 404);
         }
         $conexion = ConexionPostgresql::obtenerConexionPostgresql();
@@ -72,6 +77,41 @@ final class RutasApi
             }
             if ($metodo === 'PATCH' && preg_match('#^/api/usuarios/([1-9][0-9]*)/estado$#', $ruta, $coincidencia)) {
                 $usuarioController->cambiarEstadoUsuario(SolicitudHttp::obtenerIdPositivo($coincidencia[1]), $usuario);
+            }
+        }
+        if (str_starts_with($ruta, '/api/especialidades')) {
+            VerificarRolUsuario::exigirRolPermitido($usuario, [RolesSistema::ADMINISTRADOR]);
+            $especialidadController = new EspecialidadController(new EspecialidadService($conexion));
+            if ($metodo === 'GET' && $ruta === '/api/especialidades/activas') {
+                $especialidadController->listarEspecialidadesActivas();
+            }
+            if ($ruta === '/api/especialidades') {
+                if ($metodo === 'GET') { $especialidadController->listarEspecialidades(); }
+                if ($metodo === 'POST') { $especialidadController->registrarEspecialidad(); }
+            }
+            if (preg_match('#^/api/especialidades/([1-9][0-9]*)$#', $ruta, $coincidencia)) {
+                $idEspecialidad = SolicitudHttp::obtenerIdPositivo($coincidencia[1]);
+                if ($metodo === 'GET') { $especialidadController->obtenerEspecialidadPorId($idEspecialidad); }
+                if ($metodo === 'PATCH') { $especialidadController->actualizarDatosEspecialidad($idEspecialidad); }
+            }
+            if ($metodo === 'PATCH' && preg_match('#^/api/especialidades/([1-9][0-9]*)/estado$#', $ruta, $coincidencia)) {
+                $especialidadController->cambiarEstadoEspecialidad(SolicitudHttp::obtenerIdPositivo($coincidencia[1]));
+            }
+        }
+        if (str_starts_with($ruta, '/api/medicos')) {
+            VerificarRolUsuario::exigirRolPermitido($usuario, [RolesSistema::ADMINISTRADOR]);
+            $medicoController = new MedicoController(new MedicoService($conexion));
+            if ($ruta === '/api/medicos') {
+                if ($metodo === 'GET') { $medicoController->listarMedicos(); }
+                if ($metodo === 'POST') { $medicoController->registrarMedicoConUsuario(); }
+            }
+            if (preg_match('#^/api/medicos/([1-9][0-9]*)$#', $ruta, $coincidencia)) {
+                $idMedico = SolicitudHttp::obtenerIdPositivo($coincidencia[1]);
+                if ($metodo === 'GET') { $medicoController->obtenerMedicoPorId($idMedico); }
+                if ($metodo === 'PATCH') { $medicoController->actualizarDatosMedico($idMedico); }
+            }
+            if ($metodo === 'PATCH' && preg_match('#^/api/medicos/([1-9][0-9]*)/estado$#', $ruta, $coincidencia)) {
+                $medicoController->cambiarEstadoMedico(SolicitudHttp::obtenerIdPositivo($coincidencia[1]));
             }
         }
         if ($metodo === 'GET' && $ruta === '/api/pacientes/mi-perfil') {

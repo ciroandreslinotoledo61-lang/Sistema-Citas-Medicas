@@ -1,79 +1,87 @@
-# Pruebas de la version 1
+# Pruebas hasta el avance 2
 
-## Pruebas incluidas
+## Pruebas de validaciones y permisos
 
-Ejecuta desde la raiz del proyecto:
+Desde la raiz del proyecto:
 
 ```powershell
 php backend/tests/test_validaciones.php
 php backend/tests/test_permisos.php
+php backend/tests/test_validaciones_especialidades_medicos.php
 ```
 
-La primera comprueba normalizacion de correo y CI, fechas imposibles o futuras, tipos de datos, confirmacion de clave, contacto incompleto, roles no habilitados, estado booleano y paginacion.
+- test_validaciones.php: datos de pacientes y cuentas administrativas.
+- test_permisos.php: roles, datos publicos, hash y CSRF.
+- test_validaciones_especialidades_medicos.php: nombres, matriculas, ids, booleanos, campos no permitidos y restricciones de rol.
 
-La segunda comprueba permisos por rol, datos publicos sin hash, verificacion de clave y rechazo de un token CSRF falso.
+## Integracion con PostgreSQL
 
-## Prueba de integracion con PostgreSQL
-
-Crea una base separada desde pgAdmin, conectado a postgres:
+Usa una base de pruebas separada. Para prepararla por primera vez, conectado a postgres en pgAdmin:
 
 ```sql
 CREATE DATABASE citas_medicas_pruebas WITH ENCODING 'UTF8';
 ```
 
-En una terminal PowerShell, desde la raiz:
+En PowerShell, desde la raiz del proyecto:
 
 ```powershell
 $env:DB_NAME = "citas_medicas_pruebas"
 php backend/scripts/migrar-base-datos.php
+php backend/scripts/actualizar-especialidades-medicos.php
 php backend/scripts/cargar-datos-iniciales.php
 php backend/tests/test_registro_paciente.php
+php backend/tests/test_gestion_especialidades_medicos.php
 Remove-Item Env:DB_NAME
 ```
 
-La configuracion restante se toma de backend/.env, incluida SEED_USERS_PASSWORD. Si ya vaciaste esa variable, elige una clave de prueba antes de cargar los datos en esta base nueva. No repitas migracion/seeder si esa base ya esta preparada.
+DB_NAME del entorno tiene prioridad sobre backend/.env. El resto de la configuracion, incluida SEED_USERS_PASSWORD, se toma del archivo. Si vaciaste esa clave despues de instalar, elige una clave de prueba antes de cargar esta base nueva.
 
-En Linux/macOS puedes usar `export DB_NAME=citas_medicas_pruebas` y despues `unset DB_NAME`.
+Si la base de pruebas ya contiene la V1, ejecuta solamente la migracion 002 y las pruebas; no repitas la migracion 001 ni el seeder. En Linux/macOS puedes usar export DB_NAME=citas_medicas_pruebas y despues unset DB_NAME.
 
-La prueba exige que el nombre termine en `_pruebas`. Comprueba:
+Ambas pruebas de integracion exigen que DB_NAME termine en _pruebas y eliminan solo sus propios registros al finalizar.
 
-1. Creacion de cuenta, paciente e historia.
-2. Asignacion del rol Paciente aunque el JSON intente enviar Administrador.
-3. Rechazo de una CI repetida con SQLSTATE 23505.
-4. Ausencia de un usuario huerfano tras el rollback.
+## Cobertura de las pruebas de integracion
 
-Al terminar, elimina solamente los registros que creo esa ejecucion. No vacia tablas ni borra la base.
+test_registro_paciente.php verifica registro completo, historia obligatoria, rol Paciente fijo y rollback al duplicar CI.
 
-## Revision realizada al preparar esta entrega
+test_gestion_especialidades_medicos.php verifica:
+
+1. Crear y editar especialidades; rechazar nombres equivalentes.
+2. Rechazar registro en una especialidad inactiva sin crear usuario.
+3. Crear usuario y perfil con rol Medico fijo.
+4. Rechazar correo o matricula duplicados.
+5. Impedir desactivar una especialidad que tenga medicos activos.
+6. Invalidar la sesion del medico al desactivarlo.
+7. Impedir su reactivacion mientras su especialidad este inactiva.
+8. Impedir eludir esa regla mediante Usuarios.
+9. Editar datos, reasignar a una especialidad activa y reactivar.
+10. Buscar por matricula y nombre de especialidad.
+
+## Revision realizada para el avance 2
 
 | Comprobacion | Resultado y alcance |
 | --- | --- |
-| Sintaxis PHP | Correcta en los 60 archivos PHP; analizador de PHP 8.2 en WebAssembly |
-| Sintaxis JavaScript | Correcta en los 13 archivos JS; analizador de Node |
-| test_validaciones.php | Ejecutado y aprobado con PHP 8.2 en WebAssembly |
-| test_permisos.php | Ejecutado y aprobado con PHP 8.2 en WebAssembly |
-| SQL de la migracion | Ejecutado en PGlite: 11 tablas, FK, restricciones e indices creados |
-| Integridad SQL | Correo, CI e historia unicos; rollback sin usuario huerfano |
-| Servicios y repositorios reales | Ejecutados con PHP y un adaptador de prueba hacia PGlite: seeder, login, usuarios, cambios de estado, invalidacion de sesion, registro de paciente, rollback, contacto y busquedas |
-| Rutas HTTP sin base nativa | Estado, token, rechazo CSRF, CORS, redireccion de vistas sin cookie y bloqueo de .env revisados con un adaptador de solicitudes PHP |
-| Interfaz publica | Inicio, login y registro revisados en Chromium; errores de conexion visibles; sin excepciones JS y sin desbordamiento horizontal a 390 px |
-| Archivos entregados | Texto ASCII, UTF-8 sin BOM; sin .env reales ni credenciales personales |
-| Conexion PDO pdo_pgsql nativa | Pendiente de ejecutar en el equipo de instalacion |
-| test_registro_paciente.php con PostgreSQL nativo | Incluido; no ejecutado con ese controlador en el entorno de entrega |
-| Recorrido completo de roles en navegador con PostgreSQL nativo | Pendiente de verificar tras instalar |
-| Reservas concurrentes | Fuera de la V1; se probaran al implementar citas |
+| Sintaxis | Correcta en 77 archivos PHP y 19 archivos JavaScript |
+| Validaciones nuevas | Prueba ejecutada y aprobada con PHP 8.2 en WebAssembly |
+| Integracion incluida | test_registro_paciente.php y test_gestion_especialidades_medicos.php ejecutados con los servicios PHP reales y un adaptador PDO de prueba hacia PGlite |
+| Migracion 002 | Ejecutada dos veces; segunda ejecucion valida, sin recrear tablas |
+| Duplicados previos | Migracion rechazada y revertida conservando las filas existentes |
+| Indices normalizados | Rechazo directo en SQL de nombres y matriculas equivalentes |
+| API y permisos | Rutas reales de Especialidades y Medicos rechazan Recepcionista, Medico y Paciente; sin sesion devuelven 401 |
+| CSRF | La API rechaza una escritura sin token con 419 |
+| Rollback de medico | Fallo forzado en PostgreSQL al insertar el perfil despues de insertar el usuario; el usuario se revierte |
+| Navegador | Chromium: login, altas, edicion, cambios de estado, mensajes de conflicto y vista 403; sin excepciones JavaScript |
+| Celular | Formulario de medico revisado a 390 px, sin desbordamiento horizontal |
+| Parche | Aplicacion verificada sobre una copia de la V1 y comparada con el proyecto actualizado |
+| Archivos | Texto ASCII, UTF-8 sin BOM; sin .env reales ni credenciales personales |
+| PDO pdo_pgsql nativo | Pendiente de ejecutar en el equipo de instalacion |
+| Concurrencia entre conexiones nativas | No verificada en este entorno; los servicios usan bloqueo de filas y transacciones |
+| Horarios y reservas | Fuera de este avance |
 
-PGlite es un PostgreSQL embebido. El adaptador de revision permite probar el SQL y los servicios, pero no sustituye la conexion real de PDO, su controlador, la configuracion de Windows ni una prueba de concurrencia. Las herramientas del entorno de revision no son dependencias del proyecto y no se incluyen en el ZIP.
+El entorno de revision usa PHP en WebAssembly y PGlite, un motor PostgreSQL embebido. Para los recorridos del navegador se adaptaron la conexion PDO y el transporte de consulta de sesion entre frontend y backend; las rutas, permisos, controladores, servicios, SQL, vistas y acciones JavaScript fueron los del proyecto.
 
-## Revision manual antes del primer push
+Estas pruebas no sustituyen la comprobacion con pdo_pgsql y curl nativos en Windows. Los adaptadores y herramientas del entorno de revision no son dependencias del proyecto ni se incluyen en el paquete.
 
-- Inicia backend y frontend usando las direcciones del README.
-- Revisa los cuatro roles con las cuentas ficticias.
-- Comprueba que la sesion del usuario desactivado deje de acceder.
-- Comprueba que Paciente no pueda abrir Usuarios ni listar otros pacientes.
-- Registra una cuenta con correo duplicado y otra con CI duplicada.
-- Revisa el telefono y contacto actualizados desde otra sesion.
-- Confirma que no se envien hashes ni informacion de conexion en las respuestas.
-- Comprueba que git status no incluya los .env.
+## Revision local antes del commit
 
-Los permisos y los datos deben verificarse en la API, ademas de observar el menu.
+Sigue el recorrido de actualizacion-especialidades-medicos.md. Comprueba el acceso de los cuatro roles, los duplicados, los estados y el registro de pacientes. Revisa git status y confirma que los .env no se preparen para el commit.

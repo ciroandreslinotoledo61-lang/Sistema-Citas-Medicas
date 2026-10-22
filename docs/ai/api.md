@@ -1,4 +1,4 @@
-# API de la version 1
+# API hasta el avance 2 (version 1.1.0)
 
 Base local: `http://127.0.0.1:8000/api`.
 
@@ -23,6 +23,24 @@ Base local: `http://127.0.0.1:8000/api`.
 | GET | /pacientes/mi-perfil | Paciente autenticado |
 | GET | /pacientes/{idPaciente} | Administrador o Recepcionista |
 | PATCH | /pacientes/{idPaciente}/contacto | Administrador o Recepcionista |
+
+## Rutas del avance 2
+
+Todas requieren una cuenta Administrador activa. Las mutaciones requieren CSRF, igual que el resto de la API.
+
+| Metodo | Ruta | Accion |
+| --- | --- | --- |
+| GET | /especialidades | Listar por busqueda y pagina |
+| POST | /especialidades | Registrar especialidad |
+| GET | /especialidades/activas | Obtener opciones para asignacion de medicos |
+| GET | /especialidades/{idEspecialidad} | Obtener una especialidad |
+| PATCH | /especialidades/{idEspecialidad} | Actualizar nombre y descripcion |
+| PATCH | /especialidades/{idEspecialidad}/estado | Activar o desactivar |
+| GET | /medicos | Listar por busqueda y pagina |
+| POST | /medicos | Registrar usuario y perfil medico |
+| GET | /medicos/{idMedico} | Obtener datos publicos del medico |
+| PATCH | /medicos/{idMedico} | Actualizar cuenta y perfil profesional |
+| PATCH | /medicos/{idMedico}/estado | Cambiar acceso de la cuenta medica |
 
 Los endpoints no usan autenticacion JWT. Se debe conservar la cookie y enviar `credentials: "include"` desde el navegador. CORS permite solamente FRONTEND_URL.
 
@@ -83,3 +101,40 @@ Error: `{"mensaje": "...", "erroresCampos": {"nombreCampo": "..."}}`; erroresCam
 | 503 | Error de acceso a la base de datos |
 
 No se devuelven hashes, claves, SQL ni trazas internas.
+
+## Cuerpos de Especialidades y Medicos
+
+Crear o editar especialidad:
+
+```json
+{
+  "nombreEspecialidad": "Dermatologia",
+  "descripcionEspecialidad": "Atencion de la piel"
+}
+```
+
+Cambiar estado de especialidad: `{"especialidadActiva": false}`. Rechaza con 409 si intenta desactivar una especialidad con medicos activos.
+
+Registrar medico:
+
+```json
+{
+  "nombresUsuario": "Ana",
+  "apellidosUsuario": "Prueba",
+  "correoUsuario": "ana.medico@example.test",
+  "contrasenaUsuario": "FraseDePrueba123",
+  "confirmacionContrasena": "FraseDePrueba123",
+  "matriculaProfesional": "SC-12345",
+  "idEspecialidad": 1
+}
+```
+
+Reemplaza idEspecialidad por uno real obtenido desde /especialidades/activas. El rol se fija en Medico y la cuenta se crea activa; esos valores no se toman del JSON.
+
+Editar medico usa los mismos datos, sin contrasenaUsuario ni confirmacionContrasena. No cambia la clave existente. El correo se valida contra todas las cuentas, independientemente de su rol.
+
+Cambiar estado de medico: `{"medicoActivo": false}`. El estado se refleja en usuarios.usuario_activo y el cambio invalida sesiones anteriores. Intentar activar con especialidad inactiva produce 409.
+
+La ruta /usuarios/{idUsuario}/estado devuelve 409 para cuentas de rol Medico; se debe usar /medicos/{idMedico}/estado.
+
+Los listados de ambos modulos usan busqueda y pagina, con 20 filas por pagina. La busqueda de medicos incluye nombre, apellido, correo, matricula y especialidad. /especialidades/activas devuelve un arreglo de opciones, sin paginacion.

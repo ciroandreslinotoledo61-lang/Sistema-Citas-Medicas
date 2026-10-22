@@ -19,9 +19,9 @@ final class PacienteRepository
         $consulta = $this->conexionPostgresql->prepare(
             'INSERT INTO pacientes (id_usuario, cedula_identidad, fecha_nacimiento, telefono_paciente,
                 direccion_paciente, nombre_contacto_emergencia, telefono_contacto_emergencia)
-             VALUES (:idUsuario, :cedulaIdentidad, :fechaNacimiento, :telefonoPaciente,
+            VALUES (:idUsuario, :cedulaIdentidad, :fechaNacimiento, :telefonoPaciente,
                 :direccionPaciente, :nombreContactoEmergencia, :telefonoContactoEmergencia)
-             RETURNING id_paciente'
+            RETURNING id_paciente'
         );
         $consulta->execute([
             'idUsuario' => $idUsuario, 'cedulaIdentidad' => $datosPaciente['cedulaIdentidad'],
@@ -53,7 +53,7 @@ final class PacienteRepository
     {
         $consulta = $this->conexionPostgresql->prepare(self::CONSULTA_PACIENTE .
             " WHERE concat_ws(' ', pacientes.cedula_identidad, usuarios.nombres_usuario, usuarios.apellidos_usuario) ILIKE :busqueda
-              ORDER BY pacientes.id_paciente DESC LIMIT 21 OFFSET :desplazamiento");
+            ORDER BY pacientes.id_paciente DESC LIMIT 21 OFFSET :desplazamiento");
         $consulta->bindValue(':busqueda', '%' . $busqueda . '%');
         $consulta->bindValue(':desplazamiento', ($pagina - 1) * 20, \PDO::PARAM_INT);
         $consulta->execute();
@@ -64,8 +64,8 @@ final class PacienteRepository
     {
         $consulta = $this->conexionPostgresql->prepare(
             'UPDATE pacientes SET telefono_paciente = :telefonoPaciente, direccion_paciente = :direccionPaciente,
-             nombre_contacto_emergencia = :nombreContactoEmergencia, telefono_contacto_emergencia = :telefonoContactoEmergencia
-             WHERE id_paciente = :idPaciente'
+            nombre_contacto_emergencia = :nombreContactoEmergencia, telefono_contacto_emergencia = :telefonoContactoEmergencia
+            WHERE id_paciente = :idPaciente'
         );
         $consulta->execute(['idPaciente' => $idPaciente] + $datosPaciente);
     }

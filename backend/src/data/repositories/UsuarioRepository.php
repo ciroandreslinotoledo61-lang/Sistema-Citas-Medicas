@@ -33,7 +33,7 @@ final class UsuarioRepository
     {
         $consulta = $this->conexionPostgresql->prepare(self::CONSULTA_USUARIO .
             " WHERE concat_ws(' ', usuarios.nombres_usuario, usuarios.apellidos_usuario, usuarios.correo_usuario) ILIKE :busqueda
-              ORDER BY usuarios.id_usuario DESC LIMIT 21 OFFSET :desplazamiento");
+            ORDER BY usuarios.id_usuario DESC LIMIT 21 OFFSET :desplazamiento");
         $consulta->bindValue(':busqueda', '%' . $busqueda . '%');
         $consulta->bindValue(':desplazamiento', ($pagina - 1) * 20, \PDO::PARAM_INT);
         $consulta->execute();
@@ -44,7 +44,7 @@ final class UsuarioRepository
     {
         $consulta = $this->conexionPostgresql->prepare(
             'INSERT INTO usuarios (id_rol, nombres_usuario, apellidos_usuario, correo_usuario, contrasena_hash)
-             VALUES (:idRol, :nombresUsuario, :apellidosUsuario, :correoUsuario, :contrasenaHash) RETURNING id_usuario'
+            VALUES (:idRol, :nombresUsuario, :apellidosUsuario, :correoUsuario, :contrasenaHash) RETURNING id_usuario'
         );
         $consulta->execute([
             'idRol' => $idRol, 'nombresUsuario' => $datosUsuario['nombresUsuario'],
@@ -58,7 +58,7 @@ final class UsuarioRepository
     {
         $consulta = $this->conexionPostgresql->prepare(
             'UPDATE usuarios SET nombres_usuario = :nombresUsuario, apellidos_usuario = :apellidosUsuario,
-             correo_usuario = :correoUsuario WHERE id_usuario = :idUsuario'
+            correo_usuario = :correoUsuario WHERE id_usuario = :idUsuario'
         );
         $consulta->execute([
             'idUsuario' => $idUsuario, 'nombresUsuario' => $datosUsuario['nombresUsuario'],
@@ -70,7 +70,7 @@ final class UsuarioRepository
     {
         $consulta = $this->conexionPostgresql->prepare(
             'UPDATE usuarios SET usuario_activo = :usuarioActivo, version_credenciales = version_credenciales + 1
-             WHERE id_usuario = :idUsuario'
+            WHERE id_usuario = :idUsuario'
         );
         $consulta->bindValue(':usuarioActivo', $usuarioActivo, \PDO::PARAM_BOOL);
         $consulta->bindValue(':idUsuario', $idUsuario, \PDO::PARAM_INT);
@@ -81,7 +81,7 @@ final class UsuarioRepository
     {
         $consulta = $this->conexionPostgresql->prepare(
             "SELECT count(*) FROM usuarios INNER JOIN roles USING (id_rol)
-             WHERE roles.codigo_rol = 'administrador' AND usuarios.usuario_activo = TRUE"
+            WHERE roles.codigo_rol = 'administrador' AND usuarios.usuario_activo = TRUE"
         );
         $consulta->execute();
         return (int) $consulta->fetchColumn();

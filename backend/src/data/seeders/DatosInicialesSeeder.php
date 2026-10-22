@@ -25,7 +25,7 @@ final class DatosInicialesSeeder
                 'INSERT INTO roles (id_rol, codigo_rol, nombre_rol) VALUES (:idRol, :codigoRol, :nombreRol)'
             );
             foreach ([[1, 'administrador', 'Administrador'], [2, 'recepcionista', 'Recepcionista'],
-                      [3, 'medico', 'Medico'], [4, 'paciente', 'Paciente']] as [$idRol, $codigoRol, $nombreRol]) {
+                    [3, 'medico', 'Medico'], [4, 'paciente', 'Paciente']] as [$idRol, $codigoRol, $nombreRol]) {
                 $insertarRol->execute(['idRol' => $idRol, 'codigoRol' => $codigoRol, 'nombreRol' => $nombreRol]);
             }
             $conexionPostgresql->query("SELECT setval(pg_get_serial_sequence('roles', 'id_rol'), 4, true)");
@@ -52,7 +52,7 @@ final class DatosInicialesSeeder
                 if ($idRol === 3) {
                     $insertarMedico = $conexionPostgresql->prepare(
                         'INSERT INTO medicos (id_usuario, id_especialidad, matricula_profesional)
-                         VALUES (:idUsuario, :idEspecialidad, :matriculaProfesional)'
+                        VALUES (:idUsuario, :idEspecialidad, :matriculaProfesional)'
                     );
                     $insertarMedico->execute(['idUsuario' => $idUsuario, 'idEspecialidad' => $idMedicinaGeneral, 'matriculaProfesional' => 'DEMO-M001']);
                 }

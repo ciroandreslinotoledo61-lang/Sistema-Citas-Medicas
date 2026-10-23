@@ -1,4 +1,14 @@
 <?php if ($esVistaPrivada): ?>
+<?php
+$rolMenu = $usuarioAutenticado['codigoRol'];
+$esAdmin = $rolMenu === 'administrador';
+$esRecepcion = $rolMenu === 'recepcionista';
+$esPaciente = $rolMenu === 'paciente';
+$pacientesActivo = str_starts_with($paginaActual, 'paciente');
+$usuariosActivo = str_starts_with($paginaActual, 'usuario');
+$medicosActivo = str_starts_with($paginaActual, 'medico');
+$especialidadesActivo = str_starts_with($paginaActual, 'especialidad');
+?>
 <div class="fondo-navegacion" id="fondo-navegacion" hidden></div>
 <aside class="navegacion-lateral" id="navegacion-lateral" aria-label="Menu principal">
     <div class="cabecera-lateral">
@@ -11,12 +21,62 @@
     <p class="etiqueta-menu">PRINCIPAL</p>
     <nav class="menu-lateral" aria-label="Navegacion principal">
         <a href="/panel" <?= $paginaActual === 'panel' ? 'aria-current="page"' : '' ?>><?= mostrarIcono('panel') ?><span>Panel principal</span></a>
-        <?php if ($modulosDisponibles !== []): ?><span class="etiqueta-menu">GESTION</span><?php endif; ?>
-        <?php foreach ($modulosDisponibles as $modulo): ?>
-        <a href="<?= escaparTextoHtml($modulo['ruta']) ?>" <?= str_starts_with($paginaActual, $modulo['prefijo']) ? 'aria-current="page"' : '' ?>>
-            <?= mostrarIcono($modulo['icono']) ?><span><?= escaparTextoHtml($modulo['titulo']) ?></span>
-        </a>
-        <?php endforeach; ?>
+
+        <?php if ($esAdmin || $esRecepcion): ?>
+        <span class="etiqueta-menu">GESTION</span>
+        <details class="grupo-menu" <?= $pacientesActivo ? 'open' : '' ?>>
+            <summary><?= mostrarIcono('pacientes') ?><span>Pacientes</span><span class="chevron-menu" aria-hidden="true"></span></summary>
+            <div class="grupo-opciones">
+                <a href="/pacientes" <?= $paginaActual === 'pacientes' || $paginaActual === 'paciente-detalle' ? 'aria-current="page"' : '' ?>>Consultar pacientes</a>
+                <a href="/pacientes/nuevo" <?= $paginaActual === 'paciente-nuevo' ? 'aria-current="page"' : '' ?>>Registrar paciente</a>
+            </div>
+        </details>
+        <?php endif; ?>
+
+        <?php if ($esAdmin): ?>
+        <details class="grupo-menu" <?= $usuariosActivo ? 'open' : '' ?>>
+            <summary><?= mostrarIcono('usuarios') ?><span>Usuarios y autenticacion</span><span class="chevron-menu" aria-hidden="true"></span></summary>
+            <div class="grupo-opciones">
+                <a href="/usuarios" <?= $paginaActual === 'usuarios' || $paginaActual === 'usuario-editar' ? 'aria-current="page"' : '' ?>>Administrar cuentas</a>
+                <a href="/usuarios/nuevo" <?= $paginaActual === 'usuario-nuevo' ? 'aria-current="page"' : '' ?>>Crear usuario</a>
+                <span class="enlace-pendiente">Cambiar contrasena <small>Pendiente</small></span>
+            </div>
+        </details>
+        <details class="grupo-menu" <?= ($medicosActivo || $especialidadesActivo) ? 'open' : '' ?>>
+            <summary><?= mostrarIcono('medicos') ?><span>Medicos y especialidades</span><span class="chevron-menu" aria-hidden="true"></span></summary>
+            <div class="grupo-opciones">
+                <a href="/medicos" <?= $paginaActual === 'medicos' || $paginaActual === 'medico-editar' ? 'aria-current="page"' : '' ?>>Gestionar medicos</a>
+                <a href="/medicos/nuevo" <?= $paginaActual === 'medico-nuevo' ? 'aria-current="page"' : '' ?>>Registrar medico</a>
+                <a href="/especialidades" <?= $paginaActual === 'especialidades' || $paginaActual === 'especialidad-editar' ? 'aria-current="page"' : '' ?>>Gestionar especialidades</a>
+                <a href="/especialidades/nueva" <?= $paginaActual === 'especialidad-nueva' ? 'aria-current="page"' : '' ?>>Crear especialidad</a>
+            </div>
+        </details>
+        <span class="etiqueta-menu">PROXIMOS MODULOS</span>
+        <details class="grupo-menu grupo-menu-pendiente">
+            <summary><?= mostrarIcono('calendario') ?><span>Consultorios y horarios</span><span class="chevron-menu" aria-hidden="true"></span></summary>
+            <div class="grupo-opciones">
+                <span class="enlace-pendiente">Gestionar consultorios <small>Pendiente</small></span>
+                <span class="enlace-pendiente">Configurar horarios <small>Pendiente</small></span>
+            </div>
+        </details>
+        <details class="grupo-menu grupo-menu-pendiente">
+            <summary><?= mostrarIcono('informacion') ?><span>Bitacora del sistema</span><span class="chevron-menu" aria-hidden="true"></span></summary>
+            <div class="grupo-opciones">
+                <span class="enlace-pendiente">Consultar bitacora <small>Pendiente</small></span>
+            </div>
+        </details>
+        <details class="grupo-menu grupo-menu-pendiente">
+            <summary><?= mostrarIcono('panel') ?><span>Mas funcionalidades</span><span class="chevron-menu" aria-hidden="true"></span></summary>
+            <div class="grupo-opciones">
+                <span class="enlace-pendiente">Agenda e historial <small>Pendiente</small></span>
+                <span class="enlace-pendiente">Laboratorio digital <small>Pendiente</small></span>
+                <span class="enlace-pendiente">Reportes administrativos <small>Pendiente</small></span>
+            </div>
+        </details>
+        <?php elseif ($esPaciente): ?>
+        <span class="etiqueta-menu">MI ESPACIO</span>
+        <a href="/mi-perfil" <?= $paginaActual === 'mi-perfil' ? 'aria-current="page"' : '' ?>><?= mostrarIcono('perfil') ?><span>Mi perfil</span></a>
+        <?php endif; ?>
     </nav>
     <div class="pie-lateral">
         <div class="usuario-lateral">

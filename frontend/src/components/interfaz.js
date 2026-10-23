@@ -41,7 +41,7 @@ function configurarMenuMovil() {
             actualizarMenu(false, true);
         }
         if (evento.key === "Tab") {
-            const elementos = [...navegacion.querySelectorAll("a[href], button:not(:disabled)")]
+            const elementos = [...navegacion.querySelectorAll("a[href], button:not(:disabled), summary")]
                 .filter((elemento) => elemento.getClientRects().length > 0);
             const primero = elementos[0];
             const ultimo = elementos[elementos.length - 1];

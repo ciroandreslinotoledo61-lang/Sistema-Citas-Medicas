@@ -421,3 +421,48 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
     html { scroll-behavior: auto; }
     *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* Menu acordeon de gestion: enlaces reales y apartados futuros informativos. */
+.menu-lateral .grupo-menu { margin: 1px 0; }
+.menu-lateral .grupo-menu > summary {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    min-height: 45px; padding: 10px 13px; border-radius: 8px;
+    color: var(--menu-texto); font-size: 12.5px; font-weight: 600;
+    cursor: pointer; list-style: none; transition: background .18s ease;
+}
+.menu-lateral .grupo-menu > summary::-webkit-details-marker { display: none; }
+.menu-lateral .grupo-menu > summary::marker { content: ''; }
+.menu-lateral .grupo-menu > summary .icono { flex: 0 0 18px; width: 18px; height: 18px; color: var(--menu-icono); }
+.menu-lateral .grupo-menu > summary > span:nth-child(2) { flex: 1; }
+.menu-lateral .grupo-menu > summary:hover,
+.menu-lateral .grupo-menu[open] > summary { color: var(--blanco); background: var(--menu-hover); }
+.menu-lateral .grupo-menu > summary:focus-visible { outline: 2px solid var(--dorado); outline-offset: 2px; }
+.chevron-menu {
+    flex: 0 0 8px; width: 8px; height: 8px;
+    border-bottom: 1.7px solid currentColor; border-right: 1.7px solid currentColor;
+    transform: rotate(45deg); transition: transform .18s ease;
+}
+.grupo-menu[open] > summary .chevron-menu { transform: rotate(225deg); }
+.menu-lateral .grupo-opciones {
+    display: grid; gap: 3px; margin: 4px 0 11px 20px;
+    padding-left: 12px; border-left: 1px solid var(--menu-linea);
+}
+.menu-lateral .grupo-opciones a,
+.menu-lateral .grupo-opciones .enlace-pendiente {
+    display: flex; align-items: center; justify-content: space-between; gap: 6px;
+    min-height: 37px; padding: 8px 9px; border-radius: 6px;
+    color: var(--menu-secundario); font-size: 11.5px; font-weight: 500; line-height: 1.45;
+    text-decoration: none;
+}
+.menu-lateral .grupo-opciones a:hover { background: var(--menu-hover); color: var(--blanco); }
+.menu-lateral .grupo-opciones a[aria-current="page"] {
+    color: var(--blanco); font-weight: 650; background: var(--turquesa-boton);
+    box-shadow: inset 2px 0 0 var(--dorado);
+}
+.menu-lateral .grupo-opciones .enlace-pendiente { opacity: .78; cursor: default; }
+.menu-lateral .enlace-pendiente small {
+    font-size: 9px; flex-shrink: 0; color: var(--dorado);
+}
+@media (prefers-reduced-motion: reduce) {
+    .chevron-menu, .menu-lateral .grupo-menu > summary { transition: none; }
+}

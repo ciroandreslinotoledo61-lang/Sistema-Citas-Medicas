@@ -1,4 +1,4 @@
-# API hasta el avance 2 (version 1.1.0)
+# API de Clinica (version 1.2.0)
 
 Base local: `http://127.0.0.1:8000/api`.
 
@@ -138,3 +138,87 @@ Cambiar estado de medico: `{"medicoActivo": false}`. El estado se refleja en usu
 La ruta /usuarios/{idUsuario}/estado devuelve 409 para cuentas de rol Medico; se debe usar /medicos/{idMedico}/estado.
 
 Los listados de ambos modulos usan busqueda y pagina, con 20 filas por pagina. La busqueda de medicos incluye nombre, apellido, correo, matricula y especialidad. /especialidades/activas devuelve un arreglo de opciones, sin paginacion.
+
+## Rutas de horarios y citas
+
+Todas requieren sesion activa. En todas las mutaciones se exige CSRF. Los identificadores se obtienen de los listados correspondientes; los valores de ejemplo no son datos precargados.
+
+| Metodo | Ruta | Acceso y alcance |
+| --- | --- | --- |
+| GET | /disponibilidad/medicos | Administrador, Recepcionista, Paciente; solo medicos y especialidades activos |
+| GET | /disponibilidad/turnos?idMedico=1&fecha=2030-01-02 | Administrador, Recepcionista, Paciente; turnos futuros libres del medico y dia |
+| GET | /horarios | Administrador: todos; Medico: propios |
+| POST | /horarios | Administrador |
+| GET | /citas | Todos; Paciente: propias, Medico: asignadas, Administrador/Recepcionista: todas |
+| POST | /citas | Paciente: para si mismo; Administrador/Recepcionista: para paciente seleccionado |
+| GET | /citas/{idCita} | Mismo alcance que el listado |
+| PATCH | /citas/{idCita}/cancelacion | Paciente: propia; Administrador/Recepcionista: cualquiera vigente futura |
+| PATCH | /citas/{idCita}/reprogramacion | Administrador, Recepcionista |
+| PATCH | /citas/{idCita}/asistencia | Administrador, Recepcionista |
+
+GET /horarios admite busqueda, pagina, fecha e idMedico opcional. El filtro idMedico no permite al Medico consultar otro profesional. GET /citas admite busqueda, pagina, fecha y estado (pendiente, confirmada, cancelada, reprogramada, no_asistio, atendida). Las paginas tienen hasta 20 registros.
+
+### Crear horario
+
+POST /horarios:
+
+```json
+{"idMedico": 1, "fechaAtencion": "2030-01-02", "horaInicio": "08:00", "horaFin": "09:00"}
+```
+
+Cambiar la fecha por una futura dentro del siguiente ano. Respuesta 201, datos con idHorarioMedico, cantidadTurnos y los campos anteriores. Horas en HH:mm, intervalos de 15 minutos, mismo dia y sin cruces. GET /horarios devuelve datos.elementos con idHorarioMedico, idMedico, nombreMedico, fechaAtencion, horaInicio, horaFin y cantidadTurnos; ademas pagina y hayPaginaSiguiente.
+
+### Catalogo y turnos
+
+GET /disponibilidad/medicos devuelve datos como arreglo de idMedico, nombreMedico, idEspecialidad y nombreEspecialidad. No incluye correos, matriculas, pacientes ni cuentas completas.
+
+GET /disponibilidad/turnos requiere idMedico y fecha AAAA-MM-DD. Devuelve datos como arreglo de idTurno, fechaHoraInicio y fechaHoraFin. Vacio significa que no hay turnos disponibles para esa seleccion; no es una reserva.
+
+### Reservar y modificar cita
+
+POST /citas del Paciente:
+
+```json
+{"idTurno": 1, "motivoCita": "Control general"}
+```
+
+Recepcionista/Administrador deben enviar ademas idPaciente. Para Paciente, el servidor lo obtiene de la sesion; enviar otro idPaciente produce 403. motivoCita es opcional, hasta 500 caracteres. Reserva exitosa: 201 y detalle en datos.
+
+PATCH /citas/{idCita}/cancelacion:
+
+```json
+{"motivoCancelacion": "Cambio de planes"}
+```
+
+Motivo opcional hasta 300 caracteres; se admite un objeto JSON vacio {}. Respuesta 200 con el detalle actualizado. Solo citas vigentes antes del inicio y sin asistencia registrada.
+
+PATCH /citas/{idCita}/reprogramacion:
+
+```json
+{"idTurno": 2}
+```
+
+El paciente y motivo se conservan desde la cita original. Respuesta 201 con la nueva reserva; idCitaOrigen identifica la anterior. Si falla, la reserva previa sigue vigente.
+
+PATCH /citas/{idCita}/asistencia:
+
+```json
+{"asistenciaRegistrada": "asistio"}
+```
+
+Valores: asistio o no_asistio. Asistio desde inicio; no_asistio desde fin. Respuesta 200. No se puede registrar dos veces ni modificar datos clinicos.
+
+### Datos publicos de una cita
+
+El listado en datos.elementos y el detalle en datos usan:
+
+- Identificadores: idCita, idPaciente, idTurno, idMedico, idCitaOrigen (null si no es reprogramacion).
+- Datos basicos: nombrePaciente, cedulaIdentidad, fechaNacimiento, nombreMedico, nombreEspecialidad.
+- Reserva: fechaHoraInicio, fechaHoraFin, estadoCita, motivoCita, motivoCancelacion, asistenciaRegistrada.
+- Acciones disponibles: puedeCancelar, puedeReprogramar, puedeRegistrarAsistencia, puedeRegistrarInasistencia (booleanos calculados en el servidor).
+
+Las fechas/horas de turnos son locales a la clinica, formato YYYY-MM-DD HH:mm:ss; el frontend no las convierte a la zona del navegador. La zona configurada debe coincidir en frontend y backend. Los responsables internos de auditoria y los datos de autenticacion no se incluyen.
+
+Los booleanos orientan la interfaz. Cada escritura vuelve a comprobar permisos, propiedad, hora y estado. Una cita ajena devuelve 404; un rol sin operacion, 403; turno ocupado, cruce, medico inactivo o cita no modificable, 409; entrada invalida, 422. Sin sesion, 401; sin CSRF, 419.
+
+Desactivar medico o cambiar su especialidad produce 409 si tiene citas pendientes/confirmadas cuyo turno aun no termina. No hay rutas para borrar citas, editar bloques ni registrar consultas clinicas en esta version.

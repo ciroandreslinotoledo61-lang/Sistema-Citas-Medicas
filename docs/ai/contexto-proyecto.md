@@ -1,38 +1,35 @@
 # Contexto del proyecto
 
-## Objetivo
+Version 1.2.0 de Clinica. Stack: PHP 8.2 o posterior, PostgreSQL, PDO pdo_pgsql, HTML, CSS y JavaScript sin framework ni compilacion.
 
-Construir un sistema academico de citas para el Centro Medico Vida Salud usando PHP, HTML, CSS, JavaScript y PostgreSQL. La referencia de organizacion es CADEFAR Inventory, pero no se copia su stack Node/React.
+## Implementado
 
-## Entrega actual
+- Autenticacion, sesiones, CSRF y permisos de cuatro roles.
+- Usuarios administrativos, pacientes e historia vacia automatica.
+- Especialidades y medicos; cuenta y perfil atomicos.
+- Horarios futuros sin cruces y turnos de 15 minutos.
+- Reserva, consulta, anulacion, reprogramacion y asistencia.
+- Panel y navegacion por rol; controles de propiedad en el backend.
+- README con matriz de responsabilidades, 30 casos implementados y 12 previstos, prioridades y flujos principales.
 
-Avance 2, version 1.1.0: autenticacion por roles, gestion de cuentas administrativas, pacientes, especialidades y medicos. El registro crea una historia clinica vacia. Las 11 tablas del dominio estan definidas para sostener los siguientes avances.
+Paciente significa cliente: reserva y anula solo sus citas; elige medico y turno. Recepcion registra pacientes, gestiona citas y asistencia. Medico consulta solo sus bloques y citas, con datos basicos de esos pacientes. Administrador gestiona recursos y operaciones administrativas; no escribe informacion clinica por ser administrador.
 
-El Administrador puede registrar, editar y cambiar el estado de medicos, asignandoles una especialidad. El acceso del medico existe, pero no registra consultas todavia. No anunciar reservas, agenda, reportes, cambio de clave ni recuperacion por correo como funciones terminadas.
+## Pendiente
 
-## Condiciones de trabajo
+Edicion o retiro de bloques, consulta clinica, historial completo, tratamientos, reportes, cambio/recuperacion de clave, cambio de rol existente y visor general de bitacora. Consultorios y laboratorio proceden del menu previo y requieren requisitos. No simular estos modulos.
 
-- Mantener backend, frontend y docs/ai separados.
-- Escribir textos, rutas, comentarios y nombres sin acentos.
-- Usar nombres completos, de verbo mas entidad, que permitan explicar el codigo.
-- Mantener los archivos en UTF-8 sin BOM.
-- No agregar frameworks o dependencias sin una necesidad concreta.
-- SQL preparado en repositories; reglas y transacciones en services.
-- No poner credenciales en Git ni exponer backend/src como carpeta publica.
-- No usar datos reales en seeds ni pruebas.
-- Un avance terminado debe incluir su documentacion y una verificacion relacionada con su riesgo.
+## Reglas para continuar
 
-## Decisiones iniciales
+- Mantener frontend, negocio y datos separados; SQL preparado en repositories.
+- Texto ASCII, UTF-8 sin BOM y nombres completos descriptivos.
+- No copiar el stack Node/React del proyecto de referencia CADEFAR.
+- Conservar .env, credenciales y datos; no ejecutar seeder en una base con usuarios.
+- Extender contratos reales y documentar cambios; no inventar endpoints en las pantallas.
+- Fechas de turnos expresadas en la zona local de la clinica (America/La_Paz); auditoria con TIMESTAMPTZ.
+- La gestion por rol y la propiedad de registros se comprueban en el servidor.
 
-- Cuatro roles fijos; sin editor de roles.
-- PostgreSQL como motor de datos; PDO como acceso desde PHP.
-- Session PHP con cookie HttpOnly; sin JWT ni localStorage para credenciales.
-- Dos servidores locales para conservar la separacion frontend/backend.
-- Fechas locales del centro en America/La_Paz; eventos de registro en TIMESTAMPTZ.
-- La estructura de tablas es un diseno inicial. Debe revisarse junto al diagrama academico antes de ampliar los modulos clinicos.
+## Actualizar
 
-## Actualizacion desde V1
+Leer ACTUALIZAR-ESTA-VERSION.md. Mantener migraciones 001 y 002 y aplicar 003 mediante backend/scripts/actualizar-roles-citas.php. Las 11 tablas se conservan. La migracion nueva agrega asistencia y referencias de auditoria/reprogramacion a citas.
 
-Aplicar el parche de este avance y ejecutar backend/scripts/actualizar-especialidades-medicos.php. No recrear la base ni volver a cargar el seeder. La migracion 001 se mantiene igual; la 002 agrega unicidad normalizada por nombre y matricula.
-
-El ZIP de actualizacion contiene un parche Git, los archivos nuevos/modificados y una guia. El estado del medico corresponde a usuarios.usuario_activo; no se agrega un segundo estado en medicos.
+Las pruebas nativas de PHP/PDO con PostgreSQL embebido, los recorridos de navegador y sus limites se describen en docs/ai/pruebas.md. La configuracion Apache/XAMPP y concurrencia sobre un servidor PostgreSQL independiente deben verificarse en el entorno de instalacion.

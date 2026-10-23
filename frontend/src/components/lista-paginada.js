@@ -1,6 +1,6 @@
 import { mostrarErrorSolicitud } from "./formularios.js";
 
-export function configurarListaPaginada(obtenerListado, mostrarElementos, cuerpoTabla) {
+export function configurarListaPaginada(obtenerListado, mostrarElementos, cuerpoTabla, obtenerFiltrosAdicionales = () => ({})) {
     const formularioBusqueda = document.querySelector("#formulario-busqueda");
     const mensajeListado = document.querySelector("#mensaje-listado");
     const botonAnterior = document.querySelector("#pagina-anterior");
@@ -19,6 +19,7 @@ export function configurarListaPaginada(obtenerListado, mostrarElementos, cuerpo
             const parametros = new URLSearchParams({
                 busqueda: formularioBusqueda.elements.busqueda.value.trim(),
                 pagina: String(paginaActual),
+                ...obtenerFiltrosAdicionales(formularioBusqueda),
             });
             const respuesta = await obtenerListado(parametros);
             if (solicitudActual !== numeroSolicitud) return;

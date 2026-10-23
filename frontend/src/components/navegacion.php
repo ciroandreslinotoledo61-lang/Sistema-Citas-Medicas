@@ -22,6 +22,23 @@ $especialidadesActivo = str_starts_with($paginaActual, 'especialidad');
     <nav class="menu-lateral" aria-label="Navegacion principal">
         <a href="/panel" <?= $paginaActual === 'panel' ? 'aria-current="page"' : '' ?>><?= mostrarIcono('panel') ?><span>Panel principal</span></a>
 
+        <details class="grupo-menu" <?= str_starts_with($paginaActual, 'cita') ? 'open' : '' ?>>
+            <summary><?= mostrarIcono('calendario') ?><span><?= $esPaciente ? 'Mis citas' : ($rolMenu === 'medico' ? 'Mi agenda' : 'Citas medicas') ?></span><span class="chevron-menu" aria-hidden="true"></span></summary>
+            <div class="grupo-opciones">
+                <a href="/citas" <?= in_array($paginaActual, ['citas', 'cita-detalle', 'cita-reprogramar'], true) ? 'aria-current="page"' : '' ?>>Consultar citas</a>
+                <?php if ($rolMenu !== 'medico'): ?><a href="/citas/nueva" <?= $paginaActual === 'cita-nueva' ? 'aria-current="page"' : '' ?>>Reservar cita</a><?php endif; ?>
+            </div>
+        </details>
+        <?php if ($esAdmin || $rolMenu === 'medico'): ?>
+        <details class="grupo-menu" <?= str_starts_with($paginaActual, 'horario') ? 'open' : '' ?>>
+            <summary><?= mostrarIcono('calendario') ?><span><?= $esAdmin ? 'Horarios de atencion' : 'Mis horarios' ?></span><span class="chevron-menu" aria-hidden="true"></span></summary>
+            <div class="grupo-opciones">
+                <a href="/horarios" <?= $paginaActual === 'horarios' ? 'aria-current="page"' : '' ?>>Consultar horarios</a>
+                <?php if ($esAdmin): ?><a href="/horarios/nuevo" <?= $paginaActual === 'horario-nuevo' ? 'aria-current="page"' : '' ?>>Crear horario</a><?php endif; ?>
+            </div>
+        </details>
+        <?php endif; ?>
+
         <?php if ($esAdmin || $esRecepcion): ?>
         <span class="etiqueta-menu">GESTION</span>
         <details class="grupo-menu" <?= $pacientesActivo ? 'open' : '' ?>>
@@ -53,10 +70,9 @@ $especialidadesActivo = str_starts_with($paginaActual, 'especialidad');
         </details>
         <span class="etiqueta-menu">PROXIMOS MODULOS</span>
         <details class="grupo-menu grupo-menu-pendiente">
-            <summary><?= mostrarIcono('calendario') ?><span>Consultorios y horarios</span><span class="chevron-menu" aria-hidden="true"></span></summary>
+            <summary><?= mostrarIcono('calendario') ?><span>Consultorios</span><span class="chevron-menu" aria-hidden="true"></span></summary>
             <div class="grupo-opciones">
                 <span class="enlace-pendiente">Gestionar consultorios <small>Pendiente</small></span>
-                <span class="enlace-pendiente">Configurar horarios <small>Pendiente</small></span>
             </div>
         </details>
         <details class="grupo-menu grupo-menu-pendiente">
@@ -68,7 +84,7 @@ $especialidadesActivo = str_starts_with($paginaActual, 'especialidad');
         <details class="grupo-menu grupo-menu-pendiente">
             <summary><?= mostrarIcono('panel') ?><span>Mas funcionalidades</span><span class="chevron-menu" aria-hidden="true"></span></summary>
             <div class="grupo-opciones">
-                <span class="enlace-pendiente">Agenda e historial <small>Pendiente</small></span>
+                <span class="enlace-pendiente">Consultas e historial <small>Pendiente</small></span>
                 <span class="enlace-pendiente">Laboratorio digital <small>Pendiente</small></span>
                 <span class="enlace-pendiente">Reportes administrativos <small>Pendiente</small></span>
             </div>

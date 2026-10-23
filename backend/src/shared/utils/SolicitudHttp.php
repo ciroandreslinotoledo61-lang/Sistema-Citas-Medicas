@@ -21,7 +21,8 @@ final class SolicitudHttp
         } catch (\JsonException) {
             throw new ErrorAplicacion('El cuerpo JSON no es valido.', 400);
         }
-        if (!is_array($datos) || array_is_list($datos)) {
+        // Distinguir {} de []: ambos se decodifican como un arreglo PHP vacio.
+        if (!is_array($datos) || !str_starts_with(ltrim($contenido), '{')) {
             throw new ErrorAplicacion('Se esperaba un objeto JSON.', 400);
         }
         return $datos;

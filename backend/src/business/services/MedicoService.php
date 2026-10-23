@@ -10,6 +10,7 @@ use CitasMedicas\Data\Repositories\MedicoRepository;
 use CitasMedicas\Data\Repositories\EspecialidadRepository;
 use CitasMedicas\Data\Repositories\UsuarioRepository;
 use CitasMedicas\Data\Repositories\RolRepository;
+use CitasMedicas\Data\Repositories\CitaRepository;
 use CitasMedicas\Shared\Constants\RolesSistema;
 use CitasMedicas\Shared\Errors\ErrorAplicacion;
 
@@ -73,6 +74,9 @@ final class MedicoService
         try {
             $medico = $this->medicoRepository->obtenerMedicoPorId($idMedico, true)
                 ?? throw new ErrorAplicacion('El medico no existe.', 404);
+            if ($medico->idEspecialidad !== $datosValidados['idEspecialidad']) {
+                $this->exigirMedicoSinCitasVigentes($idMedico);
+            }
             // Un medico inactivo puede conservar su especialidad inactiva al corregir sus datos.
             if ($medico->medicoActivo || $medico->idEspecialidad !== $datosValidados['idEspecialidad']) {
                 $this->exigirEspecialidadActiva($datosValidados['idEspecialidad']);
@@ -99,6 +103,9 @@ final class MedicoService
         try {
             $medico = $this->medicoRepository->obtenerMedicoPorId($idMedico, true)
                 ?? throw new ErrorAplicacion('El medico no existe.', 404);
+            if (!$medicoActivo && $medico->medicoActivo) {
+                $this->exigirMedicoSinCitasVigentes($idMedico);
+            }
             if ($medicoActivo) {
                 $this->exigirEspecialidadActiva($medico->idEspecialidad);
             }
@@ -112,6 +119,13 @@ final class MedicoService
         } catch (\Throwable $error) {
             if ($this->conexionPostgresql->inTransaction()) { $this->conexionPostgresql->rollBack(); }
             throw $error;
+        }
+    }
+
+    private function exigirMedicoSinCitasVigentes(int $idMedico): void
+    {
+        if ((new CitaRepository($this->conexionPostgresql))->medicoTieneCitasVigentes($idMedico, date('Y-m-d H:i:s'))) {
+            throw new ErrorAplicacion('Primero anula o reprograma las citas vigentes del medico antes de desactivarlo o cambiar su especialidad.', 409);
         }
     }
 

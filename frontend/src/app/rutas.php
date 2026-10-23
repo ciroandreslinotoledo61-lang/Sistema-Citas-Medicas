@@ -38,12 +38,22 @@ $rutasVistas = [
     '/especialidades/nueva' => ['especialidad-nueva', 'Nueva especialidad', 'especialidades/formulario-especialidad.php', 'especialidades/formulario-especialidad.js', ['administrador']],
     '/medicos' => ['medicos', 'Medicos', 'medicos/lista-medicos.php', 'medicos/listar-medicos.js', ['administrador']],
     '/medicos/nuevo' => ['medico-nuevo', 'Registrar medico', 'medicos/formulario-medico.php', 'medicos/formulario-medico.js', ['administrador']],
+    '/citas' => ['citas', 'Citas medicas', 'citas/lista-citas.php', 'citas/listar-citas.js', ['administrador', 'recepcionista', 'medico', 'paciente']],
+    '/citas/nueva' => ['cita-nueva', 'Reservar cita', 'citas/formulario-cita.php', 'citas/formulario-cita.js', ['administrador', 'recepcionista', 'paciente']],
+    '/horarios' => ['horarios', 'Horarios de atencion', 'horarios/lista-horarios.php', 'horarios/listar-horarios.js', ['administrador', 'medico']],
+    '/horarios/nuevo' => ['horario-nuevo', 'Crear horario', 'horarios/formulario-horario.php', 'horarios/formulario-horario.js', ['administrador']],
     '/mi-perfil' => ['mi-perfil', 'Mi perfil', 'pacientes/detalle-paciente.php', 'pacientes/detalle-paciente.js', ['paciente']],
 ];
 
 try {
     if (isset($rutasVistas[$rutaActual])) {
         [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] = $rutasVistas[$rutaActual];
+    } elseif (preg_match('#^/citas/([1-9][0-9]*)(/reprogramar)?$#', $rutaActual, $coincidencia)) {
+        $idRegistro = (int) $coincidencia[1];
+        $esReprogramacion = isset($coincidencia[2]);
+        [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] = $esReprogramacion
+            ? ['cita-reprogramar', 'Reprogramar cita', 'citas/formulario-cita.php', 'citas/formulario-cita.js', ['administrador', 'recepcionista']]
+            : ['cita-detalle', 'Detalle de cita', 'citas/detalle-cita.php', 'citas/detalle-cita.js', ['administrador', 'recepcionista', 'medico', 'paciente']];
     } elseif (preg_match('#^/usuarios/([1-9][0-9]*)/editar$#', $rutaActual, $coincidencia)) {
         $idRegistro = (int) $coincidencia[1];
         [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] =

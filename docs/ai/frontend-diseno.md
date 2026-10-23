@@ -98,3 +98,16 @@ git commit -m "docs: documentar estructura y rediseno del frontend"
 ```
 
 Revisa git status antes de preparar archivos si tienes otros cambios pendientes. El ZIP no sube cambios a GitHub. Ejecuta git push desde tu repositorio cuando quieras publicar tus commits.
+
+## Responsabilidades y agenda en 1.2.0
+
+Se conservan la marca Clinica, los componentes visuales y el menu acordeon recibido. El panel ofrece solamente acciones del rol. Citas y Horarios usan los mismos estilos, tablas, paginacion y formularios que el resto de modulos.
+
+- Paciente: Mis citas, Reservar cita y Mi perfil. Seleccion de especialidad, medico, fecha y turno; anulacion con confirmacion en el detalle.
+- Recepcionista: pacientes, reserva para un paciente buscado, listado de citas, reprogramacion y asistencia.
+- Medico: Mi agenda y Mis horarios; detalle con datos basicos del paciente asignado, sin controles administrativos.
+- Administrador: directorios, citas y configuracion de bloques/turnos.
+
+Rutas nuevas de vistas: /citas, /citas/nueva, /citas/{id}, /citas/{id}/reprogramar, /horarios, /horarios/nuevo. ProteccionVista comprueba rol; las respuestas de la API comprueban tambien propiedad. Las acciones del detalle se calculan desde puedeCancelar, puedeReprogramar y los permisos de asistencia.
+
+Los turnos se presentan como radios con etiqueta y foco de teclado. Cambiar medico, especialidad o fecha descarta la seleccion anterior; un contador evita pintar respuestas antiguas sobre la seleccion actual. Un conflicto de reserva actualiza los turnos. Las tablas mantienen desplazamiento horizontal dentro de su contenedor en celular.

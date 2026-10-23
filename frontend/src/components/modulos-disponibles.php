@@ -6,8 +6,26 @@ function obtenerModulosDisponibles(string $codigoRol): array
 {
     $modulos = [
         [
+            'titulo' => $codigoRol === 'paciente' ? 'Mis citas' : ($codigoRol === 'medico' ? 'Mi agenda' : 'Citas medicas'),
+            'ruta' => '/citas', 'prefijo' => 'cita', 'icono' => 'calendario',
+            'descripcion' => match ($codigoRol) {
+                'paciente' => 'Elige medico y horario. Consulta o anula tus reservas.',
+                'medico' => 'Citas asignadas y datos basicos de tus pacientes.',
+                default => 'Reservas, reprogramaciones y control de asistencia.',
+            },
+            'rutaRegistro' => $codigoRol === 'medico' ? '' : '/citas/nueva', 'accionRegistro' => 'Reservar cita',
+            'roles' => ['administrador', 'recepcionista', 'medico', 'paciente'],
+        ],
+        [
+            'titulo' => $codigoRol === 'medico' ? 'Mis horarios' : 'Horarios de atencion',
+            'ruta' => '/horarios', 'prefijo' => 'horario', 'icono' => 'calendario',
+            'descripcion' => $codigoRol === 'medico' ? 'Tus bloques de atencion asignados.' : 'Bloques de disponibilidad y turnos de 15 minutos.',
+            'rutaRegistro' => $codigoRol === 'administrador' ? '/horarios/nuevo' : '', 'accionRegistro' => 'Crear horario',
+            'roles' => ['administrador', 'medico'],
+        ],
+        [
             'titulo' => 'Pacientes', 'ruta' => '/pacientes', 'prefijo' => 'paciente',
-            'icono' => 'pacientes', 'descripcion' => 'Datos personales, contacto e historia clinica.',
+            'icono' => 'pacientes', 'descripcion' => 'Datos personales, contacto y numero de historia.',
             'rutaRegistro' => '/pacientes/nuevo', 'accionRegistro' => 'Registrar paciente',
             'roles' => ['administrador', 'recepcionista'],
         ],

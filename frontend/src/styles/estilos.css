@@ -1,7 +1,7 @@
 /* 1. Paleta central: base, variantes accesibles y componentes */
 :root {
     color-scheme: light;
-    /* Los seis colores base de Clinica Vida Salud. */
+    /* Los seis colores base de la clinica. */
     --azul-marino: #152D4A;
     --turquesa: #0D9488;
     --celeste: #D5F1F4;
@@ -465,4 +465,33 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 }
 @media (prefers-reduced-motion: reduce) {
     .chevron-menu, .menu-lateral .grupo-menu > summary { transition: none; }
+}
+
+/* Agenda y reservas: mismos componentes y colores del resto del portal. */
+.filtros-agenda { flex-wrap: wrap; align-items: flex-end; }
+.filtros-agenda label { flex: 1 1 140px; margin: 0; min-width: 0; }
+.filtros-agenda .crecer { flex-basis: 230px; }
+.filtros-agenda .boton { margin-bottom: 0; }
+.dato-secundario { display: block; margin-top: 5px; color: var(--secundario); font-size: 11px; }
+.cabecera-detalle, .cabecera-turnos { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.cabecera-turnos { margin-top: 20px; }
+.cabecera-turnos h3 { margin: 0; }
+.rejilla-turnos { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px; margin: 18px 0; }
+.opcion-turno { position: relative; margin: 0; cursor: pointer; }
+.opcion-turno input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.opcion-turno span { display: grid; place-items: center; min-height: 46px; border: 1px solid var(--campo-borde); border-radius: 8px; background: var(--papel); color: var(--tinta); font-weight: 600; }
+.opcion-turno input:checked + span { color: var(--blanco); background: var(--turquesa-boton); border-color: var(--turquesa-boton); }
+.opcion-turno input:focus-visible + span { outline: 3px solid var(--foco); outline-offset: 3px; }
+.opcion-turno:hover span { border-color: var(--turquesa-oscuro); }
+.resumen-reserva { padding: 16px 18px; border-left: 3px solid var(--turquesa); background: var(--turquesa-suave); border-radius: 0 6px 6px 0; }
+.busqueda-paciente-reserva { margin-bottom: 22px; }
+.fila-busqueda { display: flex; align-items: stretch; gap: 10px; }
+.fila-busqueda input { flex: 1; min-width: 0; }
+.fila-busqueda .boton { flex-shrink: 0; }
+.enlace-boton { padding: 8px; border: 0; background: transparent; color: var(--turquesa-texto); text-decoration: underline; text-underline-offset: 3px; }
+.boton-peligro { background: var(--rojo-suave); color: var(--rojo); border-color: var(--rojo-linea); box-shadow: none; }
+.boton-peligro:hover { background: var(--rojo); color: var(--blanco); border-color: var(--rojo); }
+@media (max-width: 440px) {
+    .fila-busqueda { flex-direction: column; }
+    .filtros-agenda .crecer { flex-basis: 100%; }
 }

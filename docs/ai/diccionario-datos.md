@@ -186,3 +186,23 @@ La migracion 002_unicidad_especialidades_medicos.sql agrega:
 | uq_medicos_matricula_normalizada | medicos | Matricula en mayusculas, sin espacios de los extremos y con espacios internos agrupados |
 
 No se agregan tablas ni columnas. medicoActivo, devuelto por la API, representa usuarios.usuario_activo. cantidadMedicosActivos es un conteo calculado, no una columna guardada.
+
+## Migracion 003: citas y responsabilidades
+
+Las 11 tablas se conservan. Campos agregados a citas:
+
+| Campo | Tipo | Proposito |
+| --- | --- | --- |
+| asistencia_registrada | VARCHAR(12), NOT NULL, defecto pendiente | pendiente, asistio o no_asistio; CHECK |
+| motivo_cancelacion | VARCHAR(300), NOT NULL, defecto vacio | Motivo opcional al anular |
+| id_usuario_registro | BIGINT, FK usuarios, nullable | Responsable de la reserva |
+| id_usuario_actualizacion | BIGINT, FK usuarios, nullable | Responsable del ultimo cambio de estado o asistencia |
+| fecha_actualizacion_cita | TIMESTAMPTZ, nullable | Momento del ultimo cambio |
+| id_especialidad_reserva | BIGINT, FK especialidades, nullable | Especialidad asignada al reservar; evita reinterpretar una cita nueva tras reasignar al medico |
+| id_cita_origen | BIGINT, FK citas, nullable | Reserva anterior al reprogramar |
+
+Los campos nullable permiten conservar registros previos sin inventar sus responsables. Para reservas anteriores sin id_especialidad_reserva, la consulta usa la especialidad actual del medico. No se almacena una copia textual del nombre de especialidad.
+
+Indices nuevos: horarios_medicos(id_medico, fecha_atencion), turnos(fecha_hora_inicio) y citas(id_cita_origen). Se mantiene el indice unico parcial uq_citas_turno_ocupado: cancelada y reprogramada no ocupan el turno. No asistio y atendida conservan la ocupacion historica.
+
+La ausencia de cruces de bloques y de citas del mismo paciente se controla en servicios con bloqueos de filas y transacciones. No es una restriccion de exclusion independiente en SQL: las escrituras de la aplicacion deben pasar por esos servicios.

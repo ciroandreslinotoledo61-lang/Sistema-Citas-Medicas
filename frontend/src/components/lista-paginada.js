@@ -28,7 +28,7 @@ export function configurarListaPaginada(obtenerListado, mostrarElementos, cuerpo
             if (respuesta.datos.elementos.length === 0) {
                 const fila = document.createElement("tr");
                 const celda = document.createElement("td");
-                celda.colSpan = 5;
+                celda.colSpan = cuerpoTabla.closest("table").querySelectorAll("thead th").length;
                 celda.className = "sin-resultados";
                 celda.textContent = "No se encontraron registros para esta busqueda.";
                 fila.append(celda);

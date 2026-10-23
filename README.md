@@ -1,8 +1,10 @@
 # Clinica - Sistema de Citas Medicas
 
-Version 1.2.0. Proyecto universitario con PHP, PostgreSQL, PDO, HTML, CSS y JavaScript. Se conserva la arquitectura por capas y la configuracion existente.
+Version 1.3.0. Proyecto universitario con PHP, PostgreSQL, PDO, HTML, CSS y JavaScript. Se conserva la arquitectura por capas y la configuracion existente.
 
-Esta version separa el trabajo de Administracion, Recepcion, Medico y Paciente. Incorpora bloques de atencion, turnos de 15 minutos, reservas, anulaciones, reprogramaciones y asistencia. Las pantallas consultan la API real; no muestran reservas ni estadisticas inventadas.
+La hora de Bolivia se aplica internamente a toda la aplicacion. La interfaz no muestra ciudades ni identificadores de zona. CITA_DURACION_MINUTOS configura nuevos bloques; por defecto es 30.
+
+Esta version separa el trabajo de Administracion, Recepcion, Medico y Paciente. Incorpora bloques de atencion, turnos de 30 minutos por defecto, reservas, anulaciones, reprogramaciones y asistencia. Las pantallas consultan la API real; no muestran reservas ni estadisticas inventadas.
 
 ## 1. Responsabilidades por rol
 
@@ -11,7 +13,7 @@ En el sistema, **cliente corresponde al rol Paciente**. Una cuenta tiene un unic
 | Funcion | Administrador | Recepcionista | Medico | Paciente |
 | --- | --- | --- | --- | --- |
 | Gestionar usuarios administrativos y asignar su rol al crearlos | Si | No | No | No |
-| Registrar, buscar y actualizar contacto de pacientes | Si | Si | No | No |
+| Registrar, editar y activar/desactivar pacientes | Si | Si | No | No |
 | Consultar perfil personal de paciente | No | No | No | Solo el propio |
 | Registrar, editar y activar/desactivar medicos y especialidades | Si | No | No | No |
 | Crear bloques de atencion y generar turnos | Si | No | No | No |
@@ -21,10 +23,11 @@ En el sistema, **cliente corresponde al rol Paciente**. Una cuenta tiene un unic
 | Consultar citas | Todas | Todas | Solo las asignadas | Solo las propias |
 | Anular una cita futura vigente | Cualquier paciente | Cualquier paciente | No | Solo la propia |
 | Reprogramar una cita futura vigente | Si | Si | No | Solicita el cambio a Recepcion |
-| Registrar asistencia o inasistencia | Si | Si | No | No |
+| Marcar cita atendida | Si | Si | Solo las asignadas | No |
+| Registrar inasistencia | Si | Si | No | No |
 | Consultar datos basicos del paciente desde una cita | Si | Si | Solo pacientes de sus citas | Solo sus propios datos |
 | Consultas, tratamientos e historial clinico completo | Pendiente | Sin permiso clinico | Pendiente | Pendiente de definir alcance |
-| Reportes administrativos | Pendiente | No | No | No |
+| Reportes administrativos | Si | No | No | No |
 
 El Administrador tiene control administrativo. Su rol no le concede automaticamente permiso para escribir diagnosticos o tratamientos. El Medico ve nombre, CI, nacimiento y motivo de consulta de sus citas; no recibe acceso al directorio general de pacientes.
 
@@ -42,7 +45,7 @@ Los limites se comprueban en las rutas y servicios del backend. Para citas, la c
 | backend/src/shared | Errores, constantes, configuracion, sesion y utilidades |
 | backend/scripts | Comprobacion del entorno y actualizaciones de la base |
 | backend/tests | Pruebas de validaciones, permisos e integracion |
-| frontend/src/features | Pantallas y JavaScript por modulo: auth, panel, usuarios, pacientes, especialidades, medicos, horarios y citas |
+| frontend/src/features | Pantallas y JavaScript por modulo: auth, panel, usuarios, pacientes, especialidades, medicos, horarios, citas y reportes |
 | frontend/src/components | Navegacion, formularios, tablas, paginacion e iconos compartidos |
 | frontend/src/api | Transporte JSON y consulta de sesion desde PHP |
 | frontend/src/styles | Estilos responsive compartidos |
@@ -99,7 +102,7 @@ Edita `backend/.env`:
 
 ```dotenv
 APP_ENV=local
-APP_TIMEZONE=America/La_Paz
+CITA_DURACION_MINUTOS=30
 FRONTEND_URL=http://127.0.0.1:8080
 DB_HOST=127.0.0.1
 DB_PORT=5432
@@ -119,7 +122,6 @@ En `frontend/.env`:
 
 ```dotenv
 APP_ENV=local
-APP_TIMEZONE=America/La_Paz
 FRONTEND_URL=http://127.0.0.1:8080
 API_URL=http://127.0.0.1:8000/api
 SESSION_COOKIE_NAME=citas_medicas_sesion
@@ -142,12 +144,15 @@ php backend/scripts/verificar-entorno.php --conexion
 php backend/scripts/migrar-base-datos.php
 php backend/scripts/actualizar-especialidades-medicos.php
 php backend/scripts/actualizar-roles-citas.php
+php backend/scripts/actualizar-agenda-reportes.php
 php backend/scripts/cargar-datos-iniciales.php
 ```
 
 La migracion crea las 11 tablas dentro de una transaccion. Es una migracion inicial, no un gestor automatico de versiones: si las tablas existen, se detiene sin borrarlas. La migracion 002 agrega dos indices sin eliminar datos y se puede ejecutar nuevamente. Si detecta duplicados equivalentes anteriores, se detiene para que se revisen.
 
 La migracion 003 agrega a citas el registro de asistencia, el motivo de anulacion, los responsables y la referencia a la reserva original al reprogramar. No borra registros ni modifica cuentas. Se puede repetir.
+
+La migracion 004 agrega sexo opcional, telefono medico y duracion por bloque/turno. Convierte la oferta futura a 30 minutos y conserva las horas de las reservas anteriores. Asistio pasa a Atendida. Ver [reglas de actualizacion](docs/ai/actualizacion-agenda-reportes.md).
 
 El seeder requiere una base sin usuarios. Crea cuatro roles, tres especialidades, una cuenta por rol, el perfil medico de prueba y un paciente con historia clinica. Una segunda ejecucion se detiene; no reemplaza cuentas ni claves.
 
@@ -206,7 +211,7 @@ Los servidores incorporados de PHP son para desarrollo local. El despliegue en n
 | CU-03 | Crear cuenta de paciente | Visitante | P1 | Usuario Paciente, perfil e historia vacia en una transaccion |
 | CU-04 | Registrar un paciente desde recepcion | Administrador, Recepcionista | P1 | Registro completo sin duplicar correo ni CI |
 | CU-05 | Buscar y consultar pacientes | Administrador, Recepcionista | P1 | Lista paginada, datos de contacto y numero de historia |
-| CU-06 | Actualizar contacto del paciente | Administrador, Recepcionista | P1 | Telefono, direccion y contacto de emergencia |
+| CU-06 | Editar datos y estado del paciente | Administrador, Recepcionista | P1 | Nombre, correo, CI, nacimiento, sexo opcional y contacto; desactivar conserva citas e historia |
 | CU-07 | Consultar mi perfil | Paciente | P1 | Datos asociados al usuario autenticado |
 | CU-08 | Crear usuario y asignar rol administrativo | Administrador | P0 | Elegir Administrador o Recepcionista al registrar |
 | CU-09 | Buscar y consultar usuarios | Administrador | P1 | Cuentas y roles; sin hashes ni claves |
@@ -220,7 +225,7 @@ Los servidores incorporados de PHP son para desarrollo local. El despliegue en n
 | CU-17 | Buscar y consultar medicos | Administrador | P1 | Busqueda por nombre, correo, matricula o especialidad |
 | CU-18 | Editar medico o reasignar especialidad | Administrador | P1 | Valida matricula, correo y especialidad; protege citas vigentes |
 | CU-19 | Activar o desactivar medico | Administrador | P0 | Controla acceso y disponibilidad; protege citas vigentes |
-| CU-20 | Crear bloque de atencion | Administrador | P0 | Rechaza cruces y genera turnos de 15 minutos automaticamente |
+| CU-20 | Crear bloque de atencion | Administrador | P0 | Rechaza cruces y genera turnos de 30 minutos por defecto automaticamente |
 | CU-21 | Consultar horarios de atencion | Administrador, Medico | P1 | Administrador ve todos; Medico solo los propios |
 | CU-22 | Consultar disponibilidad y elegir medico | Administrador, Recepcionista, Paciente | P0 | Catalogo activo, filtro de especialidad, fecha y turnos libres |
 | CU-23 | Reservar mi cita | Paciente | P0 | Reserva para si mismo, sin ocupar un turno ajeno ni cruzar otra cita propia |
@@ -228,9 +233,11 @@ Los servidores incorporados de PHP son para desarrollo local. El despliegue en n
 | CU-25 | Consultar citas y su detalle | Todos | P0 | Administrador/Recepcion: todas; Paciente: propias; Medico: asignadas |
 | CU-26 | Anular cita | Administrador, Recepcionista, Paciente | P0 | Solo vigente y futura; Paciente solo la propia; libera turno y conserva registro |
 | CU-27 | Reprogramar cita | Administrador, Recepcionista | P0 | Crea nueva reserva vinculada y conserva la anterior; cambio atomico |
-| CU-28 | Registrar asistencia | Administrador, Recepcionista | P1 | Desde el inicio del turno, una vez; no registra una consulta clinica |
+| CU-28 | Marcar cita atendida | Administrador, Recepcionista, Medico asignado | P1 | Desde el inicio del turno; estado Atendida y asistencia Asistio; conserva auditoria |
 | CU-29 | Registrar inasistencia | Administrador, Recepcionista | P1 | Desde el fin del turno, una vez; estado No asistio |
-| CU-30 | Consultar mi agenda y datos basicos para la atencion | Medico | P1 | Fechas, pacientes y motivos de sus citas; solo lectura |
+| CU-30 | Consultar mi agenda y datos basicos para la atencion | Medico | P1 | Fechas, pacientes y motivos de sus citas; puede marcarlas atendidas |
+
+| CU-36 | Consultar reportes administrativos | Administrador | P1 | Periodo, medico, especialidad y estado; totales, agenda y pacientes registrados |
 
 La generacion de turnos es parte de CU-20, no un boton independiente. El control de acceso, la validacion y la proteccion contra cruces son reglas transversales de estos casos.
 
@@ -243,7 +250,6 @@ La generacion de turnos es parte de CU-20, no un boton independiente. El control
 | CU-33 | Consultar historial clinico autorizado | Medico | P0 | Pendiente; existe la historia vacia, no el acceso clinico completo |
 | CU-34 | Actualizar historial con antecedentes y atenciones | Medico | P0 | Pendiente; delimitar acceso y trazabilidad clinica |
 | CU-35 | Registrar y actualizar tratamientos | Medico | P1 | Pendiente; las tablas existen, el modulo no |
-| CU-36 | Generar reportes de citas, estados y asistencia | Administrador | P1 | Pendiente; no hay indicadores o graficos simulados |
 | CU-37 | Cambiar mi contrasena | Todos | P1 | Pendiente; editar usuario no modifica claves |
 | CU-38 | Recuperar acceso | Usuario sin acceso | P1 | Pendiente; no se envian correos de recuperacion |
 | CU-39 | Reasignar rol de una cuenta existente | Administrador | P2 | Pendiente; revisar compatibilidad de perfiles y citas |
@@ -272,7 +278,7 @@ Estos casos se deben explicar y demostrar primero: acceso correcto, reserva sin 
 - **Precondiciones:** sesion activa, paciente activo, medico y especialidad activos, bloque futuro y turno habilitado.
 - **Flujo principal:** 1) identificar al paciente desde la sesion o buscarlo en Recepcion; 2) elegir especialidad y medico; 3) elegir fecha; 4) consultar turnos libres; 5) seleccionar hora e indicar motivo opcional; 6) confirmar; 7) comprobar otra vez disponibilidad y cruces en una transaccion; 8) mostrar el detalle de la reserva confirmada.
 - **Alternativas:** si no hay turnos, elegir otra fecha o medico. Si otro usuario ocupa el turno, devolver 409 y actualizar opciones. Si el paciente ya tiene una cita que coincide, rechazar. El Paciente no puede enviar el identificador de otra persona para reservar a su nombre.
-- **Postcondicion:** una cita confirmada ocupa un solo turno de 15 minutos; el sistema conserva quien la registro y la especialidad elegida.
+- **Postcondicion:** una cita confirmada ocupa un solo turno de 30 minutos por defecto; el sistema conserva quien la registro y la especialidad elegida.
 - **Prueba de aceptacion:** dos reservas para el mismo turno nunca deben quedar confirmadas; la segunda recibe un conflicto. Reservas simultaneas en PostgreSQL nativo requieren la comprobacion indicada en docs/ai/pruebas.md.
 
 ### CU-26 - Anular cita (P0)
@@ -287,9 +293,9 @@ Estos casos se deben explicar y demostrar primero: acceso correcto, reserva sin 
 
 - **Actor:** Administrador.
 - **Precondiciones:** medico y especialidad activos; fecha futura dentro de los proximos 12 meses.
-- **Flujo principal:** 1) elegir medico y fecha; 2) indicar inicio y fin del mismo dia, en intervalos de 15 minutos; 3) validar que no cruce otro bloque; 4) guardar bloque y turnos en una transaccion.
+- **Flujo principal:** 1) elegir medico y fecha; 2) indicar inicio y fin del mismo dia, en pasos de 5 minutos y con duracion total multiplo del turno configurado; 3) validar que no cruce otro bloque; 4) guardar bloque y turnos en una transaccion.
 - **Alternativas:** 09:00-10:00 y 09:30-10:30 se cruzan y se rechazan; 09:00-10:00 y 10:00-11:00 son contiguos y se admiten. Hora final igual o anterior, fechas pasadas o medico inactivo se rechazan.
-- **Postcondicion:** 08:00-09:00 produce 08:00, 08:15, 08:30 y 08:45; cada turno termina 15 minutos despues. Un fallo revierte tambien los turnos.
+- **Postcondicion:** 08:00-09:00 produce 08:00-08:30 y 08:30-09:00 con la configuracion inicial de 30 minutos. Un fallo revierte tambien los turnos.
 
 ### CU-27 - Reprogramar sin perder la reserva (P0)
 
@@ -301,22 +307,22 @@ Estos casos se deben explicar y demostrar primero: acceso correcto, reserva sin 
 
 ### CU-28 / CU-29 - Asistencia e inasistencia (P1)
 
-- **Actores:** Administrador o Recepcionista.
+- **Actores:** Administrador o Recepcionista; el Medico asignado tambien puede marcar Atendida.
 - **Precondiciones:** cita pendiente o confirmada, sin asistencia registrada.
 - **Flujo principal:** 1) abrir detalle; 2) confirmar Asistio desde el inicio del turno, o No asistio desde su fin; 3) guardar el responsable y el resultado una sola vez.
 - **Alternativas:** antes de la hora permitida, en citas anuladas o ante un registro repetido se devuelve 409. Medico y Paciente no tienen esta operacion.
-- **Postcondicion:** Asistio actualiza la asistencia; No asistio cambia ademas estado_cita a no_asistio. Ninguna de estas acciones escribe diagnosticos ni tratamientos.
+- **Postcondicion:** Asistio cambia estado_cita a atendida; No asistio cambia estado_cita a no_asistio. Ninguna de estas acciones escribe diagnosticos ni tratamientos.
 - **Limite:** la correccion de una asistencia ya registrada no esta implementada.
 
 ## 9. Recorrido para demostrar los cuatro roles
 
-1. **Administrador:** iniciar sesion, registrar una especialidad y medico o usar los de prueba; crear un horario futuro de 09:00 a 10:00. Deben aparecer cuatro turnos.
+1. **Administrador:** iniciar sesion, registrar una especialidad y medico o usar los de prueba; crear un horario futuro de 09:00 a 10:00. Deben aparecer dos turnos de 30 minutos.
 2. **Paciente:** iniciar sesion, abrir Mis citas, reservar con ese medico y horario. Revisar el detalle y comprobar que Usuarios, Pacientes y la reprogramacion no estan disponibles.
 3. **Otro paciente:** el turno ocupado ya no aparece. Abrir por URL la cita del primer paciente no debe entregar sus datos.
 4. **Recepcionista:** buscar el paciente, consultar sus citas y reprogramar una futura; al anular, comprobar que se libera el turno. No puede crear horarios ni administrar usuarios.
-5. **Medico:** revisar Mi agenda y Mis horarios; solamente debe encontrar sus registros. Puede leer los datos basicos de una cita asignada, sin anularla ni marcar asistencia.
+5. **Medico:** revisar Mi agenda y Mis horarios; solamente debe encontrar sus registros. Puede leer los datos basicos de una cita asignada, y marcarla atendida desde el inicio de su turno; no puede anularla.
 6. **Recepcionista:** en una cita cuyo turno haya comenzado, registrar asistencia; para inasistencia, esperar a que termine el turno. No cambies manualmente las fechas de una base con datos reales.
-7. **Administrador:** intentar desactivar un medico con citas vigentes futuras; primero debe resolver esas reservas. Las consultas y reportes pendientes no se presentan como terminados.
+7. **Administrador:** intentar desactivar un medico con citas vigentes futuras; primero debe resolver esas reservas. Abrir Reportes, filtrar el periodo y comprobar totales, citas y pacientes registrados. El registro clinico sigue pendiente.
 
 ## 10. Pruebas
 
@@ -327,14 +333,16 @@ php backend/tests/test_validaciones.php
 php backend/tests/test_permisos.php
 php backend/tests/test_validaciones_especialidades_medicos.php
 php backend/tests/test_validaciones_agenda.php
+php backend/tests/test_validaciones_actualizacion.php
 ```
 
-Con una base separada cuyo nombre termine en `_pruebas`, migraciones 001, 002 y 003 y datos iniciales:
+Con una base separada cuyo nombre termine en `_pruebas`, migraciones 001, 002, 003 y 004 y datos iniciales:
 
 ```powershell
 php backend/tests/test_registro_paciente.php
 php backend/tests/test_gestion_especialidades_medicos.php
 php backend/tests/test_gestion_citas.php
+php backend/tests/test_reportes_perfiles.php
 ```
 
 Preparacion, cobertura y limites del entorno de comprobacion: [docs/ai/pruebas.md](docs/ai/pruebas.md). No ejecutes pruebas de integracion en la base de trabajo.
@@ -347,11 +355,11 @@ Conserva tu repositorio y revisa los cambios antes de crear commits. No se subio
 git status
 git diff --stat
 git add backend
-git commit -m "feat: agregar permisos y gestion de horarios y citas"
+git commit -m "feat: agregar agenda de 30 minutos, perfiles y reportes"
 git add frontend
-git commit -m "feat: separar paneles y reservas segun el rol"
+git commit -m "feat: integrar reportes, datos de pacientes y filtros de agenda"
 git add README.md ACTUALIZAR-ESTA-VERSION.md docs
-git commit -m "docs: documentar responsabilidades y casos de uso prioritarios"
+git commit -m "docs: actualizar reglas, migracion y pruebas de la version 1.3"
 ```
 
 Antes de subir, ejecuta las pruebas en tu entorno y comprueba que ningun `.env` este preparado para el commit. Estos comandos son para tu copia existente: no reemplazan ni reinician su historial.
@@ -362,7 +370,7 @@ Antes de subir, ejecuta las pruebas en tu entorno y comprueba que ningun `.env` 
 | --- | --- |
 | Falta PHP o una extension | Comprueba php --ini y verificar-entorno.php |
 | Error de conexion | Revisa PostgreSQL y las variables DB_* |
-| Citas devuelve servicio no disponible tras actualizar | Ejecuta actualizar-roles-citas.php en la misma base que usa el backend |
+| Citas devuelve servicio no disponible tras actualizar | Comprueba migraciones 001 a 004; para esta actualizacion ejecuta actualizar-agenda-reportes.php |
 | No hay turnos | Administracion debe crear un bloque futuro; medico y especialidad deben estar activos |
 | La sesion no permanece | Mismo host, nombre de cookie y HTTP/HTTPS compatibles en ambos servicios |
 | Vista no autorizada | Verifica el rol; el frontend no cambia permisos del backend |

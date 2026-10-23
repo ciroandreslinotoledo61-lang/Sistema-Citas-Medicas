@@ -33,13 +33,13 @@ try {
     $bloque = ['idMedico' => $datosPrueba->medicos[0]->idMedico, 'fechaAtencion' => $fecha, 'horaInicio' => '09:00', 'horaFin' => '11:00'];
     foreach ([$pacientePrimero, $recepcionista, $medicoPrimero] as $actor) { rechazarCitas(fn() => $horarios->registrarHorario($actor, $bloque), 403); }
     $creado = $horarios->registrarHorario($administrador, $bloque);
-    comprobarCitas($creado['cantidadTurnos'] === 8, 'Dos horas deben producir ocho turnos.');
-    rechazarCitas(fn() => $horarios->registrarHorario($administrador, array_replace($bloque, ['horaInicio' => '09:15'])), 409);
-    $horarios->registrarHorario($administrador, array_replace($bloque, ['horaInicio' => '11:00', 'horaFin' => '11:15']));
+    comprobarCitas($creado['cantidadTurnos'] === 4, 'Dos horas deben producir cuatro turnos.');
+    rechazarCitas(fn() => $horarios->registrarHorario($administrador, array_replace($bloque, ['horaInicio' => '09:30'])), 409);
+    $horarios->registrarHorario($administrador, array_replace($bloque, ['horaInicio' => '11:00', 'horaFin' => '11:30']));
     $horarios->registrarHorario($administrador, array_replace($bloque, ['idMedico' => $datosPrueba->medicos[1]->idMedico]));
     $turnosPrimero = $horarios->listarTurnosDisponibles($pacientePrimero, ['idMedico' => $bloque['idMedico'], 'fecha' => $fecha]);
     $turnosSegundo = $horarios->listarTurnosDisponibles($pacientePrimero, ['idMedico' => $datosPrueba->medicos[1]->idMedico, 'fecha' => $fecha]);
-    comprobarCitas(count($turnosPrimero) === 9, 'Bloques contiguos permitidos.');
+    comprobarCitas(count($turnosPrimero) === 5, 'Bloques contiguos permitidos.');
     comprobarCitas(count($horarios->listarHorarios($medicoSegundo, ['fecha' => $fecha])['elementos']) === 1, 'El medico solo ve sus horarios.');
     comprobarCitas($horarios->listarHorarios($medicoSegundo, ['idMedico' => $bloque['idMedico']])['elementos'] === [], 'Un filtro no elimina el alcance propio.');
     rechazarCitas(fn() => $horarios->listarHorarios($pacientePrimero, []), 403);
@@ -50,7 +50,7 @@ try {
     $primera = $citas->reservarCita($pacientePrimero, $reserva);
     comprobarCitas($primera['idPaciente'] === $datosPrueba->pacientes[0]['idPaciente'], 'El propietario procede de la sesion.');
     comprobarCitas($primera['puedeCancelar'] && !$primera['puedeReprogramar'], 'Acciones del paciente.');
-    comprobarCitas(count($horarios->listarTurnosDisponibles($pacientePrimero, ['idMedico' => $bloque['idMedico'], 'fecha' => $fecha])) === 8, 'El turno reservado deja de ofrecerse.');
+    comprobarCitas(count($horarios->listarTurnosDisponibles($pacientePrimero, ['idMedico' => $bloque['idMedico'], 'fecha' => $fecha])) === 4, 'El turno reservado deja de ofrecerse.');
     // La restriccion SQL tambien impide duplicados si se evita el servicio.
     try {
         $insercionDirecta = $conexion->prepare('INSERT INTO citas (id_paciente, id_turno) VALUES (:idPaciente, :idTurno)');
@@ -81,7 +81,7 @@ try {
             throw new RuntimeException('La restriccion de prueba no se ejecuto.');
         } catch (PDOException $error) { comprobarCitas($error->getCode() === '23514', 'Fallo forzado en la nueva reserva.'); }
         comprobarCitas($citas->obtenerCita($pacientePrimero, $primera['idCita'])['estadoCita'] === 'confirmada', 'Rollback restaura la cita despues de modificarla.');
-        comprobarCitas(count($horarios->listarTurnosDisponibles($pacientePrimero, ['idMedico' => $datosPrueba->medicos[1]->idMedico, 'fecha' => $fecha])) === 8, 'Rollback no ocupa el turno nuevo.');
+        comprobarCitas(count($horarios->listarTurnosDisponibles($pacientePrimero, ['idMedico' => $datosPrueba->medicos[1]->idMedico, 'fecha' => $fecha])) === 4, 'Rollback no ocupa el turno nuevo.');
     } finally { $conexion->exec('ALTER TABLE citas DROP CONSTRAINT ' . $restriccionPrueba); }
     $nueva = $citas->reprogramarCita($recepcionista, $primera['idCita'], ['idTurno' => $turnosSegundo[0]['idTurno']]);
     comprobarCitas($nueva['idCitaOrigen'] === $primera['idCita'], 'Trazabilidad de reprogramacion.');
@@ -95,18 +95,18 @@ try {
     rechazarCitas(fn() => $alInicio->cancelarCita($pacientePrimero, $reutilizada['idCita'], []), 409);
     rechazarCitas(fn() => $alInicio->registrarAsistencia($recepcionista, $reutilizada['idCita'], ['asistenciaRegistrada' => 'no_asistio']), 409);
     $asistencia = $alInicio->registrarAsistencia($recepcionista, $reutilizada['idCita'], ['asistenciaRegistrada' => 'asistio']);
-    comprobarCitas($asistencia['asistenciaRegistrada'] === 'asistio' && $asistencia['estadoCita'] === 'confirmada', 'Asistencia no equivale a consulta atendida.');
+    comprobarCitas($asistencia['asistenciaRegistrada'] === 'asistio' && $asistencia['estadoCita'] === 'atendida', 'Asistio cambia el estado a Atendida.');
     rechazarCitas(fn() => $alInicio->registrarAsistencia($recepcionista, $reutilizada['idCita'], ['asistenciaRegistrada' => 'asistio']), 409);
-    $alFin = new CitaService($conexion, new DateTimeImmutable($fecha . ' 09:30:00'));
+    $alFin = new CitaService($conexion, new DateTimeImmutable($fecha . ' 10:00:00'));
     comprobarCitas($alFin->registrarAsistencia($administrador, $ocupada['idCita'], ['asistenciaRegistrada' => 'no_asistio'])['estadoCita'] === 'no_asistio', 'Inasistencia al finalizar el turno.');
     rechazarCitas(fn() => $alFin->reservarCita($pacientePrimero, ['idTurno' => $turnosPrimero[0]['idTurno']]), 409);
     $inhabilitar = $conexion->prepare('UPDATE turnos SET turno_habilitado = false WHERE id_turno = :idTurno');
-    $inhabilitar->execute(['idTurno' => $turnosPrimero[5]['idTurno']]);
-    rechazarCitas(fn() => $citas->reservarCita($pacientePrimero, ['idTurno' => $turnosPrimero[5]['idTurno']]), 409);
+    $inhabilitar->execute(['idTurno' => $turnosPrimero[3]['idTurno']]);
+    rechazarCitas(fn() => $citas->reservarCita($pacientePrimero, ['idTurno' => $turnosPrimero[3]['idTurno']]), 409);
     // Usar un medico sin citas futuras para probar desactivacion y catalogo.
     rechazarCitas(fn() => $citas->cancelarCita($pacienteSegundo, $ocupada['idCita'], []), 409);
     (new MedicoService($conexion))->cambiarEstadoMedico($bloque['idMedico'], ['medicoActivo' => false]);
-    rechazarCitas(fn() => $citas->reservarCita($pacientePrimero, ['idTurno' => $turnosPrimero[6]['idTurno']]), 409);
+    rechazarCitas(fn() => $citas->reservarCita($pacientePrimero, ['idTurno' => $turnosPrimero[4]['idTurno']]), 409);
     comprobarCitas($horarios->listarTurnosDisponibles($pacientePrimero, ['idMedico' => $bloque['idMedico'], 'fecha' => $fecha]) === [], 'Medico inactivo sin disponibilidad.');
     rechazarCitas(fn() => $horarios->registrarHorario($administrador, array_replace($bloque, ['horaInicio' => '12:00', 'horaFin' => '13:00'])), 409);
 } finally { $datosPrueba->eliminarDatos(); }

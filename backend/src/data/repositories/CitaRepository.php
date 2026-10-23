@@ -38,6 +38,7 @@ final class CitaRepository
         if ($usuario->codigoRol === 'medico') { $condiciones[] = 'medicos.id_usuario = :idPropietario'; $parametros['idPropietario'] = $usuario->idUsuario; }
         if ($filtros['fecha'] !== '') { $condiciones[] = 'horarios.fecha_atencion = :fecha'; $parametros['fecha'] = $filtros['fecha']; }
         if ($filtros['estado'] !== '') { $condiciones[] = 'citas.estado_cita = :estado'; $parametros['estado'] = $filtros['estado']; }
+        foreach (['idMedico' => 'medicos.id_medico', 'idPaciente' => 'pacientes.id_paciente'] as $campo => $columna) { if ($filtros[$campo] !== null) { $condiciones[] = $columna . ' = :' . $campo; $parametros[$campo] = $filtros[$campo]; } }
         $condiciones[] = "concat_ws(' ', usuario_paciente.nombres_usuario, usuario_paciente.apellidos_usuario,
             pacientes.cedula_identidad, usuario_medico.nombres_usuario, usuario_medico.apellidos_usuario,
             especialidades.nombre_especialidad) ILIKE :busqueda";
@@ -129,4 +130,21 @@ final class CitaRepository
         );
         $consulta->execute(['idCita' => $idCita, 'asistencia' => $asistencia, 'estado' => $estado, 'idUsuario' => $idUsuario]);
     }
+
+    public function medicoTieneCruce(int $idMedico, string $inicio, string $fin, int $idCitaExcluida = 0): bool
+    {
+        $consulta = $this->conexionPostgresql->prepare("SELECT c.id_cita FROM citas c JOIN turnos t USING(id_turno)
+            JOIN horarios_medicos h USING(id_horario_medico) WHERE h.id_medico=:idMedico AND c.id_cita<>:idCitaExcluida
+            AND c.estado_cita NOT IN ('cancelada','reprogramada') AND t.fecha_hora_inicio<:fin AND t.fecha_hora_fin>:inicio LIMIT 1");
+        $consulta->execute(compact('idMedico','inicio','fin','idCitaExcluida'));
+        return $consulta->fetchColumn() !== false;
+    }
+    public function listarMedicosParaAgenda(Usuario $usuario): array
+    {
+        $consulta = $this->conexionPostgresql->prepare("SELECT m.id_medico, concat_ws(' ',u.nombres_usuario,u.apellidos_usuario) AS nombre_medico, u.usuario_activo
+            FROM medicos m JOIN usuarios u USING(id_usuario)" . ($usuario->codigoRol === 'medico' ? ' WHERE m.id_usuario=:idUsuario' : '') . ' ORDER BY nombre_medico,m.id_medico');
+        $consulta->execute($usuario->codigoRol === 'medico' ? ['idUsuario'=>$usuario->idUsuario] : []);
+        return array_map(static fn(array $fila): array => ['idMedico'=>(int)$fila['id_medico'], 'nombreMedico'=>$fila['nombre_medico'], 'medicoActivo'=>in_array($fila['usuario_activo'],[true,1,'1','t','true'],true)], $consulta->fetchAll());
+    }
+
 }

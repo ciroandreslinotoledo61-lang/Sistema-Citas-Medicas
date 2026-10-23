@@ -7,10 +7,9 @@ use CitasMedicas\Shared\Errors\ErrorAplicacion;
 
 final class PacienteValidator
 {
-    public static function validarDatosRegistroPaciente(array $datos): array
+    public static function validarDatosActualizacionPaciente(array $datos): array
     {
         $datosValidados = UsuarioValidator::validarDatosActualizacionUsuario($datos);
-        $datosValidados['contrasenaUsuario'] = ValidarCamposFormulario::validarContrasenaRegistro($datos);
         $cedulaIdentidad = strtoupper(ValidarCamposFormulario::validarTexto($datos, 'cedulaIdentidad', 'La cedula de identidad', 25));
         if (!preg_match('/^[A-Z0-9][A-Z0-9 -]{2,24}$/', $cedulaIdentidad)) {
             throw new ErrorAplicacion('Revisa la cedula de identidad.', 422, ['cedulaIdentidad' => 'Usa de 3 a 25 letras, numeros, espacios o guiones.']);
@@ -22,7 +21,9 @@ final class PacienteValidator
             $fechaInterpretada > $fechaActual || $fechaInterpretada < $fechaActual->modify('-120 years')) {
             throw new ErrorAplicacion('Revisa la fecha de nacimiento.', 422, ['fechaNacimiento' => 'Selecciona una fecha real, no futura, de los ultimos 120 anos.']);
         }
-        return $datosValidados + [
+        $sexo = $datos['sexoPaciente'] ?? 'no_especificado';
+        if (!is_string($sexo) || !in_array($sexo, ['no_especificado','femenino','masculino','otro'], true)) { throw new ErrorAplicacion('Selecciona una opcion valida para sexo.', 422); }
+        return $datosValidados + ['sexoPaciente' => $sexo,
             'cedulaIdentidad' => $cedulaIdentidad, 'fechaNacimiento' => $fechaNacimiento,
         ] + self::validarDatosContactoPaciente($datos);
     }
@@ -40,4 +41,15 @@ final class PacienteValidator
             'nombreContactoEmergencia' => $nombreContacto, 'telefonoContactoEmergencia' => $telefonoContacto,
         ];
     }
+
+    public static function validarDatosRegistroPaciente(array $datos): array
+    {
+        return self::validarDatosActualizacionPaciente($datos) + ['contrasenaUsuario' => ValidarCamposFormulario::validarContrasenaRegistro($datos)];
+    }
+    public static function validarEstadoPaciente(array $datos): bool
+    {
+        if (!array_key_exists('pacienteActivo',$datos) || !is_bool($datos['pacienteActivo'])) { throw new ErrorAplicacion('El estado del paciente debe ser true o false.',422); }
+        return $datos['pacienteActivo'];
+    }
+
 }

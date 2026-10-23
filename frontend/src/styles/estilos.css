@@ -495,3 +495,24 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
     .fila-busqueda { flex-direction: column; }
     .filtros-agenda .crecer { flex-basis: 100%; }
 }
+
+/* Reportes: se reutiliza la paleta central de la clinica. */
+.filtros-reportes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }
+.filtros-reportes label { min-width: 0; }
+.totales-reporte { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.total-reporte { padding: 20px; border-top: 4px solid var(--turquesa); background: var(--turquesa-suave); }
+.total-reporte:nth-child(4n+1) { background: var(--azul-suave); border-color: var(--azul-medio); }
+.total-reporte:nth-child(4n+2) { background: var(--celeste); border-color: var(--celeste-linea); }
+.total-reporte:nth-child(4n+3) { background: var(--dorado-suave); border-color: var(--dorado); }
+.total-reporte h2 { font-size: 13px; }
+.total-reporte strong { font-size: 30px; color: var(--azul-marino); }
+.grupos-reporte { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.grupos-reporte .tarjeta { min-width: 0; }
+.grupos-reporte .cabecera-listado { background: var(--azul-marino); color: var(--blanco); }
+.grupos-reporte .cabecera-listado h2 { color: var(--blanco); font-size: 16px; }
+.tabla-resumen-reporte { min-width: 0; width: 100%; }
+.tabla-resumen-reporte td { white-space: normal; overflow-wrap: anywhere; }
+.explicacion-reporte { padding: 16px 24px 0; color: var(--secundario); }
+.rejilla-turnos { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
+@media (max-width: 1100px) { .grupos-reporte { grid-template-columns: 1fr; } .totales-reporte { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filtros-reportes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .filtros-reportes { grid-template-columns: 1fr; } .total-reporte { padding: 16px; } }

@@ -10,6 +10,8 @@ final class Paciente
     public function obtenerDatosPublicosPaciente(): array
     {
         return [
+            'sexoPaciente' => $this->registroPaciente['sexo_paciente'],
+            'pacienteActivo' => in_array($this->registroPaciente['usuario_activo'], [true,1,'1','t','true'], true),
             'idPaciente' => (int) $this->registroPaciente['id_paciente'],
             'idUsuario' => (int) $this->registroPaciente['id_usuario'],
             'nombresUsuario' => $this->registroPaciente['nombres_usuario'],

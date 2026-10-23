@@ -7,6 +7,7 @@
             <legend>Datos de la cuenta</legend>
             <?php $mostrarCamposContrasena = $idRegistro === 0; require dirname(__DIR__, 2) . '/components/campos-usuario.php'; ?>
             <div class="separacion-formulario"><h2>Datos profesionales</h2><div class="rejilla-formulario">
+                <label>Telefono <span class="campo-obligatorio" aria-hidden="true">*</span><input name="telefonoMedico" type="tel" maxlength="25" required autocomplete="tel"></label>
                 <label><span>Matricula profesional <span class="campo-obligatorio" aria-hidden="true">*</span></span><input name="matriculaProfesional" required minlength="3" maxlength="40" autocomplete="off" placeholder="Ejemplo: SC-12345"></label>
                 <label><span id="etiqueta-especialidad">Especialidad <span class="campo-obligatorio" aria-hidden="true">*</span></span><select name="idEspecialidad" required aria-labelledby="etiqueta-especialidad"><option value="">Cargando especialidades...</option></select></label>
             </div></div>

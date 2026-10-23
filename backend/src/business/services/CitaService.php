@@ -95,6 +95,11 @@ final class CitaService
         PermisosSistema::exigirPermiso($usuario, 'citas.asistencia');
         $asistencia = $datos['asistenciaRegistrada'] ?? '';
         if (!in_array($asistencia, ['asistio', 'no_asistio'], true)) { throw new ErrorAplicacion('Selecciona Asistio o No asistio.', 422); }
+        return $this->guardarAsistenciaCita($usuario, $idCita, $asistencia);
+    }
+
+    private function guardarAsistenciaCita(Usuario $usuario, int $idCita, string $asistencia): array
+    {
         return $this->ejecutarTransaccion(function () use ($usuario, $idCita, $asistencia): array {
             $cita = $this->exigirCitaAutorizada($usuario, $idCita, true)->obtenerDatosPublicosCita();
             if (!in_array($cita['estadoCita'], ['pendiente', 'confirmada'], true) || $cita['asistenciaRegistrada'] !== 'pendiente') {
@@ -104,7 +109,7 @@ final class CitaService
             if ($this->obtenerAhora() < $limite) {
                 throw new ErrorAplicacion($asistencia === 'asistio' ? 'Registra la asistencia desde el inicio del turno.' : 'Registra la inasistencia cuando termine el turno.', 409);
             }
-            $estado = $asistencia === 'no_asistio' ? 'no_asistio' : $cita['estadoCita'];
+            $estado = $asistencia === 'no_asistio' ? 'no_asistio' : 'atendida';
             $this->citaRepository->registrarAsistencia($idCita, $asistencia, $estado, $usuario->idUsuario);
             return $this->obtenerCita($usuario, $idCita);
         });
@@ -150,9 +155,10 @@ final class CitaService
         $inicioBloque = new \DateTimeImmutable($turno['fecha_atencion'] . ' ' . $turno['hora_inicio']);
         $finBloque = new \DateTimeImmutable($turno['fecha_atencion'] . ' ' . $turno['hora_fin']);
         if (!in_array($turno['turno_habilitado'], [true, 1, '1', 't', 'true'], true) || $inicio <= $this->obtenerAhora() ||
-            $inicio < $inicioBloque || $fin > $finBloque || $fin->getTimestamp() - $inicio->getTimestamp() !== 900) {
+            $inicio < $inicioBloque || $fin > $finBloque || $fin->getTimestamp() - $inicio->getTimestamp() !== (int) $turno['duracion_turno_minutos'] * 60 || (int) $turno['duracion_turno_minutos'] !== (int) $turno['duracion_cita_minutos']) {
             throw new ErrorAplicacion('Ese turno ya no esta disponible. Elige otro horario.', 409);
         }
+        if ($this->citaRepository->medicoTieneCruce($medico->idMedico, $turno['fecha_hora_inicio'], $turno['fecha_hora_fin'], $idCitaExcluida)) { throw new ErrorAplicacion('El medico ya tiene una cita que se cruza.', 409); }
         if ($this->citaRepository->turnoEstaOcupado($idTurno)) { throw new ErrorAplicacion('Otra persona ya reservo ese turno. Elige otro horario.', 409); }
         if ($this->citaRepository->pacienteTieneCruce($idPaciente, $turno['fecha_hora_inicio'], $turno['fecha_hora_fin'], $idCitaExcluida)) {
             throw new ErrorAplicacion('El paciente ya tiene una cita que se cruza con ese horario.', 409);
@@ -169,6 +175,7 @@ final class CitaService
         $ahora = $this->obtenerAhora();
         $datos['puedeCancelar'] = $vigente && $inicio > $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.cancelar');
         $datos['puedeReprogramar'] = $vigente && $inicio > $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.reprogramar');
+        $datos['puedeMarcarAtendida'] = $vigente && $inicio <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.atender');
         $datos['puedeRegistrarAsistencia'] = $vigente && $inicio <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.asistencia');
         $datos['puedeRegistrarInasistencia'] = $vigente && $fin <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.asistencia');
         return $datos;
@@ -183,10 +190,22 @@ final class CitaService
             return $resultado;
         } catch (\Throwable $error) {
             if ($this->conexionPostgresql->inTransaction()) { $this->conexionPostgresql->rollBack(); }
-            if ($error instanceof \PDOException && in_array((string) $error->getCode(), ['23505', '40P01', '40001'], true)) {
+            if ($error instanceof \PDOException && in_array((string) $error->getCode(), ['23505', '23P01', '40P01', '40001'], true)) {
                 throw new ErrorAplicacion('La disponibilidad cambio durante la operacion. Actualiza los turnos e intenta otra vez.', 409);
             }
             throw $error;
         }
     }
+
+    public function marcarCitaAtendida(Usuario $usuario, int $idCita): array
+    {
+        PermisosSistema::exigirPermiso($usuario, 'citas.atender');
+        return $this->guardarAsistenciaCita($usuario, $idCita, 'asistio');
+    }
+    public function listarMedicosParaAgenda(Usuario $usuario): array
+    {
+        PermisosSistema::exigirPermiso($usuario, 'agenda.filtrar');
+        return $this->citaRepository->listarMedicosParaAgenda($usuario);
+    }
+
 }

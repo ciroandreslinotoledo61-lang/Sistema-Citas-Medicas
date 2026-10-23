@@ -11,7 +11,7 @@ export const estadosCita = { pendiente: "Pendiente", confirmada: "Confirmada", c
 export const estadosAsistencia = { pendiente: "Sin registrar", asistio: "Asistio", no_asistio: "No asistio" };
 export function crearEstadoCita(cita) {
     const insignia = document.createElement("span");
-    insignia.className = "insignia " + (cita.estadoCita === "confirmada" ? "activa" : "inactiva");
+    insignia.className = "insignia " + (["confirmada", "atendida"].includes(cita.estadoCita) ? "activa" : "inactiva");
     insignia.textContent = estadosCita[cita.estadoCita] || cita.estadoCita;
     return insignia;
 }

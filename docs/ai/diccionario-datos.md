@@ -1,6 +1,6 @@
 # Diccionario de datos
 
-Fuente: `backend/src/data/migrations/001_crear_tablas_sistema.sql`. La migracion contiene exactamente 11 tablas del dominio; no hay tablas de herramientas externas.
+Fuentes: migraciones 001 a 004 en `backend/src/data/migrations`. La migracion contiene exactamente 11 tablas del dominio; no hay tablas de herramientas externas.
 
 Las claves IDENTITY se generan en PostgreSQL. Las FK usan la accion predeterminada NO ACTION: no se eliminan registros relacionados de forma automatica. Los valores de entrada se validan tambien en la capa business.
 
@@ -82,7 +82,7 @@ Perfil profesional asociado a usuario y especialidad. Gestion implementada en el
 
 ## horarios_medicos
 
-Bloques de atencion por medico y fecha. Modulo pendiente.
+Bloques de atencion por medico y fecha. Modulo implementado.
 
 | Campo | Tipo | Nulo | Restriccion o valor inicial |
 | --- | --- | --- | --- |
@@ -94,7 +94,7 @@ Bloques de atencion por medico y fecha. Modulo pendiente.
 
 ## turnos
 
-Intervalos de 15 minutos asociados a un horario. Generacion pendiente.
+Intervalos asociados a un horario. Duracion nueva de 30 minutos por defecto; se conserva la duracion historica.
 
 | Campo | Tipo | Nulo | Restriccion o valor inicial |
 | --- | --- | --- | --- |
@@ -106,7 +106,7 @@ Intervalos de 15 minutos asociados a un horario. Generacion pendiente.
 
 ## citas
 
-Reserva de un paciente para un turno. Modulo pendiente.
+Reserva de un paciente para un turno. Modulo implementado.
 
 | Campo | Tipo | Nulo | Restriccion o valor inicial |
 | --- | --- | --- | --- |
@@ -151,8 +151,8 @@ Indicaciones de medicamentos asociadas a una consulta. Modulo pendiente.
 - pacientes: un perfil por usuario; CI unica. La fecha y el contacto se validan en el servicio.
 - historias_clinicas: un registro por paciente; tipo de sangre limitado a los ocho grupos previstos o NULL.
 - medicos: un perfil por usuario, matricula unica e indice por especialidad.
-- horarios_medicos: fin posterior al inicio; inicio unico por medico y fecha. Esto no evita todos los solapamientos: esa regla se implementara en el servicio de horarios.
-- turnos: fin exactamente 15 minutos despues del inicio; inicio unico dentro de un horario.
+- horarios_medicos: fin posterior al inicio; inicio unico por medico y fecha. Esto no evita todos los solapamientos: el servicio de horarios valida los cruces bajo bloqueo del medico.
+- turnos: fin igual al inicio mas duracion_turno_minutos; intervalo completo unico dentro de un horario.
 - citas: indice unico parcial por turno cuando el estado no es cancelada ni reprogramada. Indice por paciente.
 - consultas: una consulta por cita; indice por historia clinica.
 - tratamientos: indice por consulta.
@@ -205,4 +205,17 @@ Los campos nullable permiten conservar registros previos sin inventar sus respon
 
 Indices nuevos: horarios_medicos(id_medico, fecha_atencion), turnos(fecha_hora_inicio) y citas(id_cita_origen). Se mantiene el indice unico parcial uq_citas_turno_ocupado: cancelada y reprogramada no ocupan el turno. No asistio y atendida conservan la ocupacion historica.
 
-La ausencia de cruces de bloques y de citas del mismo paciente se controla en servicios con bloqueos de filas y transacciones. No es una restriccion de exclusion independiente en SQL: las escrituras de la aplicacion deben pasar por esos servicios.
+La ausencia de cruces de bloques y de citas del mismo paciente se controla en servicios con bloqueos de filas y transacciones. No es una restriccion de exclusion independiente en SQL: las escrituras de la aplicacion deben pasar por esos servicios. La migracion 004 agrega tambien un trigger para cruces de reservas.
+
+## Migracion 004
+
+| Tabla | Campo | Tipo y regla |
+| --- | --- | --- |
+| pacientes | sexo_paciente | VARCHAR(20), NOT NULL, defecto no_especificado; CHECK: no_especificado/femenino/masculino/otro |
+| medicos | telefono_medico | VARCHAR(25), NOT NULL, defecto vacio para datos anteriores; obligatorio en altas/ediciones nuevas |
+| horarios_medicos | duracion_cita_minutos | SMALLINT, NOT NULL, defecto 30; 5 a 120, multiplo de 5 |
+| turnos | duracion_turno_minutos | SMALLINT, NOT NULL, defecto 30; 5 a 120, multiplo de 5 |
+
+ck_turnos_duracion valida el intervalo contra duracion_turno_minutos. uq_turnos_horario_intervalo reemplaza la unicidad solo por inicio, para conservar reservas anteriores de 15 minutos durante la conversion. tr_citas_evitar_cruces bloquea medico/paciente y rechaza solapamientos con SQLSTATE 23P01; la ocupacion del mismo turno mantiene el indice parcial previo. Indices nuevos: usuarios(fecha_registro_usuario), citas(estado_cita).
+
+pacienteActivo y medicoActivo representan usuarios.usuario_activo. No se duplica ese estado en los perfiles. No se agregan tablas.

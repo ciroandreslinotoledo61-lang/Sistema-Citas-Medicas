@@ -6,6 +6,8 @@ namespace CitasMedicas\Business\Services;
 use CitasMedicas\Business\Validators\PacienteValidator;
 use CitasMedicas\Business\Validators\ValidarCamposFormulario;
 use CitasMedicas\Data\Models\Paciente;
+use CitasMedicas\Data\Models\Usuario;
+use CitasMedicas\Shared\Constants\PermisosSistema;
 use CitasMedicas\Data\Repositories\PacienteRepository;
 use CitasMedicas\Data\Repositories\HistoriaClinicaRepository;
 use CitasMedicas\Data\Repositories\RolRepository;
@@ -50,7 +52,9 @@ final class PacienteService
     public function listarPacientes(array $parametros): array
     {
         $filtros = ValidarCamposFormulario::validarParametrosBusqueda($parametros);
-        $pacientes = $this->pacienteRepository->listarPacientesPorBusqueda($filtros['busqueda'], $filtros['pagina']);
+        $estado = $parametros['estado'] ?? '';
+        if (!is_string($estado) || !in_array($estado,['','activo','inactivo'],true)) { throw new ErrorAplicacion('El estado no es valido.',422); }
+        $pacientes = $this->pacienteRepository->listarPacientesPorBusqueda($filtros['busqueda'], $filtros['pagina'], $estado);
         return [
             'elementos' => array_map(static fn(Paciente $paciente): array => $paciente->obtenerDatosPublicosPaciente(), array_slice($pacientes, 0, 20)),
             'pagina' => $filtros['pagina'], 'hayPaginaSiguiente' => count($pacientes) > 20,
@@ -76,4 +80,36 @@ final class PacienteService
         $this->pacienteRepository->actualizarContactoPaciente($idPaciente, $datosValidados);
         return $this->obtenerPacientePorId($idPaciente);
     }
+
+    public function actualizarDatosPaciente(Usuario $usuario, int $idPaciente, array $datos): Paciente
+    {
+        PermisosSistema::exigirPermiso($usuario,'pacientes.gestionar');
+        $datos=PacienteValidator::validarDatosActualizacionPaciente($datos);
+        $this->conexionPostgresql->beginTransaction();
+        try {
+            $paciente=$this->pacienteRepository->obtenerPacientePorId($idPaciente,true) ?? throw new ErrorAplicacion('El paciente no existe.',404);
+            (new UsuarioRepository($this->conexionPostgresql))->actualizarDatosUsuario($paciente->obtenerDatosPublicosPaciente()['idUsuario'],$datos);
+            $this->pacienteRepository->actualizarDatosPaciente($idPaciente,$datos);
+            $resultado=$this->obtenerPacientePorId($idPaciente); $this->conexionPostgresql->commit(); return $resultado;
+        } catch (\Throwable $error) {
+            if ($this->conexionPostgresql->inTransaction()) { $this->conexionPostgresql->rollBack(); }
+            if ($error instanceof \PDOException && (string)$error->getCode()==='23505') { throw new ErrorAplicacion('El correo o la cedula ya estan registrados.',409); }
+            throw $error;
+        }
+    }
+    public function cambiarEstadoPaciente(Usuario $usuario, int $idPaciente, array $datos): Paciente
+    {
+        PermisosSistema::exigirPermiso($usuario,'pacientes.gestionar');
+        $activo=PacienteValidator::validarEstadoPaciente($datos);
+        $this->conexionPostgresql->beginTransaction();
+        try {
+            $paciente=$this->pacienteRepository->obtenerPacientePorId($idPaciente,true) ?? throw new ErrorAplicacion('El paciente no existe.',404);
+            $registro=$paciente->obtenerDatosPublicosPaciente();
+            if ($registro['pacienteActivo']!==$activo) { (new UsuarioRepository($this->conexionPostgresql))->cambiarEstadoUsuario($registro['idUsuario'],$activo); }
+            $resultado=$this->obtenerPacientePorId($idPaciente); $this->conexionPostgresql->commit(); return $resultado;
+        } catch (\Throwable $error) {
+            if ($this->conexionPostgresql->inTransaction()) { $this->conexionPostgresql->rollBack(); } throw $error;
+        }
+    }
+
 }

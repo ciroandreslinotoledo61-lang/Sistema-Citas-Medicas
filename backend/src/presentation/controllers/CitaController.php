@@ -37,4 +37,14 @@ final class CitaController
         $resultado = $this->citaService->registrarAsistencia($usuario, $idCita, SolicitudHttp::obtenerCuerpoJson());
         RespuestaJson::enviarRespuestaJson(['mensaje' => 'Asistencia registrada.', 'datos' => $resultado]);
     }
+
+    public function marcarCitaAtendida(Usuario $usuario, int $idCita): never
+    {
+        RespuestaJson::enviarRespuestaJson(['mensaje'=>'Cita marcada como atendida.','datos'=>$this->citaService->marcarCitaAtendida($usuario,$idCita)]);
+    }
+    public function listarMedicosParaAgenda(Usuario $usuario): never
+    {
+        RespuestaJson::enviarRespuestaJson(['datos'=>$this->citaService->listarMedicosParaAgenda($usuario)]);
+    }
+
 }

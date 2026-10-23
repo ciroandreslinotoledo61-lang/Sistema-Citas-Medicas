@@ -38,7 +38,7 @@ final class HorarioMedicoRepository
         $parametros['busqueda'] = '%' . $filtros['busqueda'] . '%';
         $consulta = $this->conexionPostgresql->prepare(
             "SELECT horarios.*, concat_ws(' ', usuarios.nombres_usuario, usuarios.apellidos_usuario) AS nombre_medico,
-                (SELECT count(*) FROM turnos WHERE turnos.id_horario_medico = horarios.id_horario_medico) AS cantidad_turnos
+                (SELECT count(*) FROM turnos WHERE turnos.id_horario_medico = horarios.id_horario_medico AND turnos.turno_habilitado AND turnos.duracion_turno_minutos = horarios.duracion_cita_minutos) AS cantidad_turnos
              FROM horarios_medicos horarios JOIN medicos ON medicos.id_medico = horarios.id_medico
              JOIN usuarios ON usuarios.id_usuario = medicos.id_usuario
              WHERE " . implode(' AND ', $condiciones) .
@@ -56,28 +56,28 @@ final class HorarioMedicoRepository
             'SELECT id_horario_medico FROM horarios_medicos WHERE id_medico = :idMedico AND fecha_atencion = :fechaAtencion
              AND hora_inicio < :horaFin AND hora_fin > :horaInicio LIMIT 1'
         );
-        $consulta->execute($datos);
+        $consulta->execute(array_intersect_key($datos, array_flip(['idMedico','fechaAtencion','horaInicio','horaFin'])));
         return $consulta->fetchColumn() !== false;
     }
 
     public function registrarHorarioConTurnos(array $datos): array
     {
         $consulta = $this->conexionPostgresql->prepare(
-            'INSERT INTO horarios_medicos (id_medico, fecha_atencion, hora_inicio, hora_fin)
-             VALUES (:idMedico, :fechaAtencion, :horaInicio, :horaFin) RETURNING id_horario_medico'
+            'INSERT INTO horarios_medicos (id_medico, fecha_atencion, hora_inicio, hora_fin, duracion_cita_minutos)
+             VALUES (:idMedico, :fechaAtencion, :horaInicio, :horaFin, :duracionCitaMinutos) RETURNING id_horario_medico'
         );
         $consulta->execute($datos);
         $idHorario = (int) $consulta->fetchColumn();
         $insertarTurno = $this->conexionPostgresql->prepare(
-            'INSERT INTO turnos (id_horario_medico, fecha_hora_inicio, fecha_hora_fin)
-             VALUES (:idHorario, :inicio, :fin)'
+            'INSERT INTO turnos (id_horario_medico, fecha_hora_inicio, fecha_hora_fin, duracion_turno_minutos)
+             VALUES (:idHorario, :inicio, :fin, :duracion)'
         );
         $inicio = new \DateTimeImmutable($datos['fechaAtencion'] . ' ' . $datos['horaInicio']);
         $fin = new \DateTimeImmutable($datos['fechaAtencion'] . ' ' . $datos['horaFin']);
         $cantidadTurnos = 0;
-        for ($momento = $inicio; $momento < $fin; $momento = $momento->modify('+15 minutes')) {
-            $insertarTurno->execute(['idHorario' => $idHorario, 'inicio' => $momento->format('Y-m-d H:i:s'),
-                'fin' => $momento->modify('+15 minutes')->format('Y-m-d H:i:s')]);
+        for ($momento = $inicio; $momento < $fin; $momento = $momento->modify('+' . $datos['duracionCitaMinutos'] . ' minutes')) {
+            $insertarTurno->execute(['duracion' => $datos['duracionCitaMinutos'], 'idHorario' => $idHorario, 'inicio' => $momento->format('Y-m-d H:i:s'),
+                'fin' => $momento->modify('+' . $datos['duracionCitaMinutos'] . ' minutes')->format('Y-m-d H:i:s')]);
             $cantidadTurnos++;
         }
         return ['idHorarioMedico' => $idHorario, 'cantidadTurnos' => $cantidadTurnos] + $datos;
@@ -94,8 +94,11 @@ final class HorarioMedicoRepository
              WHERE horarios.id_medico = :idMedico AND horarios.fecha_atencion = :fecha
              AND turnos.turno_habilitado AND usuarios.usuario_activo AND especialidades.especialidad_activa
              AND turnos.fecha_hora_inicio > :ahora
-             AND NOT EXISTS (SELECT 1 FROM citas WHERE citas.id_turno = turnos.id_turno
-                 AND citas.estado_cita NOT IN ('cancelada', 'reprogramada'))
+             AND turnos.duracion_turno_minutos = horarios.duracion_cita_minutos
+             AND turnos.fecha_hora_inicio >= horarios.fecha_atencion + horarios.hora_inicio AND turnos.fecha_hora_fin <= horarios.fecha_atencion + horarios.hora_fin
+             AND NOT EXISTS (SELECT 1 FROM citas c JOIN turnos t ON t.id_turno=c.id_turno JOIN horarios_medicos h ON h.id_horario_medico=t.id_horario_medico
+                 WHERE h.id_medico=horarios.id_medico AND c.estado_cita NOT IN ('cancelada','reprogramada')
+                 AND t.fecha_hora_inicio<turnos.fecha_hora_fin AND t.fecha_hora_fin>turnos.fecha_hora_inicio)
              ORDER BY turnos.fecha_hora_inicio"
         );
         $consulta->execute(['idMedico' => $idMedico, 'fecha' => $fecha, 'ahora' => $ahora]);
@@ -106,7 +109,7 @@ final class HorarioMedicoRepository
     public function obtenerTurnoPorId(int $idTurno, bool $bloquear = false): ?array
     {
         $consulta = $this->conexionPostgresql->prepare(
-            'SELECT turnos.*, horarios.id_medico, horarios.fecha_atencion, horarios.hora_inicio, horarios.hora_fin
+            'SELECT turnos.*, horarios.duracion_cita_minutos, horarios.id_medico, horarios.fecha_atencion, horarios.hora_inicio, horarios.hora_fin
              FROM turnos JOIN horarios_medicos horarios ON horarios.id_horario_medico = turnos.id_horario_medico
              WHERE turnos.id_turno = :idTurno' . ($bloquear ? ' FOR UPDATE OF turnos' : '')
         );

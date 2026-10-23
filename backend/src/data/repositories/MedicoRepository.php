@@ -8,7 +8,7 @@ use CitasMedicas\Data\Models\Medico;
 final class MedicoRepository
 {
     private const CONSULTA_MEDICO = 'SELECT medicos.id_medico, medicos.id_usuario, medicos.id_especialidad,
-        medicos.matricula_profesional, usuarios.nombres_usuario, usuarios.apellidos_usuario,
+        medicos.telefono_medico, medicos.matricula_profesional, usuarios.nombres_usuario, usuarios.apellidos_usuario,
         usuarios.correo_usuario, usuarios.usuario_activo, especialidades.nombre_especialidad,
         especialidades.especialidad_activa FROM medicos
         INNER JOIN usuarios ON usuarios.id_usuario = medicos.id_usuario
@@ -51,12 +51,12 @@ final class MedicoRepository
     public function registrarPerfilMedico(int $idUsuario, array $datosMedico): int
     {
         $consulta = $this->conexionPostgresql->prepare(
-            'INSERT INTO medicos (id_usuario, id_especialidad, matricula_profesional)
-             VALUES (:idUsuario, :idEspecialidad, :matriculaProfesional) RETURNING id_medico'
+            'INSERT INTO medicos (id_usuario, id_especialidad, matricula_profesional, telefono_medico)
+             VALUES (:idUsuario, :idEspecialidad, :matriculaProfesional, :telefonoMedico) RETURNING id_medico'
         );
         $consulta->execute([
             'idUsuario' => $idUsuario, 'idEspecialidad' => $datosMedico['idEspecialidad'],
-            'matriculaProfesional' => $datosMedico['matriculaProfesional'],
+            'matriculaProfesional' => $datosMedico['matriculaProfesional'], 'telefonoMedico' => $datosMedico['telefonoMedico'],
         ]);
         return (int) $consulta->fetchColumn();
     }
@@ -64,12 +64,12 @@ final class MedicoRepository
     public function actualizarPerfilMedico(int $idMedico, array $datosMedico): void
     {
         $consulta = $this->conexionPostgresql->prepare(
-            'UPDATE medicos SET id_especialidad = :idEspecialidad, matricula_profesional = :matriculaProfesional
+            'UPDATE medicos SET telefono_medico = :telefonoMedico, id_especialidad = :idEspecialidad, matricula_profesional = :matriculaProfesional
              WHERE id_medico = :idMedico'
         );
         $consulta->execute([
             'idMedico' => $idMedico, 'idEspecialidad' => $datosMedico['idEspecialidad'],
-            'matriculaProfesional' => $datosMedico['matriculaProfesional'],
+            'matriculaProfesional' => $datosMedico['matriculaProfesional'], 'telefonoMedico' => $datosMedico['telefonoMedico'],
         ]);
     }
 }

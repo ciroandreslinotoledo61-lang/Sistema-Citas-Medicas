@@ -32,7 +32,7 @@ final class SoportePruebasAgenda
                 'contrasenaUsuario' => 'ClaveDePruebaAgenda123', 'confirmacionContrasena' => 'ClaveDePruebaAgenda123'];
             $medico = (new MedicoService($this->conexion))->registrarMedicoConUsuario($cuenta + [
                 'correoUsuario' => 'medico-' . $nombre . '-' . $this->identificador . '@example.test',
-                'matriculaProfesional' => 'AGENDA-' . $nombre . '-' . $this->identificador, 'idEspecialidad' => $idEspecialidad]);
+                'telefonoMedico' => '70000001', 'matriculaProfesional' => 'AGENDA-' . $nombre . '-' . $this->identificador, 'idEspecialidad' => $idEspecialidad]);
             $this->identificadoresUsuarios[] = $medico->idUsuario;
             $this->medicos[] = $medico;
             $this->usuariosMedicos[] = $usuarios->obtenerUsuarioPorId($medico->idUsuario);

@@ -1,4 +1,4 @@
-# API de Clinica (version 1.2.0)
+# API de Clinica (version 1.3.0)
 
 Base local: `http://127.0.0.1:8000/api`.
 
@@ -59,6 +59,7 @@ Registro de paciente:
   "confirmacionContrasena": "FraseDePrueba123",
   "cedulaIdentidad": "TEST-123",
   "fechaNacimiento": "2000-01-15",
+  "sexoPaciente": "no_especificado",
   "telefonoPaciente": "70000000",
   "direccionPaciente": "",
   "nombreContactoEmergencia": "",
@@ -124,6 +125,7 @@ Registrar medico:
   "correoUsuario": "ana.medico@example.test",
   "contrasenaUsuario": "FraseDePrueba123",
   "confirmacionContrasena": "FraseDePrueba123",
+  "telefonoMedico": "70000000",
   "matriculaProfesional": "SC-12345",
   "idEspecialidad": 1
 }
@@ -166,7 +168,7 @@ POST /horarios:
 {"idMedico": 1, "fechaAtencion": "2030-01-02", "horaInicio": "08:00", "horaFin": "09:00"}
 ```
 
-Cambiar la fecha por una futura dentro del siguiente ano. Respuesta 201, datos con idHorarioMedico, cantidadTurnos y los campos anteriores. Horas en HH:mm, intervalos de 15 minutos, mismo dia y sin cruces. GET /horarios devuelve datos.elementos con idHorarioMedico, idMedico, nombreMedico, fechaAtencion, horaInicio, horaFin y cantidadTurnos; ademas pagina y hayPaginaSiguiente.
+Cambiar la fecha por una futura dentro del siguiente ano. Respuesta 201, datos con idHorarioMedico, cantidadTurnos y los campos anteriores. Horas en HH:mm, pasos de 5 minutos y bloque multiplo de la duracion configurada (30 por defecto), mismo dia y sin cruces. GET /horarios devuelve datos.elementos con idHorarioMedico, idMedico, nombreMedico, fechaAtencion, horaInicio, horaFin y cantidadTurnos; ademas pagina y hayPaginaSiguiente.
 
 ### Catalogo y turnos
 
@@ -206,7 +208,7 @@ PATCH /citas/{idCita}/asistencia:
 {"asistenciaRegistrada": "asistio"}
 ```
 
-Valores: asistio o no_asistio. Asistio desde inicio; no_asistio desde fin. Respuesta 200. No se puede registrar dos veces ni modificar datos clinicos.
+Valores: asistio o no_asistio. Asistio desde inicio cambia estado a atendida; no_asistio desde fin cambia estado a no_asistio. Respuesta 200. No se puede registrar dos veces ni modificar datos clinicos.
 
 ### Datos publicos de una cita
 
@@ -215,10 +217,25 @@ El listado en datos.elementos y el detalle en datos usan:
 - Identificadores: idCita, idPaciente, idTurno, idMedico, idCitaOrigen (null si no es reprogramacion).
 - Datos basicos: nombrePaciente, cedulaIdentidad, fechaNacimiento, nombreMedico, nombreEspecialidad.
 - Reserva: fechaHoraInicio, fechaHoraFin, estadoCita, motivoCita, motivoCancelacion, asistenciaRegistrada.
-- Acciones disponibles: puedeCancelar, puedeReprogramar, puedeRegistrarAsistencia, puedeRegistrarInasistencia (booleanos calculados en el servidor).
+- Acciones disponibles: puedeCancelar, puedeReprogramar, puedeMarcarAtendida, puedeRegistrarAsistencia, puedeRegistrarInasistencia (booleanos calculados en el servidor).
 
-Las fechas/horas de turnos son locales a la clinica, formato YYYY-MM-DD HH:mm:ss; el frontend no las convierte a la zona del navegador. La zona configurada debe coincidir en frontend y backend. Los responsables internos de auditoria y los datos de autenticacion no se incluyen.
+Las fechas/horas de turnos son locales a la clinica, formato YYYY-MM-DD HH:mm:ss; el frontend no las convierte a la zona del navegador. Frontend y backend usan internamente la hora de Bolivia. Los responsables internos de auditoria y los datos de autenticacion no se incluyen.
 
 Los booleanos orientan la interfaz. Cada escritura vuelve a comprobar permisos, propiedad, hora y estado. Una cita ajena devuelve 404; un rol sin operacion, 403; turno ocupado, cruce, medico inactivo o cita no modificable, 409; entrada invalida, 422. Sin sesion, 401; sin CSRF, 419.
 
 Desactivar medico o cambiar su especialidad produce 409 si tiene citas pendientes/confirmadas cuyo turno aun no termina. No hay rutas para borrar citas, editar bloques ni registrar consultas clinicas en esta version.
+
+## Endpoints agregados en 1.3.0
+
+| Metodo | Ruta | Permiso / datos |
+| --- | --- | --- |
+| GET | /disponibilidad/configuracion | Sesion; datos.duracionCitaMinutos |
+| GET | /agenda/medicos | Administrador/Recepcion: todos, incluidos inactivos; Medico: solo el propio |
+| PATCH | /citas/{idCita}/atencion | Administrador, Recepcionista, Medico asignado; JSON {}; cambia a atendida/asistio |
+| PATCH | /pacientes/{idPaciente} | Administrador/Recepcion; datos personales y contacto completos, sin claves |
+| PATCH | /pacientes/{idPaciente}/estado | Administrador/Recepcion; {"pacienteActivo": false} o true booleano |
+| GET | /reportes | Solo Administrador |
+
+GET /pacientes acepta estado vacio, activo o inactivo. Sus objetos agregan sexoPaciente y pacienteActivo. GET /citas acepta idMedico e idPaciente opcionales, siempre intersectados con el alcance del usuario. GET /horarios agrega duracionCitaMinutos a cada bloque. Medicos agrega telefonoMedico a la entrada y salida.
+
+GET /reportes acepta fechaDesde/fechaHasta (AAAA-MM-DD, inclusivas; por defecto inicio de mes y hoy), idMedico, idEspecialidad, estado, paginaCitas y paginaPacientes. Responde datos.filtros, totales (total, programadas, confirmadas, atendidas, canceladas, inasistencias, reprogramadas, pacientesRegistrados), porMedico, porEspecialidad, porEstado, citas, pacientes, medicosDisponibles y especialidadesDisponibles. Cada listado tiene elementos, pagina y hayPaginaSiguiente; veinte filas por pagina. Todas las mutaciones nuevas exigen CSRF.

@@ -1,4 +1,4 @@
-import { obtenerCita, cancelarCita, registrarAsistencia } from "./citas-api.js";
+import { obtenerCita, cancelarCita, registrarAsistencia, marcarCitaAtendida } from "./citas-api.js";
 import { formatearTurno, crearEstadoCita, estadosAsistencia, mostrarResumenCampos } from "./presentacion-citas.js";
 import { ejecutarEnvioFormulario, mostrarErrorSolicitud, mostrarMensaje } from "../../components/formularios.js";
 const idCita = Number(document.body.dataset.idRegistro);
@@ -26,9 +26,9 @@ function mostrarCita(cita) {
     document.querySelector("#mostrar-anulacion").hidden = !cita.puedeCancelar;
     document.querySelector("#reprogramar-cita").hidden = !cita.puedeReprogramar;
     document.querySelector("#reprogramar-cita").href = "/citas/" + cita.idCita + "/reprogramar";
-    document.querySelector("#registrar-asistencia").hidden = !cita.puedeRegistrarAsistencia;
+    document.querySelector("#registrar-asistencia").hidden = !cita.puedeMarcarAtendida;
     document.querySelector("#registrar-inasistencia").hidden = !cita.puedeRegistrarInasistencia;
-    acciones.hidden = !(cita.puedeCancelar || cita.puedeReprogramar || cita.puedeRegistrarAsistencia || cita.puedeRegistrarInasistencia);
+    acciones.hidden = !(cita.puedeCancelar || cita.puedeReprogramar || cita.puedeMarcarAtendida || cita.puedeRegistrarInasistencia);
     formulario.hidden = true;
     detalle.removeAttribute("aria-busy");
 }
@@ -49,12 +49,12 @@ formulario.addEventListener("submit", evento => {
     });
 });
 async function guardarAsistencia(asistencia) {
-    const texto = asistencia === "asistio" ? "Confirmar que el paciente asistio a esta cita?" : "Confirmar que el paciente no asistio a esta cita?";
+    const texto = asistencia === "asistio" ? "Marcar esta cita como atendida?" : "Confirmar que el paciente no asistio a esta cita?";
     if (!window.confirm(texto)) return;
     const botones = acciones.querySelectorAll("button");
     botones.forEach(boton => { boton.disabled = true; });
     try {
-        const respuesta = await registrarAsistencia(idCita, asistencia);
+        const respuesta = await (asistencia === "asistio" ? marcarCitaAtendida(idCita) : registrarAsistencia(idCita, asistencia));
         mostrarCita(respuesta.datos); mostrarMensaje(mensaje, respuesta.mensaje);
     } catch (error) { mostrarErrorSolicitud(mensaje, error); }
     finally { botones.forEach(boton => { boton.disabled = false; }); }

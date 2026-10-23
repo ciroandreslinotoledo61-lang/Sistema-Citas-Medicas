@@ -35,9 +35,9 @@ rechazarAgenda(fn() => AgendaValidator::validarFiltrosCitas(['estado' => 'invent
 rechazarAgenda(fn() => AgendaValidator::validarFiltrosCitas(['estado' => []]));
 rechazarAgenda(fn() => AgendaValidator::validarFiltrosCitas(['pagina' => '0']));
 $esperado = [
-    'administrador' => ['horarios.crear', 'horarios.consultar', 'disponibilidad.consultar', 'citas.consultar', 'citas.reservar', 'citas.cancelar', 'citas.reprogramar', 'citas.asistencia'],
-    'recepcionista' => ['disponibilidad.consultar', 'citas.consultar', 'citas.reservar', 'citas.cancelar', 'citas.reprogramar', 'citas.asistencia'],
-    'medico' => ['horarios.consultar', 'citas.consultar'],
+    'administrador' => ['reportes.consultar', 'horarios.crear', 'horarios.consultar', 'disponibilidad.consultar', 'citas.consultar', 'citas.reservar', 'citas.cancelar', 'citas.reprogramar', 'citas.asistencia', 'citas.atender', 'agenda.filtrar'],
+    'recepcionista' => ['disponibilidad.consultar', 'citas.consultar', 'citas.reservar', 'citas.cancelar', 'citas.reprogramar', 'citas.asistencia', 'citas.atender', 'agenda.filtrar'],
+    'medico' => ['horarios.consultar', 'citas.consultar', 'citas.atender', 'agenda.filtrar'],
     'paciente' => ['disponibilidad.consultar', 'citas.consultar', 'citas.reservar', 'citas.cancelar'],
     'desconocido' => [],
 ];

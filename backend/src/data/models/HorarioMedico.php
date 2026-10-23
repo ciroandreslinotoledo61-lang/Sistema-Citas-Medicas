@@ -15,6 +15,7 @@ final class HorarioMedico
             'fechaAtencion' => $this->registro['fecha_atencion'],
             'horaInicio' => substr($this->registro['hora_inicio'], 0, 5),
             'horaFin' => substr($this->registro['hora_fin'], 0, 5),
+            'duracionCitaMinutos' => (int) $this->registro['duracion_cita_minutos'],
             'cantidadTurnos' => (int) $this->registro['cantidad_turnos'],
         ];
     }

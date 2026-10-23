@@ -11,8 +11,8 @@ configurarListaPaginada(listarPacientes, (pacientes) => {
         fila.append(
             crearCeldaTexto(paciente.nombresUsuario + " " + paciente.apellidosUsuario),
             crearCeldaTexto(paciente.cedulaIdentidad), crearCeldaTexto(paciente.telefonoPaciente),
-            crearCeldaTexto("HC-" + paciente.idHistoriaClinica), acciones
+            crearCeldaTexto("HC-" + paciente.idHistoriaClinica), crearCeldaTexto(paciente.pacienteActivo ? "Activo" : "Inactivo"), acciones
         );
         cuerpoTabla.append(fila);
     }
-}, cuerpoTabla);
+}, cuerpoTabla, formulario => ({ estado: formulario.elements.estado.value }));

@@ -15,3 +15,6 @@ export function obtenerPerfilPacienteAutenticado() {
 export function actualizarContactoPaciente(idPaciente, datosContacto) {
     return solicitarApi("/pacientes/" + idPaciente + "/contacto", "PATCH", datosContacto);
 }
+
+export const actualizarDatosPaciente = (idPaciente, datos) => solicitarApi("/pacientes/" + idPaciente, "PATCH", datos);
+export const cambiarEstadoPaciente = (idPaciente, pacienteActivo) => solicitarApi("/pacientes/" + idPaciente + "/estado", "PATCH", { pacienteActivo });

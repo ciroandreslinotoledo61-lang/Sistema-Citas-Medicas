@@ -5,6 +5,7 @@ declare(strict_types=1);
 function obtenerModulosDisponibles(string $codigoRol): array
 {
     $modulos = [
+        ['titulo'=>'Reportes', 'ruta'=>'/reportes', 'prefijo'=>'reportes', 'icono'=>'panel', 'descripcion'=>'Citas por fecha, medico, especialidad y estado. Pacientes registrados.', 'rutaRegistro'=>'', 'accionRegistro'=>'', 'roles'=>['administrador']],
         [
             'titulo' => $codigoRol === 'paciente' ? 'Mis citas' : ($codigoRol === 'medico' ? 'Mi agenda' : 'Citas medicas'),
             'ruta' => '/citas', 'prefijo' => 'cita', 'icono' => 'calendario',
@@ -19,7 +20,7 @@ function obtenerModulosDisponibles(string $codigoRol): array
         [
             'titulo' => $codigoRol === 'medico' ? 'Mis horarios' : 'Horarios de atencion',
             'ruta' => '/horarios', 'prefijo' => 'horario', 'icono' => 'calendario',
-            'descripcion' => $codigoRol === 'medico' ? 'Tus bloques de atencion asignados.' : 'Bloques de disponibilidad y turnos de 15 minutos.',
+            'descripcion' => $codigoRol === 'medico' ? 'Tus bloques de atencion asignados.' : 'Bloques de disponibilidad y generacion automatica de turnos.',
             'rutaRegistro' => $codigoRol === 'administrador' ? '/horarios/nuevo' : '', 'accionRegistro' => 'Crear horario',
             'roles' => ['administrador', 'medico'],
         ],

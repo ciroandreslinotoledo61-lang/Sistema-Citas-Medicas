@@ -16,7 +16,7 @@ final class HorarioMedicoController
     public function registrarHorario(Usuario $usuario): never
     {
         $resultado = $this->horarioService->registrarHorario($usuario, SolicitudHttp::obtenerCuerpoJson());
-        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Horario registrado. Sus turnos de 15 minutos ya estan disponibles.', 'datos' => $resultado], 201);
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Horario registrado. Se generaron turnos de ' . $resultado['duracionCitaMinutos'] . ' minutos.', 'datos' => $resultado], 201);
     }
     public function listarMedicosDisponibles(Usuario $usuario): never
     {
@@ -26,4 +26,11 @@ final class HorarioMedicoController
     {
         RespuestaJson::enviarRespuestaJson(['datos' => $this->horarioService->listarTurnosDisponibles($usuario, $_GET)]);
     }
+
+    public function obtenerConfiguracionAgenda(Usuario $usuario): never
+    {
+        \CitasMedicas\Shared\Constants\PermisosSistema::exigirPermiso($usuario,'citas.consultar');
+        RespuestaJson::enviarRespuestaJson(['datos'=>['duracionCitaMinutos'=>\CitasMedicas\Shared\Config\ConfiguracionAgenda::obtenerDuracionCitaMinutos()]]);
+    }
+
 }

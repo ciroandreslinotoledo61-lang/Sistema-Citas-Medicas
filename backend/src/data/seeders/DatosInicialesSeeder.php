@@ -51,10 +51,10 @@ final class DatosInicialesSeeder
                 );
                 if ($idRol === 3) {
                     $insertarMedico = $conexionPostgresql->prepare(
-                        'INSERT INTO medicos (id_usuario, id_especialidad, matricula_profesional)
-                        VALUES (:idUsuario, :idEspecialidad, :matriculaProfesional)'
+                        'INSERT INTO medicos (id_usuario, id_especialidad, matricula_profesional, telefono_medico)
+                        VALUES (:idUsuario, :idEspecialidad, :matriculaProfesional, :telefonoMedico)'
                     );
-                    $insertarMedico->execute(['idUsuario' => $idUsuario, 'idEspecialidad' => $idMedicinaGeneral, 'matriculaProfesional' => 'DEMO-M001']);
+                    $insertarMedico->execute(['idUsuario' => $idUsuario, 'idEspecialidad' => $idMedicinaGeneral, 'matriculaProfesional' => 'DEMO-M001', 'telefonoMedico' => '70000002']);
                 }
                 if ($idRol === 4) {
                     $pacienteRepository = new PacienteRepository($conexionPostgresql);

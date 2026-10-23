@@ -33,7 +33,7 @@ exigirCondicionValidacion(EspecialidadValidator::validarEstadoEspecialidad(['esp
 
 $datosMedico = [
     'nombresUsuario' => 'Ana', 'apellidosUsuario' => 'Prueba', 'correoUsuario' => ' ANA@EXAMPLE.TEST ',
-    'matriculaProfesional' => ' sc-1234 ', 'idEspecialidad' => '1',
+    'telefonoMedico' => '70000001', 'matriculaProfesional' => ' sc-1234 ', 'idEspecialidad' => '1',
     'contrasenaUsuario' => 'FraseParaPrueba123', 'confirmacionContrasena' => 'FraseParaPrueba123',
     'codigoRol' => 'administrador', 'medicoActivo' => false,
 ];
@@ -44,7 +44,7 @@ exigirCondicionValidacion(!array_key_exists('codigoRol', $medico) && !array_key_
 foreach ([true, false, 0, -1, 1.5, [], 'abc', '1.5'] as $idInvalido) {
     exigirErrorValidacion(fn() => MedicoValidator::validarDatosRegistroMedico(array_replace($datosMedico, ['idEspecialidad' => $idInvalido])), 422);
 }
-exigirErrorValidacion(fn() => MedicoValidator::validarDatosRegistroMedico(array_replace($datosMedico, ['matriculaProfesional' => '<script>'])), 422);
+exigirErrorValidacion(fn() => MedicoValidator::validarDatosRegistroMedico(array_replace($datosMedico, ['telefonoMedico' => '70000001', 'matriculaProfesional' => '<script>'])), 422);
 exigirErrorValidacion(fn() => MedicoValidator::validarDatosRegistroMedico(array_replace($datosMedico, ['confirmacionContrasena' => 'DistintaClave123'])), 422);
 exigirErrorValidacion(fn() => MedicoValidator::validarEstadoMedico(['medicoActivo' => 'true']), 422);
 exigirCondicionValidacion(MedicoValidator::validarEstadoMedico(['medicoActivo' => false]) === false, 'Desactivacion valida.');

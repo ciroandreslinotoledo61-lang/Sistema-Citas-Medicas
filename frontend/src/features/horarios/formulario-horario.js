@@ -1,10 +1,12 @@
 import { registrarHorario } from "./horarios-api.js";
-import { listarMedicosDisponibles } from "../citas/citas-api.js";
+import { listarMedicosDisponibles, obtenerConfiguracionAgenda } from "../citas/citas-api.js";
 import { ejecutarEnvioFormulario, mostrarErrorSolicitud } from "../../components/formularios.js";
 const formulario = document.querySelector("#formulario-horario");
 async function cargarMedicos() {
     try {
-        const medicos = (await listarMedicosDisponibles()).datos;
+        const [respuestaMedicos, configuracion] = await Promise.all([listarMedicosDisponibles(), obtenerConfiguracionAgenda()]);
+        const medicos = respuestaMedicos.datos;
+        document.querySelector("#duracion-horario").textContent = "Cada cita nueva dura " + configuracion.datos.duracionCitaMinutos + " minutos.";
         formulario.elements.idMedico.replaceChildren(new Option("Selecciona un medico", ""));
         for (const medico of medicos) formulario.elements.idMedico.add(new Option(medico.nombreMedico + " / " + medico.nombreEspecialidad, medico.idMedico));
         if (!medicos.length) throw new Error("Registra y activa un medico antes de configurar horarios.");

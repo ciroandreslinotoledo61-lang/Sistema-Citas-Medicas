@@ -8,7 +8,7 @@
     <div class="acciones" id="acciones-cita" hidden>
         <a class="boton boton-secundario" id="reprogramar-cita" hidden>Reprogramar</a>
         <button class="boton boton-peligro" type="button" id="mostrar-anulacion" hidden>Anular cita</button>
-        <button class="boton" type="button" id="registrar-asistencia" hidden>Registrar asistencia</button>
+        <button class="boton" type="button" id="registrar-asistencia" hidden>Marcar atendida</button>
         <button class="boton boton-secundario" type="button" id="registrar-inasistencia" hidden>Registrar inasistencia</button>
     </div>
     <form id="formulario-anulacion" class="separacion-formulario" method="post" hidden>

@@ -1,4 +1,4 @@
-import { listarMedicosDisponibles, listarTurnosDisponibles, reservarCita, obtenerCita, reprogramarCita } from "./citas-api.js";
+import { obtenerConfiguracionAgenda, listarMedicosDisponibles, listarTurnosDisponibles, reservarCita, obtenerCita, reprogramarCita } from "./citas-api.js";
 import { listarPacientes } from "../pacientes/pacientes-api.js";
 import { formatearTurno } from "./presentacion-citas.js";
 import { mostrarErrorSolicitud, mostrarMensaje, ejecutarEnvioFormulario } from "../../components/formularios.js";
@@ -42,8 +42,8 @@ async function cargarTurnos() {
             const opcion = document.createElement("input");
             opcion.type = "radio"; opcion.name = "idTurno"; opcion.value = turno.idTurno; opcion.required = true;
             const texto = document.createElement("span");
-            texto.textContent = turno.fechaHoraInicio.slice(11, 16);
-            opcion.setAttribute("aria-label", texto.textContent + " a " + turno.fechaHoraFin.slice(11, 16));
+            texto.textContent = turno.fechaHoraInicio.slice(11, 16) + " - " + turno.fechaHoraFin.slice(11, 16);
+            opcion.setAttribute("aria-label", texto.textContent);
             etiqueta.append(opcion, texto); contenedorTurnos.append(etiqueta);
         }
     } catch (error) { if (solicitud === numeroSolicitudTurnos) mostrarErrorSolicitud(mensajeTurnos, error); }
@@ -51,7 +51,9 @@ async function cargarTurnos() {
 }
 async function cargarFormulario() {
     try {
-        medicos = (await listarMedicosDisponibles()).datos;
+        const [respuestaMedicos, configuracion] = await Promise.all([listarMedicosDisponibles(), obtenerConfiguracionAgenda()]);
+        medicos = respuestaMedicos.datos;
+        document.querySelector("#duracion-reserva").textContent = "Cada cita nueva dura " + configuracion.datos.duracionCitaMinutos + " minutos. El turno indica su hora de inicio y fin.";
         const especialidades = new Map(medicos.map(medico => [medico.idEspecialidad, medico.nombreEspecialidad]));
         for (const [identificador, nombre] of especialidades) especialidad.add(new Option(nombre, identificador));
         mostrarMedicos();
@@ -81,7 +83,7 @@ busquedaPaciente?.addEventListener("submit", async evento => {
     selector.replaceChildren(new Option("Selecciona un paciente", "")); actualizarBotonReserva();
     mensaje.hidden = true;
     try {
-        const respuesta = await listarPacientes(new URLSearchParams({ busqueda: busquedaPaciente.elements.busqueda.value.trim(), pagina: "1" }));
+        const respuesta = await listarPacientes(new URLSearchParams({ busqueda: busquedaPaciente.elements.busqueda.value.trim(), pagina: "1", estado: "activo" }));
         if (solicitud !== numeroSolicitudPaciente) return;
         for (const paciente of respuesta.datos.elementos) selector.add(new Option(paciente.nombresUsuario + " " + paciente.apellidosUsuario + " / " + paciente.cedulaIdentidad, paciente.idPaciente));
         if (!respuesta.datos.elementos.length) mostrarMensaje(mensaje, "No se encontraron pacientes. Revisa el nombre o la cedula.", true);

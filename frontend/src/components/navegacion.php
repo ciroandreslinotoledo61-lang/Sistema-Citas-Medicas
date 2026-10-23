@@ -68,6 +68,7 @@ $especialidadesActivo = str_starts_with($paginaActual, 'especialidad');
                 <a href="/especialidades/nueva" <?= $paginaActual === 'especialidad-nueva' ? 'aria-current="page"' : '' ?>>Crear especialidad</a>
             </div>
         </details>
+        <a href="/reportes" <?= $paginaActual === 'reportes' ? 'aria-current="page"' : '' ?>><?= mostrarIcono('panel') ?><span>Reportes administrativos</span></a>
         <span class="etiqueta-menu">PROXIMOS MODULOS</span>
         <details class="grupo-menu grupo-menu-pendiente">
             <summary><?= mostrarIcono('calendario') ?><span>Consultorios</span><span class="chevron-menu" aria-hidden="true"></span></summary>
@@ -86,7 +87,6 @@ $especialidadesActivo = str_starts_with($paginaActual, 'especialidad');
             <div class="grupo-opciones">
                 <span class="enlace-pendiente">Consultas e historial <small>Pendiente</small></span>
                 <span class="enlace-pendiente">Laboratorio digital <small>Pendiente</small></span>
-                <span class="enlace-pendiente">Reportes administrativos <small>Pendiente</small></span>
             </div>
         </details>
         <?php elseif ($esPaciente): ?>

@@ -7,3 +7,7 @@ export const reprogramarCita = (identificador, datos) => solicitarApi("/citas/" 
 export const registrarAsistencia = (identificador, asistenciaRegistrada) => solicitarApi("/citas/" + identificador + "/asistencia", "PATCH", { asistenciaRegistrada });
 export const listarMedicosDisponibles = () => solicitarApi("/disponibilidad/medicos");
 export const listarTurnosDisponibles = (idMedico, fecha) => solicitarApi("/disponibilidad/turnos?" + new URLSearchParams({ idMedico, fecha }));
+
+export const listarMedicosParaAgenda = () => solicitarApi("/agenda/medicos");
+export const obtenerConfiguracionAgenda = () => solicitarApi("/disponibilidad/configuracion");
+export const marcarCitaAtendida = idCita => solicitarApi("/citas/" + idCita + "/atencion", "PATCH");

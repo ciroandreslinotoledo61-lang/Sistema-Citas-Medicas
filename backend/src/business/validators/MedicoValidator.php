@@ -22,7 +22,7 @@ final class MedicoValidator
                 'matriculaProfesional' => 'Usa de 3 a 40 letras, numeros, espacios, puntos, guiones o barras.',
             ]);
         }
-        return $datosValidados + [
+        return $datosValidados + ['telefonoMedico' => ValidarCamposFormulario::validarTelefono($datos, 'telefonoMedico', true),
             'idEspecialidad' => (int) $idEspecialidad, 'matriculaProfesional' => $matriculaProfesional,
         ];
     }

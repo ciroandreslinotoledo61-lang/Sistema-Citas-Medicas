@@ -4,7 +4,7 @@
 
 Actualizacion visual para la V1 con el avance de Especialidades y Medicos ya aplicado. El nombre visible es Clinica, con Centro medico como descripcion. Conserva PHP, HTML, CSS y JavaScript sin frameworks ni dependencias externas.
 
-El backend, las migraciones, los archivos .env y las credenciales existentes no se modifican. Los correos de prueba creados por el seeder siguen siendo los mismos, aunque contengan el nombre anterior. No hay que volver a cargar datos.
+El avance visual inicial conservo backend, migraciones, archivos .env y credenciales. La version 1.3 agrega la migracion 004 y cambios funcionales; consulta ACTUALIZAR-ESTA-VERSION.md. Los correos de prueba creados por el seeder siguen siendo los mismos, aunque contengan el nombre anterior. No hay que volver a cargar datos.
 
 ## Criterio visual
 
@@ -59,7 +59,7 @@ Todos los archivos *-api.js, cliente-api.js, ClienteApiServidor.php, ProteccionV
 | Medico | Panel con su cuenta y aviso de agenda aun no disponible |
 | Paciente | Panel y Mi perfil, sin formulario de edicion de contacto |
 
-Los horarios, citas, consultas, tratamientos y reportes siguen pendientes. No se agregaron botones sin destino ni solicitudes para esos modulos. Cuando existan sus rutas y permisos, sus metadatos se pueden incorporar a modulos-disponibles.php y sus vistas a features/.
+Este apartado describe el avance visual inicial. En la version 1.3, horarios, citas y reportes ya estan implementados; consultas y tratamientos siguen pendientes. No se agregaron botones sin destino ni solicitudes para esos modulos. Cuando existan sus rutas y permisos, sus metadatos se pueden incorporar a modulos-disponibles.php y sus vistas a features/.
 
 ## Adaptacion y accesibilidad
 
@@ -111,3 +111,7 @@ Se conservan la marca Clinica, los componentes visuales y el menu acordeon recib
 Rutas nuevas de vistas: /citas, /citas/nueva, /citas/{id}, /citas/{id}/reprogramar, /horarios, /horarios/nuevo. ProteccionVista comprueba rol; las respuestas de la API comprueban tambien propiedad. Las acciones del detalle se calculan desde puedeCancelar, puedeReprogramar y los permisos de asistencia.
 
 Los turnos se presentan como radios con etiqueta y foco de teclado. Cambiar medico, especialidad o fecha descarta la seleccion anterior; un contador evita pintar respuestas antiguas sobre la seleccion actual. Un conflicto de reserva actualiza los turnos. Las tablas mantienen desplazamiento horizontal dentro de su contenedor en celular.
+
+## Actualizacion 1.3
+
+Reportes usa la paleta central, filtros responsive y tablas desplazables. Pacientes permite edicion completa y estado; Medicos incluye telefono. La agenda muestra inicio y fin del turno, sin identificadores de zona. Ver actualizacion-agenda-reportes.md y pruebas.md para el alcance actual.

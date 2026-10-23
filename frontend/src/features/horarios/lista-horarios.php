@@ -1,5 +1,5 @@
 <?php $esAdministrador = $usuarioAutenticado['codigoRol'] === 'administrador'; ?>
-<section class="titulo-vista"><div><p class="sobretitulo">DISPONIBILIDAD</p><h1><?= $esAdministrador ? 'Horarios de atencion' : 'Mis horarios' ?></h1><p><?= $esAdministrador ? 'Configura bloques de atencion y genera turnos de 15 minutos.' : 'Consulta los bloques de atencion asignados por Administracion.' ?></p></div><?php if ($esAdministrador): ?><a class="boton" href="/horarios/nuevo"><?= mostrarIcono('mas') ?> Crear horario</a><?php endif; ?></section>
+<section class="titulo-vista"><div><p class="sobretitulo">DISPONIBILIDAD</p><h1><?= $esAdministrador ? 'Horarios de atencion' : 'Mis horarios' ?></h1><p><?= $esAdministrador ? 'Configura bloques de atencion y genera turnos automaticamente.' : 'Consulta los bloques de atencion asignados por Administracion.' ?></p></div><?php if ($esAdministrador): ?><a class="boton" href="/horarios/nuevo"><?= mostrarIcono('mas') ?> Crear horario</a><?php endif; ?></section>
 <section class="tarjeta tarjeta-listado" aria-label="Horarios de atencion">
     <div class="cabecera-listado"><h2>Bloques registrados</h2></div>
     <form id="formulario-busqueda" class="barra-busqueda filtros-agenda" method="get">
@@ -12,4 +12,4 @@
     </div>
     <?php require dirname(__DIR__, 2) . '/components/paginacion.php'; ?>
 </section>
-<p class="nota-informativa"><?= mostrarIcono('informacion') ?><span>La cantidad indica los turnos generados, incluidos los que ya fueron reservados. Zona horaria: <?= escaparTextoHtml(date_default_timezone_get()) ?>.</span></p>
+<p class="nota-informativa"><?= mostrarIcono('informacion') ?><span>La cantidad indica los turnos habilitados del bloque, incluidos los reservados. Las citas anteriores conservan sus horas.</span></p>

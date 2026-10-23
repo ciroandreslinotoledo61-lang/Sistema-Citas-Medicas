@@ -30,7 +30,7 @@ final class RutasApi
         $metodo = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $ruta = rtrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/', '/');
         if ($metodo === 'GET' && $ruta === '/api/estado') {
-            RespuestaJson::enviarRespuestaJson(['datos' => ['aplicacion' => 'Citas Medicas', 'version' => '1.2.0', 'estado' => 'disponible']]);
+            RespuestaJson::enviarRespuestaJson(['datos' => ['aplicacion' => 'Citas Medicas', 'version' => '1.3.0', 'estado' => 'disponible']]);
         }
         if ($metodo === 'GET' && $ruta === '/api/autenticacion/token') {
             RespuestaJson::enviarRespuestaJson(['datos' => ['tokenCsrf' => SesionUsuario::obtenerTokenCsrf()]]);
@@ -39,9 +39,9 @@ final class RutasApi
             '/api/autenticacion/iniciar-sesion', '/api/autenticacion/cerrar-sesion', '/api/autenticacion/sesion',
             '/api/autenticacion/registro-paciente', '/api/usuarios', '/api/roles', '/api/pacientes', '/api/pacientes/mi-perfil',
             '/api/especialidades', '/api/especialidades/activas', '/api/medicos',
-            '/api/horarios', '/api/citas', '/api/disponibilidad/medicos', '/api/disponibilidad/turnos',
+            '/api/reportes', '/api/agenda/medicos', '/api/disponibilidad/configuracion', '/api/horarios', '/api/citas', '/api/disponibilidad/medicos', '/api/disponibilidad/turnos',
         ];
-        if (!in_array($ruta, $rutasConocidas, true) && !preg_match('#^/api/citas/[1-9][0-9]*(/(cancelacion|reprogramacion|asistencia))?$#', $ruta) && !preg_match('#^/api/(usuarios|pacientes|especialidades|medicos)/[1-9][0-9]*(/estado|/contacto)?$#', $ruta)) {
+        if (!in_array($ruta, $rutasConocidas, true) && !preg_match('#^/api/citas/[1-9][0-9]*(/(cancelacion|reprogramacion|asistencia|atencion))?$#', $ruta) && !preg_match('#^/api/(usuarios|pacientes|especialidades|medicos)/[1-9][0-9]*(/estado|/contacto)?$#', $ruta)) {
             throw new ErrorAplicacion('La ruta solicitada no existe.', 404);
         }
         $conexion = ConexionPostgresql::obtenerConexionPostgresql();
@@ -129,6 +129,8 @@ final class RutasApi
             if ($metodo === 'GET' && preg_match('#^/api/pacientes/([1-9][0-9]*)$#', $ruta, $coincidencia)) {
                 $pacienteController->obtenerPacientePorId(SolicitudHttp::obtenerIdPositivo($coincidencia[1]));
             }
+            if ($metodo === 'PATCH' && preg_match('#^/api/pacientes/([1-9][0-9]*)$#', $ruta, $coincidencia)) { $pacienteController->actualizarDatosPaciente($usuario, SolicitudHttp::obtenerIdPositivo($coincidencia[1])); }
+            if ($metodo === 'PATCH' && preg_match('#^/api/pacientes/([1-9][0-9]*)/estado$#', $ruta, $coincidencia)) { $pacienteController->cambiarEstadoPaciente($usuario, SolicitudHttp::obtenerIdPositivo($coincidencia[1])); }
             if ($metodo === 'PATCH' && preg_match('#^/api/pacientes/([1-9][0-9]*)/contacto$#', $ruta, $coincidencia)) {
                 $pacienteController->actualizarContactoPaciente(SolicitudHttp::obtenerIdPositivo($coincidencia[1]));
             }

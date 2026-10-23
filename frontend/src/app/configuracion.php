@@ -32,4 +32,4 @@ function escaparTextoHtml(mixed $valor): string
 }
 
 cargarVariablesEntornoFrontend(dirname(__DIR__, 2) . '/.env');
-date_default_timezone_set(obtenerConfiguracionFrontend('APP_TIMEZONE', 'America/La_Paz'));
+date_default_timezone_set('America/La_Paz');

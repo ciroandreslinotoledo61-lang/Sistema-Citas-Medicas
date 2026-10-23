@@ -19,6 +19,9 @@ final class PermisosSistema
         'citas.reservar' => ['administrador', 'recepcionista', 'paciente'],
         'citas.cancelar' => ['administrador', 'recepcionista', 'paciente'],
         'citas.reprogramar' => ['administrador', 'recepcionista'],
+        'reportes.consultar' => ['administrador'],
+        'agenda.filtrar' => ['administrador', 'recepcionista', 'medico'],
+        'citas.atender' => ['administrador', 'recepcionista', 'medico'],
         'citas.asistencia' => ['administrador', 'recepcionista'],
     ];
 

@@ -7,10 +7,7 @@
         <fieldset><legend><span>01</span> Datos de acceso</legend>
             <?php $mostrarCamposContrasena = true; require dirname(__DIR__, 2) . '/components/campos-usuario.php'; ?>
         </fieldset>
-        <fieldset><legend><span>02</span> Datos personales</legend><div class="rejilla-formulario">
-            <label><span>Cedula de identidad <span class="campo-obligatorio" aria-hidden="true">*</span></span><input name="cedulaIdentidad" required minlength="3" maxlength="25" autocomplete="off"></label>
-            <label><span>Fecha de nacimiento <span class="campo-obligatorio" aria-hidden="true">*</span></span><input name="fechaNacimiento" type="date" required max="<?= escaparTextoHtml(date('Y-m-d')) ?>" min="<?= escaparTextoHtml(date('Y-m-d', strtotime('-120 years'))) ?>" autocomplete="bday"></label>
-        </div></fieldset>
+        <fieldset><legend><span>02</span> Datos personales</legend><?php require dirname(__DIR__, 2) . '/components/campos-personales-paciente.php'; ?></fieldset>
         <fieldset><legend><span>03</span> Datos de contacto</legend>
             <?php require dirname(__DIR__, 2) . '/components/campos-contacto.php'; ?>
         </fieldset>

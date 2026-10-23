@@ -29,6 +29,7 @@ $rutasVistas = [
     '/' => ['inicio', 'Portal de pacientes', 'inicio/inicio.php', '', null],
     '/iniciar-sesion' => ['iniciar-sesion', 'Iniciar sesion', 'auth/iniciar-sesion.php', 'auth/iniciar-sesion.js', null],
     '/registro-paciente' => ['registro-paciente', 'Crear cuenta de paciente', 'pacientes/formulario-registro.php', 'pacientes/registrar-paciente.js', null],
+    '/reportes' => ['reportes', 'Reportes administrativos', 'reportes/reportes.php', 'reportes/reportes.js', ['administrador']],
     '/panel' => ['panel', 'Panel principal', 'panel/panel.php', '', []],
     '/usuarios' => ['usuarios', 'Usuarios', 'usuarios/lista-usuarios.php', 'usuarios/listar-usuarios.js', ['administrador']],
     '/usuarios/nuevo' => ['usuario-nuevo', 'Nuevo usuario', 'usuarios/formulario-usuario.php', 'usuarios/formulario-usuario.js', ['administrador']],

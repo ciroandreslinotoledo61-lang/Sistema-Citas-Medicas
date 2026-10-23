@@ -48,7 +48,7 @@ $datosMedico = [
     'nombresUsuario' => 'Medico', 'apellidosUsuario' => 'Prueba',
     'correoUsuario' => $correoPrimero,
     'contrasenaUsuario' => 'FraseParaPrueba123', 'confirmacionContrasena' => 'FraseParaPrueba123',
-    'matriculaProfesional' => 'TEST-' . $identificadorPrueba, 'codigoRol' => 'administrador',
+    'telefonoMedico' => '70000001', 'matriculaProfesional' => 'TEST-' . $identificadorPrueba, 'codigoRol' => 'administrador',
 ];
 try {
     $primera = $especialidadService->registrarEspecialidad(['nombreEspecialidad' => $nombrePrimera]);
@@ -70,7 +70,7 @@ try {
     exigirErrorGestion(fn() => $especialidadService->cambiarEstadoEspecialidad($primera->idEspecialidad, ['especialidadActiva' => false]), 409);
     exigirErrorGestion(fn() => $medicoService->registrarMedicoConUsuario(array_replace($datosMedico, ['correoUsuario' => $correoSegundo])), 409);
     exigirCondicionGestion($usuarioRepository->obtenerUsuarioPorCorreo($correoSegundo) === null, 'Quedo una cuenta tras una matricula duplicada.');
-    exigirErrorGestion(fn() => $medicoService->registrarMedicoConUsuario(array_replace($datosMedico, ['matriculaProfesional' => 'OTRA-' . $identificadorPrueba])), 409);
+    exigirErrorGestion(fn() => $medicoService->registrarMedicoConUsuario(array_replace($datosMedico, ['telefonoMedico' => '70000001', 'matriculaProfesional' => 'OTRA-' . $identificadorPrueba])), 409);
 
     $autenticacionService->iniciarSesionUsuario(['correoUsuario' => $correoPrimero, 'contrasenaUsuario' => 'FraseParaPrueba123']);
     $medicoService->cambiarEstadoMedico($medico->idMedico, ['medicoActivo' => false]);

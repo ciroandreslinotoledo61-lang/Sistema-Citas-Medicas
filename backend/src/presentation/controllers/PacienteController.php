@@ -37,4 +37,16 @@ final class PacienteController
         $paciente = $this->pacienteService->actualizarContactoPaciente($idPaciente, SolicitudHttp::obtenerCuerpoJson());
         RespuestaJson::enviarRespuestaJson(['mensaje' => 'Contacto actualizado.', 'datos' => $paciente->obtenerDatosPublicosPaciente()]);
     }
+
+    public function actualizarDatosPaciente(\CitasMedicas\Data\Models\Usuario $usuario, int $idPaciente): never
+    {
+        $paciente=$this->pacienteService->actualizarDatosPaciente($usuario,$idPaciente,SolicitudHttp::obtenerCuerpoJson());
+        RespuestaJson::enviarRespuestaJson(['mensaje'=>'Datos del paciente actualizados.','datos'=>$paciente->obtenerDatosPublicosPaciente()]);
+    }
+    public function cambiarEstadoPaciente(\CitasMedicas\Data\Models\Usuario $usuario, int $idPaciente): never
+    {
+        $paciente=$this->pacienteService->cambiarEstadoPaciente($usuario,$idPaciente,SolicitudHttp::obtenerCuerpoJson());
+        RespuestaJson::enviarRespuestaJson(['mensaje'=>'Estado actualizado. Sus citas e historia se conservan.','datos'=>$paciente->obtenerDatosPublicosPaciente()]);
+    }
+
 }

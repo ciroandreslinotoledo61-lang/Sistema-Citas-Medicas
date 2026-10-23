@@ -9,8 +9,8 @@ final class EspecialidadRepository
 {
     private const CONSULTA_ESPECIALIDAD = 'SELECT especialidades.*,
         (SELECT count(*) FROM medicos INNER JOIN usuarios ON usuarios.id_usuario = medicos.id_usuario
-         WHERE medicos.id_especialidad = especialidades.id_especialidad AND usuarios.usuario_activo = TRUE)
-         AS cantidad_medicos_activos FROM especialidades';
+        WHERE medicos.id_especialidad = especialidades.id_especialidad AND usuarios.usuario_activo = TRUE)
+        AS cantidad_medicos_activos FROM especialidades';
 
     public function __construct(private readonly \PDO $conexionPostgresql) {}
 
@@ -18,7 +18,7 @@ final class EspecialidadRepository
     {
         $consulta = $this->conexionPostgresql->prepare(self::CONSULTA_ESPECIALIDAD .
             " WHERE concat_ws(' ', nombre_especialidad, descripcion_especialidad) ILIKE :busqueda
-              ORDER BY nombre_especialidad, id_especialidad LIMIT 21 OFFSET :desplazamiento");
+            ORDER BY nombre_especialidad, id_especialidad LIMIT 21 OFFSET :desplazamiento");
         $consulta->bindValue(':busqueda', '%' . $busqueda . '%');
         $consulta->bindValue(':desplazamiento', ($pagina - 1) * 20, \PDO::PARAM_INT);
         $consulta->execute();
@@ -46,8 +46,8 @@ final class EspecialidadRepository
     {
         $consulta = $this->conexionPostgresql->prepare(
             "SELECT id_especialidad FROM especialidades
-             WHERE lower(regexp_replace(btrim(nombre_especialidad), '[[:space:]]+', ' ', 'g')) = lower(:nombreEspecialidad)
-             AND id_especialidad <> :idEspecialidadExcluida LIMIT 1"
+            WHERE lower(regexp_replace(btrim(nombre_especialidad), '[[:space:]]+', ' ', 'g')) = lower(:nombreEspecialidad)
+            AND id_especialidad <> :idEspecialidadExcluida LIMIT 1"
         );
         $consulta->execute(['nombreEspecialidad' => $nombreEspecialidad, 'idEspecialidadExcluida' => $idEspecialidadExcluida]);
         return $consulta->fetchColumn() !== false;
@@ -57,7 +57,7 @@ final class EspecialidadRepository
     {
         $consulta = $this->conexionPostgresql->prepare(
             'INSERT INTO especialidades (nombre_especialidad, descripcion_especialidad)
-             VALUES (:nombreEspecialidad, :descripcionEspecialidad) RETURNING id_especialidad'
+            VALUES (:nombreEspecialidad, :descripcionEspecialidad) RETURNING id_especialidad'
         );
         $consulta->execute($datosEspecialidad);
         return (int) $consulta->fetchColumn();
@@ -67,7 +67,7 @@ final class EspecialidadRepository
     {
         $consulta = $this->conexionPostgresql->prepare(
             'UPDATE especialidades SET nombre_especialidad = :nombreEspecialidad,
-             descripcion_especialidad = :descripcionEspecialidad WHERE id_especialidad = :idEspecialidad'
+            descripcion_especialidad = :descripcionEspecialidad WHERE id_especialidad = :idEspecialidad'
         );
         $consulta->execute(['idEspecialidad' => $idEspecialidad] + $datosEspecialidad);
     }
@@ -86,7 +86,7 @@ final class EspecialidadRepository
     {
         $consulta = $this->conexionPostgresql->prepare(
             'SELECT count(*) FROM medicos INNER JOIN usuarios ON usuarios.id_usuario = medicos.id_usuario
-             WHERE medicos.id_especialidad = :idEspecialidad AND usuarios.usuario_activo = TRUE'
+            WHERE medicos.id_especialidad = :idEspecialidad AND usuarios.usuario_activo = TRUE'
         );
         $consulta->execute(['idEspecialidad' => $idEspecialidad]);
         return (int) $consulta->fetchColumn();

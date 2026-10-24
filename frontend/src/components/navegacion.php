@@ -34,7 +34,7 @@ $especialidadesActivo = str_starts_with($paginaActual, 'especialidad');
             <summary><?= mostrarIcono('calendario') ?><span><?= $esAdmin ? 'Horarios de atencion' : 'Mis horarios' ?></span><span class="chevron-menu" aria-hidden="true"></span></summary>
             <div class="grupo-opciones">
                 <a href="/horarios" <?= $paginaActual === 'horarios' ? 'aria-current="page"' : '' ?>>Consultar horarios</a>
-                <?php if ($esAdmin): ?><a href="/horarios/nuevo" <?= $paginaActual === 'horario-nuevo' ? 'aria-current="page"' : '' ?>>Crear horario</a><?php endif; ?>
+                <?php if ($esAdmin): ?><a href="/horarios/nuevo" <?= $paginaActual === 'horario-nuevo' ? 'aria-current="page"' : '' ?>>Programar horarios</a><?php endif; ?>
             </div>
         </details>
         <?php endif; ?>

@@ -66,3 +66,9 @@ La base por si sola no exige que todo paciente tenga historia: esa regla se gara
 EspecialidadService valida el catalogo y controla su estado. MedicoService registra la cuenta con UsuarioRepository y el perfil con MedicoRepository dentro de una transaccion. Para crear, reasignar o activar, bloquea la especialidad con SELECT FOR UPDATE y comprueba que este activa.
 
 cambiarEstadoEspecialidad bloquea esa misma fila antes de contar medicos activos. Este orden permite que las operaciones relacionadas compartan un punto de coordinacion. El estado del medico no se duplica: se toma de usuarios.usuario_activo.
+
+## Programacion por periodos y cita activa
+
+AgendaValidator valida el periodo y las horas; ConfiguracionAgenda centraliza el rango y la duracion. HorarioMedicoService.programarHorariosPorPeriodo bloquea el medico y coordina fechas, omisiones y creacion; HorarioMedicoRepository consulta equivalencias/cruces y genera turnos consecutivos. No hay SQL en controladores o frontend.
+
+CitaService valida propietario, reloj, permisos y transiciones. CitaRepository.pacienteTieneCitaActiva se consulta despues del bloqueo de paciente. 005 agrega el indice parcial y el trigger de proteccion/trazabilidad; Cita transforma el JSONB en historialCambios. Se mantienen los nombres internos pendientes/no_asistio y la referencia de reprogramacion para compatibilidad.

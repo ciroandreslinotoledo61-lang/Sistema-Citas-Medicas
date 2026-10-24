@@ -36,9 +36,13 @@ final class AgendaValidator
         $duracion = \CitasMedicas\Shared\Config\ConfiguracionAgenda::obtenerDuracionCitaMinutos();
         $fecha = self::validarFecha($datos['fechaAtencion'] ?? null);
         foreach (['horaInicio', 'horaFin'] as $campo) {
-            if (!is_string($datos[$campo] ?? null) || !preg_match('/^(?:[01][0-9]|2[0-3]):[0-5][05]$/', $datos[$campo])) {
-                throw new ErrorAplicacion('Usa horas en intervalos de 5 minutos.', 422, [$campo => 'Ejemplo: 08:00, 08:05 o 08:30.']);
+            if (!is_string($datos[$campo] ?? null) || !preg_match('/^(?:[01][0-9]|2[0-3]):(?:00|30)$/', $datos[$campo])) {
+                throw new ErrorAplicacion('Selecciona horas con minutos 00 o 30.', 422, [$campo => 'Ejemplo: 08:00 u 08:30.']);
             }
+        }
+        $horarioClinica = \CitasMedicas\Shared\Config\ConfiguracionAgenda::obtenerHorarioClinica();
+        if ($datos['horaInicio'] < $horarioClinica['horaApertura'] || $datos['horaFin'] > $horarioClinica['horaCierre']) {
+            throw new ErrorAplicacion('Programa dentro del horario de la clinica: ' . $horarioClinica['horaApertura'] . ' a ' . $horarioClinica['horaCierre'] . '.', 422);
         }
         $inicio = new \DateTimeImmutable($fecha . ' ' . $datos['horaInicio']);
         $fin = new \DateTimeImmutable($fecha . ' ' . $datos['horaFin']);
@@ -62,4 +66,31 @@ final class AgendaValidator
         foreach (['idMedico', 'idPaciente'] as $campo) { $filtros[$campo] = !isset($parametros[$campo]) || $parametros[$campo] === '' ? null : self::validarIdentificador($parametros, $campo); }
         return $filtros;
     }
+    public static function validarProgramacionPeriodo(array $datos, \DateTimeImmutable $ahora): array
+    {
+        $fechaInicial = self::validarFecha($datos['fechaInicial'] ?? null);
+        $fechaFinal = self::validarFecha($datos['fechaFinal'] ?? null);
+        $inicio = new \DateTimeImmutable($fechaInicial);
+        $fin = new \DateTimeImmutable($fechaFinal);
+        if ($fin < $inicio || $inicio->diff($fin)->days > 365) {
+            throw new ErrorAplicacion('El periodo debe estar ordenado y abarcar como maximo 366 dias.', 422);
+        }
+        if ($fechaFinal > $ahora->modify('+1 year')->format('Y-m-d')) {
+            throw new ErrorAplicacion('Configura horarios dentro de los proximos 12 meses.', 422);
+        }
+        $dias = $datos['diasSemana'] ?? null;
+        if (!is_array($dias) || $dias === [] || count($dias) > 7) {
+            throw new ErrorAplicacion('Selecciona al menos un dia de la semana.', 422);
+        }
+        foreach ($dias as $dia) {
+            if (!is_int($dia) || $dia < 1 || $dia > 7) { throw new ErrorAplicacion('Los dias deben ser numeros del 1 (lunes) al 7 (domingo).', 422); }
+        }
+        // Validar el intervalo sin crear fechas pasadas. El servicio las omite y las informa.
+        $diaValidacion = $ahora->modify('+1 day')->format('Y-m-d');
+        $horario = self::validarHorario(array_merge($datos, ['fechaAtencion' => $diaValidacion]), $ahora);
+        unset($horario['fechaAtencion']);
+        return $horario + ['fechaInicial' => $fechaInicial, 'fechaFinal' => $fechaFinal,
+            'diasSemana' => array_values(array_unique($dias))];
+    }
+
 }

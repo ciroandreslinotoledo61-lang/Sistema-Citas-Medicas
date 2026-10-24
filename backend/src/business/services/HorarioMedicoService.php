@@ -53,6 +53,7 @@ final class HorarioMedicoService
         $datos = AgendaValidator::validarHorario($datos, $this->obtenerAhora());
         $this->conexionPostgresql->beginTransaction();
         try {
+            $this->conexionPostgresql->exec('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
             // Bloquear el medico serializa la creacion de sus bloques y sus reservas.
             $medico = (new MedicoRepository($this->conexionPostgresql))->obtenerMedicoPorId($datos['idMedico'], true)
                 ?? throw new ErrorAplicacion('El medico no existe.', 404);
@@ -75,4 +76,56 @@ final class HorarioMedicoService
             throw $error;
         }
     }
+    public function programarHorariosPorPeriodo(Usuario $usuario, array $datos): array
+    {
+        PermisosSistema::exigirPermiso($usuario, 'horarios.crear');
+        $datos = AgendaValidator::validarProgramacionPeriodo($datos, $this->obtenerAhora());
+        $resumen = ['fechasProcesadas' => 0, 'fechasCreadas' => 0, 'turnosCreados' => 0,
+            'fechasExistentes' => 0, 'fechasPasadas' => 0, 'conflictosDetectados' => 0,
+            'diasNoSeleccionados' => 0, 'detalle' => []];
+        $this->conexionPostgresql->beginTransaction();
+        try {
+            $this->conexionPostgresql->exec('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
+            $medico = (new MedicoRepository($this->conexionPostgresql))->obtenerMedicoPorId($datos['idMedico'], true)
+                ?? throw new ErrorAplicacion('El medico no existe.', 404);
+            $especialidad = (new EspecialidadRepository($this->conexionPostgresql))->obtenerEspecialidadPorId($medico->idEspecialidad, true);
+            if (!$medico->medicoActivo || !$especialidad?->especialidadActiva) {
+                throw new ErrorAplicacion('El medico y su especialidad deben estar activos.', 409);
+            }
+            $bloque = array_intersect_key($datos, array_flip(['idMedico', 'horaInicio', 'horaFin', 'duracionCitaMinutos']));
+            for ($fecha = new \DateTimeImmutable($datos['fechaInicial']);
+                $fecha->format('Y-m-d') <= $datos['fechaFinal']; $fecha = $fecha->modify('+1 day')) {
+                if (!in_array((int) $fecha->format('N'), $datos['diasSemana'], true)) { $resumen['diasNoSeleccionados']++; continue; }
+                $resumen['fechasProcesadas']++;
+                $bloque['fechaAtencion'] = $fecha->format('Y-m-d');
+                $detalle = ['fecha' => $bloque['fechaAtencion'], 'turnosCreados' => 0];
+                if (new \DateTimeImmutable($bloque['fechaAtencion'] . ' ' . $bloque['horaInicio']) <= $this->obtenerAhora()) {
+                    $resumen['fechasPasadas']++;
+                    $detalle += ['estado' => 'omitida', 'mensaje' => 'El inicio ya paso; no se genero el bloque.'];
+                } elseif ($this->horarioRepository->existeHorarioEquivalente($bloque)) {
+                    $resumen['fechasExistentes']++;
+                    $detalle += ['estado' => 'existente', 'mensaje' => 'El bloque ya existe. Se conservaron sus turnos y citas.'];
+                } elseif ($this->horarioRepository->existeCruceHorario($bloque)) {
+                    $resumen['conflictosDetectados']++;
+                    $detalle += ['estado' => 'conflicto', 'mensaje' => 'Se cruza con otro bloque; se conservo el horario anterior.'];
+                } else {
+                    $creado = $this->horarioRepository->registrarHorarioConTurnos($bloque);
+                    $resumen['fechasCreadas']++;
+                    $resumen['turnosCreados'] += $creado['cantidadTurnos'];
+                    $detalle['turnosCreados'] = $creado['cantidadTurnos'];
+                    $detalle += ['estado' => 'creada', 'mensaje' => 'Turnos consecutivos generados.', 'idHorarioMedico' => $creado['idHorarioMedico']];
+                }
+                $resumen['detalle'][] = $detalle;
+            }
+            $this->conexionPostgresql->commit();
+            return $resumen;
+        } catch (\Throwable $error) {
+            if ($this->conexionPostgresql->inTransaction()) { $this->conexionPostgresql->rollBack(); }
+            if ($error instanceof \PDOException && in_array((string) $error->getCode(), ['23505', '40P01', '40001'], true)) {
+                throw new ErrorAplicacion('Otro proceso modifico la agenda. No se guardo este lote; vuelve a generarlo.', 409);
+            }
+            throw $error;
+        }
+    }
+
 }

@@ -17,22 +17,26 @@ final class RutasAgenda
         if ($metodo === 'GET' && $ruta === '/api/disponibilidad/configuracion') { $horarioController->obtenerConfiguracionAgenda($usuario); }
         if ($metodo === 'GET' && $ruta === '/api/disponibilidad/medicos') { $horarioController->listarMedicosDisponibles($usuario); }
         if ($metodo === 'GET' && $ruta === '/api/disponibilidad/turnos') { $horarioController->listarTurnosDisponibles($usuario); }
+        if ($metodo === 'POST' && $ruta === '/api/horarios/programacion') { $horarioController->programarHorariosPorPeriodo($usuario); }
         if ($ruta === '/api/horarios') {
             if ($metodo === 'GET') { $horarioController->listarHorarios($usuario); }
             if ($metodo === 'POST') { $horarioController->registrarHorario($usuario); }
         }
         $citaController = new CitaController(new CitaService($conexion));
         if ($metodo === 'GET' && $ruta === '/api/agenda/medicos') { $citaController->listarMedicosParaAgenda($usuario); }
+        if ($metodo === 'GET' && $ruta === '/api/citas/activas') { $citaController->listarCitasActivasPaciente($usuario); }
         if ($ruta === '/api/citas') {
             if ($metodo === 'GET') { $citaController->listarCitas($usuario); }
             if ($metodo === 'POST') { $citaController->reservarCita($usuario); }
         }
-        if (preg_match('#^/api/citas/([1-9][0-9]*)(?:/(cancelacion|reprogramacion|asistencia|atencion))?$#', $ruta, $coincidencia)) {
+        if (preg_match('#^/api/citas/([1-9][0-9]*)(?:/(cancelacion|reprogramacion|asistencia|atencion|inasistencia|confirmacion))?$#', $ruta, $coincidencia)) {
             $idCita = SolicitudHttp::obtenerIdPositivo($coincidencia[1]);
             $accion = $coincidencia[2] ?? '';
             if ($metodo === 'GET' && $accion === '') { $citaController->obtenerCita($usuario, $idCita); }
             if ($metodo === 'PATCH' && $accion === 'cancelacion') { $citaController->cancelarCita($usuario, $idCita); }
             if ($metodo === 'PATCH' && $accion === 'reprogramacion') { $citaController->reprogramarCita($usuario, $idCita); }
+            if ($metodo === 'PATCH' && $accion === 'confirmacion') { $citaController->confirmarCita($usuario, $idCita); }
+            if ($metodo === 'PATCH' && $accion === 'inasistencia') { $citaController->marcarCitaInasistencia($usuario, $idCita); }
             if ($metodo === 'PATCH' && $accion === 'atencion') { $citaController->marcarCitaAtendida($usuario,$idCita); }
             if ($metodo === 'PATCH' && $accion === 'asistencia') { $citaController->registrarAsistencia($usuario, $idCita); }
         }

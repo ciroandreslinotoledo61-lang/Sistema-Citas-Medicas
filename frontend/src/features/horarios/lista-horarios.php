@@ -1,5 +1,5 @@
 <?php $esAdministrador = $usuarioAutenticado['codigoRol'] === 'administrador'; ?>
-<section class="titulo-vista"><div><p class="sobretitulo">DISPONIBILIDAD</p><h1><?= $esAdministrador ? 'Horarios de atencion' : 'Mis horarios' ?></h1><p><?= $esAdministrador ? 'Configura bloques de atencion y genera turnos automaticamente.' : 'Consulta los bloques de atencion asignados por Administracion.' ?></p></div><?php if ($esAdministrador): ?><a class="boton" href="/horarios/nuevo"><?= mostrarIcono('mas') ?> Crear horario</a><?php endif; ?></section>
+<section class="titulo-vista"><div><p class="sobretitulo">DISPONIBILIDAD</p><h1><?= $esAdministrador ? 'Horarios de atencion' : 'Mis horarios' ?></h1><p><?= $esAdministrador ? 'Configura bloques de atencion y genera turnos automaticamente.' : 'Consulta los bloques de atencion asignados por Administracion.' ?></p></div><?php if ($esAdministrador): ?><a class="boton" href="/horarios/nuevo"><?= mostrarIcono('mas') ?> Programar horarios</a><?php endif; ?></section>
 <section class="tarjeta tarjeta-listado" aria-label="Horarios de atencion">
     <div class="cabecera-listado"><h2>Bloques registrados</h2></div>
     <form id="formulario-busqueda" class="barra-busqueda filtros-agenda" method="get">

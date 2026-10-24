@@ -29,23 +29,30 @@ try {
     $fecha=(new DateTimeImmutable('+10 days'))->format('Y-m-d'); $ahora=new DateTimeImmutable($fecha.' 08:00');
     $horarios=new HorarioMedicoService($conexion,$ahora); $citas=new CitaService($conexion,$ahora);
     $pacientes=new PacienteService($conexion); $reportes=new ReporteService($conexion);
-    $bloque=$horarios->registrarHorario($administrador,['idMedico'=>$idMedico,'fechaAtencion'=>$fecha,'horaInicio'=>'09:00','horaFin'=>'20:00']);
-    comprobarReporte($bloque['cantidadTurnos']===22,'Once horas deben generar 22 turnos.');
+    $bloque=$horarios->registrarHorario($administrador,['idMedico'=>$idMedico,'fechaAtencion'=>$fecha,'horaInicio'=>'09:00','horaFin'=>'17:00']);
+    comprobarReporte($bloque['cantidadTurnos']===16,'Ocho horas deben generar 16 turnos.');
     $turnos=$horarios->listarTurnosDisponibles($paciente,['idMedico'=>$idMedico,'fecha'=>$fecha]); $reservas=[];
-    foreach ($turnos as $turno) { $reservas[]=$citas->reservarCita($paciente,['idTurno'=>$turno['idTurno']]); }
+    $reservas[]=$citas->reservarCita($paciente,['idTurno'=>$turnos[0]['idTurno']]);
     rechazarReporte(fn()=>$citas->marcarCitaAtendida($medico,$reservas[0]['idCita']),409);
     $alInicio=new CitaService($conexion,new DateTimeImmutable($fecha.' 09:00'));
     rechazarReporte(fn()=>$alInicio->marcarCitaAtendida($otroMedico,$reservas[0]['idCita']),404);
     rechazarReporte(fn()=>$alInicio->marcarCitaAtendida($paciente,$reservas[0]['idCita']),403);
     comprobarReporte($alInicio->marcarCitaAtendida($medico,$reservas[0]['idCita'])['estadoCita']==='atendida','El medico atiende su propia cita.');
     rechazarReporte(fn()=>$alInicio->marcarCitaAtendida($medico,$reservas[0]['idCita']),409);
+    $reservas[]=$citas->reservarCita($paciente,['idTurno'=>$turnos[1]['idTurno']]);
     $citas->cancelarCita($recepcionista,$reservas[1]['idCita'],[]);
+    $reservas[]=$citas->reservarCita($paciente,['idTurno'=>$turnos[2]['idTurno']]);
     (new CitaService($conexion,new DateTimeImmutable($fecha.' 10:30')))->registrarAsistencia($recepcionista,$reservas[2]['idCita'],['asistenciaRegistrada'=>'no_asistio']);
+    // Historial con 22 citas sin crear varias activas simultaneamente.
+    for ($indice=0; $indice<19; $indice++) {
+        $reservaHistorica=$citas->reservarCita($paciente,['idTurno'=>$turnos[3]['idTurno']]);
+        $citas->cancelarCita($paciente,$reservaHistorica['idCita'],[]);
+    }
     $filtros=['fechaDesde'=>$fecha,'fechaHasta'=>$fecha,'idMedico'=>$idMedico];
     foreach ([$recepcionista,$medico,$paciente] as $actor) { rechazarReporte(fn()=>$reportes->obtenerReporteAdministrativo($actor,$filtros),403); }
     $reporte=$reportes->obtenerReporteAdministrativo($administrador,$filtros);
     comprobarReporte($reporte['totales']['total']===22 && count($reporte['citas']['elementos'])===20 && $reporte['citas']['hayPaginaSiguiente'],'Totales independientes de la pagina.');
-    comprobarReporte($reporte['totales']['atendidas']===1 && $reporte['totales']['canceladas']===1 && $reporte['totales']['inasistencias']===1,'Estados incluidos en los totales.');
+    comprobarReporte($reporte['totales']['atendidas']===1 && $reporte['totales']['canceladas']===20 && $reporte['totales']['inasistencias']===1,'Estados incluidos en los totales.');
     $segunda=$reportes->obtenerReporteAdministrativo($administrador,$filtros+['paginaCitas'=>2]);
     comprobarReporte(count($segunda['citas']['elementos'])===2 && !$segunda['citas']['hayPaginaSiguiente'] && $segunda['totales']['total']===22,'Segunda pagina.');
     comprobarReporte($reportes->obtenerReporteAdministrativo($administrador,$filtros+['estado'=>'atendida'])['totales']['total']===1,'Filtro de estado.');

@@ -1,8 +1,55 @@
-# Pruebas de Clinica - version 1.3.0
+# Pruebas de la version 1.4
 
-## Validaciones y permisos sin base de datos
+## Entorno usado y limites
 
-Desde la raiz del proyecto:
+Revision de esta entrega: PHP 8.2 WebAssembly, codigo real de servicios/repositorios y SQL en PostgreSQL embebido PGlite mediante un adaptador PDO exclusivo de QA. Chromium uso las vistas PHP renderizadas y JavaScript/CSS del proyecto, con solicitudes a la API PHP real y sesiones de los cuatro roles. Se usaron datos ficticios. El adaptador y las herramientas temporales no se distribuyen ni forman parte del proyecto.
+
+No se ejecuto Apache/XAMPP, el cliente cURL del frontend ni PDO nativo contra un servidor PostgreSQL con conexiones independientes. La prueba de concurrencia se entrega implementada y revisada por sintaxis, pero no se declara aprobada. Los resultados de entregas anteriores no se presentan como nuevas ejecuciones.
+
+## Resultados ejecutados
+
+| Prueba | Resultado observado |
+| --- | --- |
+| test_validaciones.php | Aprobada: entradas, normalizacion, roles y fechas |
+| test_permisos.php | Aprobada: permisos, datos publicos, hash y CSRF |
+| test_validaciones_especialidades_medicos.php | Aprobada: datos y permisos de catalogo |
+| test_validaciones_agenda.php | Aprobada: 95 comprobaciones de agenda y matriz de permisos |
+| test_validaciones_actualizacion.php | Aprobada: 15 comprobaciones |
+| test_registro_paciente.php | Aprobada: usuario, paciente, historia y rollback |
+| test_gestion_especialidades_medicos.php | Aprobada: altas/edicion/estados y sesiones |
+| test_gestion_citas.php | Aprobada: 49 comprobaciones, incluida reprogramacion atomica |
+| test_reportes_perfiles.php | Aprobada: 30 comprobaciones; 22 citas historicas sin varias activas, dos paginas y filtros |
+| test_programacion_periodos.php | Aprobada: 96 comprobaciones de generacion, reservas, estados, permisos y auditoria |
+| test_migracion_005.php | Aprobada: 15 comprobaciones sobre datos legados y repeticion |
+| Sintaxis PHP y JavaScript | 113 archivos PHP revisados con TOKEN_PARSE y 30 modulos JS con node --check |
+| Navegador | Programar mes, repetir, reservar, bloquear segunda cita en Paciente/Recepcion, cancelacion medica, atencion, inasistencia e historial |
+| Seguridad HTTP | 403 por rol, 404 por cita ajena, 409 por estado/reserva y 419 sin CSRF |
+| Responsive | Seis vistas a 1440, 768, 390 y 320 px; sin overflow de pagina ni excepciones JS; tablas desplazables |
+| test_reserva_concurrente.php | Pendiente de ejecucion con PHP CLI/PDO PostgreSQL nativos |
+
+## Cobertura solicitada
+
+| Escenario | Prueba |
+| --- | --- |
+| Mes completo y solo dias elegidos | test_programacion_periodos |
+| No generar fechas/horas pasadas | test_programacion_periodos y test_validaciones_agenda |
+| Limites 08:00-17:00 y minutos 00/30 | test_programacion_periodos; selects verificados en navegador |
+| Dieciocho turnos consecutivos; media jornada con ocho | test_programacion_periodos verifica cada inicio/fin |
+| Duplicados y superposicion | Repetir periodo y cruzar bloques; tests de agenda diaria |
+| Una sola activa, incluso otro medico sin cruce | test_programacion_periodos, SQL directo y navegador |
+| Liberar regla tras cancelacion/atencion/inasistencia | test_programacion_periodos; incluye atencion antes del fin nominal |
+| Medico atiende y registra inasistencia | Servicio y navegador; inicio/fin validados |
+| Cancelacion medica con motivo obligatorio | Servicio rechaza vacio, formulario required y envio real |
+| Prohibir cambios de citas ajenas | Servicio y API 404 |
+| Estados finales e historial | Rechazo por servicio/SQL, actor/tiempo y conservacion de citas |
+| Recepcion conserva asistencia e inasistencia | test_programacion_periodos y test_gestion_citas |
+| Movil | Horarios, reserva de paciente y recepcion, Mi agenda, detalle y reportes |
+
+## Ejecutar en Windows
+
+Desde la raiz del proyecto. Requiere PHP 8.2+, pdo_pgsql y las extensiones indicadas en README.
+
+Pruebas sin base:
 
 ```powershell
 php backend/tests/test_validaciones.php
@@ -12,93 +59,54 @@ php backend/tests/test_validaciones_agenda.php
 php backend/tests/test_validaciones_actualizacion.php
 ```
 
-La prueba de agenda realiza 85 comprobaciones de identificadores, fechas reales, anos bisiestos, tipos incorrectos, turnos de 30 minutos, limites temporales, roles desconocidos, cuentas inactivas y matriz de permisos.
+Para integracion, usa una base de pruebas EXISTENTE y aislada cuyo nombre termine en _pruebas, con migraciones 001 a 005 y datos iniciales de prueba. No se crea ninguna base automaticamente. Si no tienes ese entorno, no ejecutes estos scripts contra la base de trabajo. El seeder nunca debe ejecutarse en una base con usuarios.
 
-## Integracion con una base separada
-
-Crea una base exclusiva de pruebas, desde pgAdmin conectado a postgres:
-
-```sql
-CREATE DATABASE citas_medicas_pruebas WITH ENCODING 'UTF8';
-```
-
-En PowerShell, desde la raiz:
+Las variables del proceso tienen prioridad sobre .env. Este ejemplo cambia solo el entorno de esta terminal y lo restaura al terminar; sustituye el nombre por el de tu base de pruebas. Comprueba que DB_HOST/DB_USER/DB_PASS correspondan tambien al entorno de pruebas.
 
 ```powershell
-$env:DB_NAME = "citas_medicas_pruebas"
-php backend/scripts/migrar-base-datos.php
-php backend/scripts/actualizar-especialidades-medicos.php
-php backend/scripts/actualizar-roles-citas.php
-php backend/scripts/actualizar-agenda-reportes.php
-php backend/scripts/cargar-datos-iniciales.php
-php backend/tests/test_registro_paciente.php
-php backend/tests/test_gestion_especialidades_medicos.php
-php backend/tests/test_gestion_citas.php
-php backend/tests/test_reportes_perfiles.php
-Remove-Item Env:DB_NAME
+$baseAnteriorClinica = [Environment]::GetEnvironmentVariable('DB_NAME', 'Process')
+try {
+    $env:DB_NAME = 'citas_medicas_pruebas'
+    php backend/scripts/verificar-entorno.php --conexion
+    if ($LASTEXITCODE -ne 0) { throw 'Conexion de pruebas no disponible.' }
+    # Si tu base de pruebas ya tiene 004, aplica solo la nueva migracion:
+    php backend/scripts/actualizar-programacion-mensual.php
+    if ($LASTEXITCODE -ne 0) { throw 'Fallo la migracion de la base de pruebas.' }
+    $pruebasClinica = @(
+        'test_registro_paciente.php',
+        'test_gestion_especialidades_medicos.php',
+        'test_gestion_citas.php',
+        'test_reportes_perfiles.php',
+        'test_programacion_periodos.php',
+        'test_migracion_005.php',
+        'test_reserva_concurrente.php'
+    )
+    foreach ($pruebaClinica in $pruebasClinica) {
+        php "backend/tests/$pruebaClinica"
+        if ($LASTEXITCODE -ne 0) { throw "Fallo: $pruebaClinica" }
+    }
+} finally {
+    if ($null -eq $baseAnteriorClinica) {
+        Remove-Item Env:DB_NAME -ErrorAction SilentlyContinue
+    } else { $env:DB_NAME = $baseAnteriorClinica }
+}
 ```
 
-DB_NAME del entorno tiene prioridad sobre backend/.env. Los demas datos de conexion y SEED_USERS_PASSWORD proceden del archivo, salvo que los definas tambien como variables del sistema. Si vaciaste SEED_USERS_PASSWORD despues de instalar, configura una clave de prueba antes de cargar la base nueva.
+SoportePruebasAgenda verifica el sufijo _pruebas. Los tests crean sus propios usuarios, medicos, pacientes y citas, y limpian solo esos datos. Ejecuta los scripts en serie: test_gestion_citas agrega una restriccion temporal de prueba para comprobar rollback y la retira en finally. test_migracion_005 crea un esquema aleatorio dentro de la base de pruebas, aplica 001-004 alli, prueba 005 dos veces y elimina solo ese esquema; necesita permiso CREATE SCHEMA. No toca el esquema public de la aplicacion.
 
-Si la base de pruebas ya existe, aplica solo las migraciones pendientes y ejecuta los tests; no repitas la migracion inicial ni el seeder. En Linux/macOS usa export DB_NAME=citas_medicas_pruebas y despues unset DB_NAME.
+Los tests de turnos y periodos esperan la configuracion inicial: duracion 30 y clinica 08:00-17:00. Si tu entorno la modifico, usa esos valores en variables de esta terminal de pruebas y restablecelos despues.
 
-Las pruebas de integracion se rechazan si DB_NAME no termina en _pruebas. Crean sus propios registros con identificadores unicos y eliminan esos registros al terminar; no utilizan pacientes reales. No ejecutes otras pruebas a la vez: test_gestion_citas.php agrega temporalmente una restriccion ligada a su propia cita para forzar un fallo y comprobar el rollback, y la retira en finally.
+## Concurrencia nativa pendiente
 
-## Cobertura de integracion
+Ejecuta test_reserva_concurrente.php en CLI con proc_open habilitado. Inicia dos procesos PHP independientes, sincroniza su salida a reservar con una barrera y verifica:
 
-- test_registro_paciente.php: registro atomico de usuario/paciente/historia, rol fijo y rollback por CI duplicada.
-- test_gestion_especialidades_medicos.php: altas, edicion, unicidad normalizada, especialidad activa, estado medico, rol fijo, busqueda e invalidacion de sesion.
-- test_gestion_citas.php: 49 comprobaciones de horarios, citas, permisos y estados.
+1. Dos pacientes intentan ocupar el mismo turno: exactamente un 201 y un 409.
+2. Un paciente intenta reservar dos turnos de medicos distintos, sin cruce de horas: exactamente un 201 y un 409.
 
-La prueba de citas comprueba:
+El script cancela las reservas de prueba y elimina sus propios datos. No necesita dos navegadores ni usa el servidor php -S; este ultimo, con un unico proceso, no demuestra concurrencia real.
 
-1. Solo Administrador crea bloques. Cruces rechazados, bloques contiguos admitidos y cuatro turnos por dos horas.
-2. El Medico consulta solo sus bloques; idMedico en el filtro no evade ese alcance.
-3. Reserva propia del Paciente e identificacion de paciente desde Recepcion.
-4. Rechazo de reserva para otra persona, citas ajenas y acceso a la agenda de otro medico.
-5. Rechazo de doble ocupacion desde el servicio y directamente por el indice unico SQL.
-6. Rechazo de dos citas del mismo paciente con medicos diferentes a la misma hora.
-7. Reprogramacion solo administrativa; trazabilidad mediante idCitaOrigen.
-8. Conservacion de la reserva original si el turno nuevo esta ocupado.
-9. Rollback completo ante un fallo SQL forzado al insertar la nueva cita, despues de modificar la anterior.
-10. Anulacion propia, conservacion del registro y reutilizacion de su turno.
-11. Rechazo de anulacion iniciada o repetida, reserva pasada y turno inhabilitado.
-12. Asistencia desde el inicio e inasistencia desde el fin; no se duplican ni equivalen a registrar consulta.
-13. Medico inactivo sin disponibilidad; desactivacion rechazada cuando quedan citas vigentes futuras.
+Queda por verificar tambien en PostgreSQL nativo: programaciones simultaneas superpuestas, reprogramacion mientras otro proceso toma el destino, cancelacion concurrente con reserva y migracion sobre una copia del volumen real. El entorno embebido permite probar reglas, indices y rollback, pero no esos bloqueos entre conexiones.
 
-## Revision ejecutada en esta entrega
+## Revision manual de instalacion
 
-| Comprobacion | Resultado y alcance |
-| --- | --- |
-| Sintaxis | Archivos PHP analizados con TOKEN_PARSE; modulos JavaScript comprobados con node --check |
-| Validaciones | Cinco scripts sin base aprobados; agenda: 85 comprobaciones; actualizacion: 15 rechazos de entradas invalidas |
-| Servicios y SQL | Cuatro scripts de integracion aprobados con PHP 8.2 WebAssembly y adaptador PDO de QA sobre PGlite; agenda: 49 comprobaciones; reportes/perfiles: 30 |
-| Migracion | 004 probada desde esquema 001-003 con reservas antiguas; mantiene horas e IDs, convierte Asistio, genera intervalos completos de 30 y no duplica al repetirse |
-| Conflictos | SQL rechaza cruce con reserva anterior de 15; anulacion libera; CHECK rechaza duracion incoherente |
-| Reportes | Totales sobre 22 citas y dos paginas, filtros, estados, registros al final del dia en Bolivia, rechazo a roles ajenos |
-| Perfiles | Edicion completa, rollback por CI duplicada, conservacion de clave/rol/historia, desactivacion y rechazo de reservas nuevas |
-| Navegador | Chromium con vistas PHP renderizadas y API PHP real mediante adaptador PDO de QA: reportes y paginacion, edicion/estado de pacientes, filtro de medico, reserva de 30, telefono medico y atencion |
-| Seguridad HTTP | Sesiones de cuatro roles, CSRF 419 y permisos 403 en nuevas rutas comprobados |
-| Responsive | Seis vistas a 1440, 768, 390 y 320 px: sin desbordamiento de pagina ni excepciones JavaScript; tablas con desplazamiento horizontal |
-
-El adaptador PDO se usa solo en herramientas temporales de QA, no se entrega ni altera el runtime del proyecto. Las vistas se renderizaron con usuarios de prueba; la autenticacion de su API si se ejercito. No se probo el cliente cURL del frontend ni el despliegue Apache/XAMPP con PDO nativo en esta revision.
-
-PGlite ejecuta PostgreSQL embebido, pero no demuestra concurrencia real entre conexiones independientes. Los bloqueos, las sesiones PHP nativas y la integracion completa de instalacion deben verificarse en tu equipo siguiendo el procedimiento siguiente. No se usaron datos reales.
-
-## Concurrencia y entorno de instalacion: comprobacion pendiente
-
-En PostgreSQL nativo, con la base de pruebas y dos sesiones independientes:
-
-1. Crear un bloque futuro y preparar dos pacientes distintos con el mismo idTurno.
-2. Enviar las dos reservas al mismo tiempo desde dos procesos/servidores PHP independientes. Debe haber una sola confirmada y un conflicto 409; comprobar tambien la tabla citas.
-3. Repetir con un mismo paciente y dos turnos que se cruzan de medicos distintos. Debe confirmarse solo una.
-4. Intentar crear dos bloques superpuestos del mismo medico simultaneamente. Debe guardarse solo uno con todos sus turnos.
-5. Reprogramar mientras otra sesion reserva el nuevo turno. Solo una operacion debe ocuparlo; si falla reprogramar, la cita original debe seguir vigente.
-6. Repetir reservas simultaneas con un intervalo nuevo de 30 minutos que cruce una reserva anterior de 15; debe permitirse solo una ocupacion.
-7. Comprobar en Apache/XAMPP cookies, CSRF, permisos, fechas y ambos .env siguiendo el recorrido del README.
-
-El servidor incorporado php -S con un unico proceso atiende solicitudes en serie: dos pestanas contra ese unico proceso no son una prueba suficiente de concurrencia entre conexiones.
-
-## Antes del commit
-
-Verifica la migracion 004 y el recorrido del README. Revisa git diff, conserva tus .env y confirma que no se incluyan credenciales ni bases de datos. Consulta ACTUALIZAR-ESTA-VERSION.md para una instalacion existente.
+Sigue el recorrido de ACTUALIZAR-ESTA-VERSION.md. En Windows verifica cookies/sesion, ambos .env preservados, cURL del frontend, funcionamiento Apache/XAMPP si lo utilizas y reporte del script 005. No modifiques fechas ni estados de datos reales para probar asistencia. Solo despues de revisar los resultados prepara commits manuales.

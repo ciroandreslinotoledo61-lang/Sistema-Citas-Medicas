@@ -1,4 +1,4 @@
-# API de Clinica (version 1.3.0)
+# API de Clinica (version 1.4.0)
 
 Base local: `http://127.0.0.1:8000/api`.
 
@@ -154,7 +154,7 @@ Todas requieren sesion activa. En todas las mutaciones se exige CSRF. Los identi
 | GET | /citas | Todos; Paciente: propias, Medico: asignadas, Administrador/Recepcionista: todas |
 | POST | /citas | Paciente: para si mismo; Administrador/Recepcionista: para paciente seleccionado |
 | GET | /citas/{idCita} | Mismo alcance que el listado |
-| PATCH | /citas/{idCita}/cancelacion | Paciente: propia; Administrador/Recepcionista: cualquiera vigente futura |
+| PATCH | /citas/{idCita}/cancelacion | Paciente: propia; Medico: asignada con motivo obligatorio; Administrador/Recepcionista: cualquiera vigente futura |
 | PATCH | /citas/{idCita}/reprogramacion | Administrador, Recepcionista |
 | PATCH | /citas/{idCita}/asistencia | Administrador, Recepcionista |
 
@@ -168,7 +168,7 @@ POST /horarios:
 {"idMedico": 1, "fechaAtencion": "2030-01-02", "horaInicio": "08:00", "horaFin": "09:00"}
 ```
 
-Cambiar la fecha por una futura dentro del siguiente ano. Respuesta 201, datos con idHorarioMedico, cantidadTurnos y los campos anteriores. Horas en HH:mm, pasos de 5 minutos y bloque multiplo de la duracion configurada (30 por defecto), mismo dia y sin cruces. GET /horarios devuelve datos.elementos con idHorarioMedico, idMedico, nombreMedico, fechaAtencion, horaInicio, horaFin y cantidadTurnos; ademas pagina y hayPaginaSiguiente.
+Cambiar la fecha por una futura dentro del siguiente ano. Respuesta 201, datos con idHorarioMedico, cantidadTurnos y los campos anteriores. Horas en HH:mm, minutos 00/30 dentro del horario de la clinica (08:00-17:00 por defecto) y bloque multiplo de la duracion configurada (30 por defecto), mismo dia y sin cruces. GET /horarios devuelve datos.elementos con idHorarioMedico, idMedico, nombreMedico, fechaAtencion, horaInicio, horaFin y cantidadTurnos; ademas pagina y hayPaginaSiguiente.
 
 ### Catalogo y turnos
 
@@ -192,7 +192,7 @@ PATCH /citas/{idCita}/cancelacion:
 {"motivoCancelacion": "Cambio de planes"}
 ```
 
-Motivo opcional hasta 300 caracteres; se admite un objeto JSON vacio {}. Respuesta 200 con el detalle actualizado. Solo citas vigentes antes del inicio y sin asistencia registrada.
+Motivo hasta 300 caracteres. Obligatorio para Medico; opcional para Administrador, Recepcionista y Paciente, quienes pueden enviar {}. Respuesta 200 con el detalle actualizado. Solo citas vigentes antes del inicio y sin asistencia registrada.
 
 PATCH /citas/{idCita}/reprogramacion:
 
@@ -219,7 +219,7 @@ El listado en datos.elementos y el detalle en datos usan:
 - Reserva: fechaHoraInicio, fechaHoraFin, estadoCita, motivoCita, motivoCancelacion, asistenciaRegistrada.
 - Acciones disponibles: puedeCancelar, puedeReprogramar, puedeMarcarAtendida, puedeRegistrarAsistencia, puedeRegistrarInasistencia (booleanos calculados en el servidor).
 
-Las fechas/horas de turnos son locales a la clinica, formato YYYY-MM-DD HH:mm:ss; el frontend no las convierte a la zona del navegador. Frontend y backend usan internamente la hora de Bolivia. Los responsables internos de auditoria y los datos de autenticacion no se incluyen.
+Las fechas/horas de turnos son locales a la clinica, formato YYYY-MM-DD HH:mm:ss; el frontend no las convierte a la zona del navegador. Frontend y backend usan internamente la hora de Bolivia. historialCambios incluye los responsables y tiempos de cada accion desde 005. No se incluyen datos de autenticacion.
 
 Los booleanos orientan la interfaz. Cada escritura vuelve a comprobar permisos, propiedad, hora y estado. Una cita ajena devuelve 404; un rol sin operacion, 403; turno ocupado, cruce, medico inactivo o cita no modificable, 409; entrada invalida, 422. Sin sesion, 401; sin CSRF, 419.
 
@@ -229,7 +229,7 @@ Desactivar medico o cambiar su especialidad produce 409 si tiene citas pendiente
 
 | Metodo | Ruta | Permiso / datos |
 | --- | --- | --- |
-| GET | /disponibilidad/configuracion | Sesion; datos.duracionCitaMinutos |
+| GET | /disponibilidad/configuracion | Sesion; datos.duracionCitaMinutos, horaApertura, horaCierre y horasPermitidas |
 | GET | /agenda/medicos | Administrador/Recepcion: todos, incluidos inactivos; Medico: solo el propio |
 | PATCH | /citas/{idCita}/atencion | Administrador, Recepcionista, Medico asignado; JSON {}; cambia a atendida/asistio |
 | PATCH | /pacientes/{idPaciente} | Administrador/Recepcion; datos personales y contacto completos, sin claves |
@@ -239,3 +239,41 @@ Desactivar medico o cambiar su especialidad produce 409 si tiene citas pendiente
 GET /pacientes acepta estado vacio, activo o inactivo. Sus objetos agregan sexoPaciente y pacienteActivo. GET /citas acepta idMedico e idPaciente opcionales, siempre intersectados con el alcance del usuario. GET /horarios agrega duracionCitaMinutos a cada bloque. Medicos agrega telefonoMedico a la entrada y salida.
 
 GET /reportes acepta fechaDesde/fechaHasta (AAAA-MM-DD, inclusivas; por defecto inicio de mes y hoy), idMedico, idEspecialidad, estado, paginaCitas y paginaPacientes. Responde datos.filtros, totales (total, programadas, confirmadas, atendidas, canceladas, inasistencias, reprogramadas, pacientesRegistrados), porMedico, porEspecialidad, porEstado, citas, pacientes, medicosDisponibles y especialidadesDisponibles. Cada listado tiene elementos, pagina y hayPaginaSiguiente; veinte filas por pagina. Todas las mutaciones nuevas exigen CSRF.
+
+## Contratos agregados en 1.4.0
+
+Todas estas rutas usan el prefijo /api, sesion vigente y, al escribir, token CSRF. Se aplican permisos en servicio y propiedad de la cita en cada escritura.
+
+| Metodo | Ruta | Acceso |
+| --- | --- | --- |
+| POST | /horarios/programacion | Solo Administrador |
+| GET | /citas/activas | Paciente: propias; Administrador/Recepcionista: idPaciente obligatorio |
+| PATCH | /citas/{idCita}/inasistencia | Administrador, Recepcionista y Medico asignado |
+| PATCH | /citas/{idCita}/confirmacion | Administrador y Recepcionista |
+
+### Programar un periodo
+
+```json
+{"idMedico":1,"fechaInicial":"2027-01-01","fechaFinal":"2027-01-31","diasSemana":[1,2,3,4,5],"horaInicio":"08:00","horaFin":"17:00"}
+```
+
+Dias enteros 1 a 7; arreglo no vacio. Selecciona fechas dentro del limite de un ano. La duracion se obtiene de configuracion, nunca del JSON enviado. Se conserva POST /horarios para un dia.
+
+Respuesta 200: mensaje y datos con fechasProcesadas, fechasCreadas, turnosCreados, fechasExistentes, fechasPasadas, conflictosDetectados, diasNoSeleccionados y detalle. Cada elemento de detalle contiene fecha, estado (creada, existente, conflicto u omitida), turnosCreados, mensaje y, solo si se creo, idHorarioMedico. Fechas procesadas cuenta dias seleccionados. Las fechas pasadas se omiten. Cruces esperados no abortan las otras fechas; errores SQL inesperados revierten todo el lote. Repetir conserva los bloques existentes.
+
+### Cita activa y estados
+
+GET /citas/activas devuelve datos como arreglo de citas. Puede contener varias reservas legadas; en ese caso todas deben resolverse. Paciente no puede consultar otro idPaciente; Medico no tiene este endpoint. POST /citas rechaza con 409 una segunda cita pendiente/confirmada, incluso sin cruce. El mismo control se aplica a reprogramacion excluyendo solo la cita original.
+
+PATCH /inasistencia recibe {} y requiere que haya terminado el turno. PATCH /confirmacion recibe {} y requiere cita pendiente y futura. Ambos devuelven 200 con mensaje y cita en datos. /atencion sigue vigente desde el inicio. El endpoint /asistencia sigue siendo administrativo y conserva asistio/no_asistio.
+
+| Etiqueta visible | Valor estadoCita/API/SQL |
+| --- | --- |
+| Programada | pendiente |
+| Confirmada | confirmada |
+| Atendida | atendida |
+| Cancelada | cancelada |
+| Inasistencia | no_asistio |
+| Reprogramada (historial existente) | reprogramada |
+
+La cita agrega puedeConfirmar, requiereMotivoCancelacion y explicacionAcciones, ademas de historialCambios. Cada evento contiene estadoAnterior (null al crear), estadoNuevo, asistencia, idUsuario, nombreUsuario, rolUsuario, fechaHora (con desplazamiento horario) y motivoCancelacion. No se inventan eventos para reservas anteriores a 005. Las citas finales no admiten nuevas transiciones.

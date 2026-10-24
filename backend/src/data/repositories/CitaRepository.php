@@ -83,7 +83,7 @@ final class CitaRepository
         $consulta = $this->conexionPostgresql->prepare(
             "SELECT citas.id_cita FROM citas JOIN turnos ON turnos.id_turno = citas.id_turno
              WHERE citas.id_paciente = :idPaciente AND citas.id_cita <> :idCitaExcluida
-             AND citas.estado_cita NOT IN ('cancelada', 'reprogramada')
+             AND citas.estado_cita IN ('pendiente', 'confirmada')
              AND turnos.fecha_hora_inicio < :fin AND turnos.fecha_hora_fin > :inicio LIMIT 1"
         );
         $consulta->execute(['idPaciente' => $idPaciente, 'idCitaExcluida' => $idCitaExcluida, 'inicio' => $inicio, 'fin' => $fin]);
@@ -145,6 +145,22 @@ final class CitaRepository
             FROM medicos m JOIN usuarios u USING(id_usuario)" . ($usuario->codigoRol === 'medico' ? ' WHERE m.id_usuario=:idUsuario' : '') . ' ORDER BY nombre_medico,m.id_medico');
         $consulta->execute($usuario->codigoRol === 'medico' ? ['idUsuario'=>$usuario->idUsuario] : []);
         return array_map(static fn(array $fila): array => ['idMedico'=>(int)$fila['id_medico'], 'nombreMedico'=>$fila['nombre_medico'], 'medicoActivo'=>in_array($fila['usuario_activo'],[true,1,'1','t','true'],true)], $consulta->fetchAll());
+    }
+
+    public function pacienteTieneCitaActiva(int $idPaciente, int $idCitaExcluida = 0): bool
+    {
+        $consulta = $this->conexionPostgresql->prepare("SELECT id_cita FROM citas WHERE id_paciente = :idPaciente
+            AND id_cita <> :idCitaExcluida AND estado_cita IN ('pendiente', 'confirmada') LIMIT 1");
+        $consulta->execute(compact('idPaciente', 'idCitaExcluida'));
+        return $consulta->fetchColumn() !== false;
+    }
+
+    public function listarCitasActivasPaciente(int $idPaciente): array
+    {
+        $consulta = $this->conexionPostgresql->prepare(self::CONSULTA_CITA .
+            " WHERE citas.id_paciente = :idPaciente AND citas.estado_cita IN ('pendiente', 'confirmada') ORDER BY turnos.fecha_hora_inicio, citas.id_cita");
+        $consulta->execute(['idPaciente' => $idPaciente]);
+        return array_map(static fn (array $registro): Cita => new Cita($registro), $consulta->fetchAll());
     }
 
 }

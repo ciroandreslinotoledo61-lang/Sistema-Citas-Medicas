@@ -15,6 +15,7 @@ use CitasMedicas\Shared\Errors\ErrorAplicacion;
 
 final class CitaService
 {
+    public const MENSAJE_CITA_ACTIVA = 'Ya tienes una cita activa. Para reservar una nueva cita, primero debes completar o cancelar tu cita actual.';
     private readonly CitaRepository $citaRepository;
     private readonly HorarioMedicoRepository $horarioRepository;
     public function __construct(private readonly \PDO $conexionPostgresql, private readonly ?\DateTimeImmutable $momentoReferencia = null)
@@ -62,7 +63,7 @@ final class CitaService
     public function cancelarCita(Usuario $usuario, int $idCita, array $datos): array
     {
         PermisosSistema::exigirPermiso($usuario, 'citas.cancelar');
-        $motivo = ValidarCamposFormulario::validarTexto($datos, 'motivoCancelacion', 'El motivo de anulacion', 300, false);
+        $motivo = ValidarCamposFormulario::validarTexto($datos, 'motivoCancelacion', 'El motivo de cancelacion', 300, $usuario->codigoRol === 'medico');
         return $this->ejecutarTransaccion(function () use ($usuario, $idCita, $motivo): array {
             $cita = $this->exigirCitaAutorizada($usuario, $idCita, true);
             $this->exigirCitaModificable($cita);
@@ -132,7 +133,7 @@ final class CitaService
         $datos = $cita->obtenerDatosPublicosCita();
         if (!in_array($datos['estadoCita'], ['pendiente', 'confirmada'], true) ||
             $datos['asistenciaRegistrada'] !== 'pendiente' || new \DateTimeImmutable($datos['fechaHoraInicio']) <= $this->obtenerAhora()) {
-            throw new ErrorAplicacion('Solo se pueden anular o reprogramar citas vigentes antes del inicio del turno.', 409);
+            throw new ErrorAplicacion('Solo se pueden cancelar o reprogramar citas vigentes antes del inicio del turno.', 409);
         }
     }
 
@@ -148,6 +149,9 @@ final class CitaService
         $paciente = $this->citaRepository->bloquearPaciente($idPaciente)
             ?? throw new ErrorAplicacion('El paciente no existe.', 404);
         if (!in_array($paciente['usuario_activo'], [true, 1, '1', 't', 'true'], true)) { throw new ErrorAplicacion('La cuenta del paciente esta inactiva.', 409); }
+        if ($this->citaRepository->pacienteTieneCitaActiva($idPaciente, $idCitaExcluida)) {
+            throw new ErrorAplicacion(self::MENSAJE_CITA_ACTIVA, 409);
+        }
         $turno = $this->horarioRepository->obtenerTurnoPorId($idTurno, true)
             ?? throw new ErrorAplicacion('El turno no existe.', 404);
         $inicio = new \DateTimeImmutable($turno['fecha_hora_inicio']);
@@ -177,7 +181,13 @@ final class CitaService
         $datos['puedeReprogramar'] = $vigente && $inicio > $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.reprogramar');
         $datos['puedeMarcarAtendida'] = $vigente && $inicio <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.atender');
         $datos['puedeRegistrarAsistencia'] = $vigente && $inicio <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.asistencia');
-        $datos['puedeRegistrarInasistencia'] = $vigente && $fin <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.asistencia');
+        $datos['puedeRegistrarInasistencia'] = $vigente && $fin <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.inasistencia');
+        $datos['puedeConfirmar'] = $vigente && $datos['estadoCita'] === 'pendiente' && $inicio > $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.confirmar');
+        $datos['requiereMotivoCancelacion'] = $usuario->codigoRol === 'medico';
+        $datos['explicacionAcciones'] = !$vigente ? 'Esta cita es final y conserva su historial.'
+            : ($inicio > $ahora ? 'Puedes cancelar antes del inicio. La atencion se registra desde el inicio del turno y la inasistencia desde su final.'
+                : ($fin > $ahora ? 'El turno ya comenzo. La inasistencia se habilita al terminar; ya no se puede cancelar.'
+                    : 'El turno termino. Un usuario autorizado debe registrar el resultado; no se cambia automaticamente.'));
         return $datos;
     }
 
@@ -185,11 +195,18 @@ final class CitaService
     {
         $this->conexionPostgresql->beginTransaction();
         try {
+            $this->conexionPostgresql->exec('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
             $resultado = $operacion();
             $this->conexionPostgresql->commit();
             return $resultado;
         } catch (\Throwable $error) {
             if ($this->conexionPostgresql->inTransaction()) { $this->conexionPostgresql->rollBack(); }
+            if ($error instanceof \PDOException && ((string) $error->getCode() === 'P2001' || str_contains($error->getMessage(), 'uq_citas_paciente_activa'))) {
+                throw new ErrorAplicacion(self::MENSAJE_CITA_ACTIVA, 409);
+            }
+            if ($error instanceof \PDOException && (string) $error->getCode() === 'P2002') {
+                throw new ErrorAplicacion('La transicion de estado no esta permitida.', 409);
+            }
             if ($error instanceof \PDOException && in_array((string) $error->getCode(), ['23505', '23P01', '40P01', '40001'], true)) {
                 throw new ErrorAplicacion('La disponibilidad cambio durante la operacion. Actualiza los turnos e intenta otra vez.', 409);
             }
@@ -206,6 +223,38 @@ final class CitaService
     {
         PermisosSistema::exigirPermiso($usuario, 'agenda.filtrar');
         return $this->citaRepository->listarMedicosParaAgenda($usuario);
+    }
+
+    public function marcarCitaInasistencia(Usuario $usuario, int $idCita): array
+    {
+        PermisosSistema::exigirPermiso($usuario, 'citas.inasistencia');
+        return $this->guardarAsistenciaCita($usuario, $idCita, 'no_asistio');
+    }
+
+    public function confirmarCita(Usuario $usuario, int $idCita): array
+    {
+        PermisosSistema::exigirPermiso($usuario, 'citas.confirmar');
+        return $this->ejecutarTransaccion(function () use ($usuario, $idCita): array {
+            $cita = $this->exigirCitaAutorizada($usuario, $idCita, true);
+            $this->exigirCitaModificable($cita);
+            if ($cita->obtenerDatosPublicosCita()['estadoCita'] !== 'pendiente') {
+                throw new ErrorAplicacion('Solo se puede confirmar una cita programada.', 409);
+            }
+            $this->citaRepository->actualizarEstadoCita($idCita, 'confirmada', $usuario->idUsuario);
+            return $this->obtenerCita($usuario, $idCita);
+        });
+    }
+
+    public function listarCitasActivasPaciente(Usuario $usuario, array $parametros): array
+    {
+        PermisosSistema::exigirPermiso($usuario, 'citas.reservar');
+        $idPaciente = $usuario->codigoRol === 'paciente'
+            ? ($this->citaRepository->obtenerIdPacientePorUsuario($usuario->idUsuario) ?? throw new ErrorAplicacion('Tu perfil no existe.', 404))
+            : AgendaValidator::validarIdentificador($parametros, 'idPaciente');
+        if ($usuario->codigoRol === 'paciente' && isset($parametros['idPaciente']) && AgendaValidator::validarIdentificador($parametros, 'idPaciente') !== $idPaciente) {
+            throw new ErrorAplicacion('Solo puedes consultar tus propias citas activas.', 403);
+        }
+        return array_map(fn (Cita $cita): array => $this->prepararDatosCita($cita, $usuario), $this->citaRepository->listarCitasActivasPaciente($idPaciente));
     }
 
 }

@@ -116,4 +116,13 @@ final class HorarioMedicoRepository
         $consulta->execute(['idTurno' => $idTurno]);
         return $consulta->fetch() ?: null;
     }
+    public function existeHorarioEquivalente(array $datos): bool
+    {
+        $consulta = $this->conexionPostgresql->prepare('SELECT id_horario_medico FROM horarios_medicos
+            WHERE id_medico = :idMedico AND fecha_atencion = :fechaAtencion AND hora_inicio = :horaInicio
+            AND hora_fin = :horaFin AND duracion_cita_minutos = :duracionCitaMinutos LIMIT 1');
+        $consulta->execute($datos);
+        return $consulta->fetchColumn() !== false;
+    }
+
 }

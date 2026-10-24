@@ -1,4 +1,4 @@
-import { obtenerConfiguracionAgenda, listarMedicosDisponibles, listarTurnosDisponibles, reservarCita, obtenerCita, reprogramarCita } from "./citas-api.js";
+import { listarCitasActivasPaciente, obtenerConfiguracionAgenda, listarMedicosDisponibles, listarTurnosDisponibles, reservarCita, obtenerCita, reprogramarCita } from "./citas-api.js";
 import { listarPacientes } from "../pacientes/pacientes-api.js";
 import { formatearTurno } from "./presentacion-citas.js";
 import { mostrarErrorSolicitud, mostrarMensaje, ejecutarEnvioFormulario } from "../../components/formularios.js";
@@ -15,7 +15,31 @@ let medicos = [];
 let numeroSolicitudTurnos = 0;
 let enviando = false;
 let reservaConfirmada = false;
-function actualizarBotonReserva() { guardar.disabled = enviando || reservaConfirmada || !formulario.querySelector('input[name="idTurno"]:checked') || (formulario.elements.idPaciente && !formulario.elements.idPaciente.value); }
+let bloqueoPorCitaActiva = true;
+let numeroSolicitudActiva = 0;
+let idPacienteReprogramacion = null;
+async function comprobarCitaActiva() {
+    const solicitud = ++numeroSolicitudActiva;
+    const aviso = document.querySelector("#aviso-cita-activa");
+    bloqueoPorCitaActiva = true; actualizarBotonReserva(); aviso.hidden = true;
+    const idPaciente = formulario.elements.idPaciente?.value || idPacienteReprogramacion;
+    if (formulario.elements.idPaciente && !idPaciente) return;
+    try {
+        const activas = (await listarCitasActivasPaciente(idPaciente)).datos.filter(cita => cita.idCita !== idCita);
+        if (solicitud !== numeroSolicitudActiva) return;
+        bloqueoPorCitaActiva = activas.length > 0;
+        if (bloqueoPorCitaActiva) {
+            aviso.hidden = false;
+            aviso.textContent = JSON.parse(document.body.dataset.usuario).codigoRol === "paciente"
+                ? "Ya tienes una cita activa. Para reservar una nueva cita, primero debes completar o cancelar tu cita actual. "
+                : "El paciente ya tiene una cita activa. Debe resolverse antes de registrar otra reserva. ";
+            if (activas.length > 1) aviso.append("Hay varias citas anteriores pendientes de resolver. ");
+            for (const cita of activas) { const enlace = document.createElement("a"); enlace.href = "/citas/" + cita.idCita; enlace.textContent = "Ver cita #" + cita.idCita + " "; aviso.append(enlace); }
+        }
+    } catch (error) { if (solicitud === numeroSolicitudActiva) mostrarErrorSolicitud(aviso, error); }
+    finally { if (solicitud === numeroSolicitudActiva) actualizarBotonReserva(); }
+}
+function actualizarBotonReserva() { guardar.disabled = enviando || reservaConfirmada || bloqueoPorCitaActiva || !formulario.querySelector('input[name="idTurno"]:checked') || (formulario.elements.idPaciente && !formulario.elements.idPaciente.value); }
 function mostrarMedicos() {
     selectorMedico.replaceChildren(new Option("Selecciona un medico", ""));
     for (const medico of medicos.filter(registro => !especialidad.value || String(registro.idEspecialidad) === especialidad.value)) {
@@ -59,19 +83,21 @@ async function cargarFormulario() {
         mostrarMedicos();
         if (idCita) {
             const cita = (await obtenerCita(idCita)).datos;
+            idPacienteReprogramacion = cita.idPaciente;
             if (!cita.puedeReprogramar) throw new Error("Esta cita no admite reprogramacion.");
             document.querySelector("#resumen-cita-anterior").textContent = cita.nombrePaciente + " / Reserva actual: " + formatearTurno(cita);
             selectorMedico.value = cita.idMedico; fecha.value = cita.fechaHoraInicio.slice(0, 10);
         }
         campos.disabled = false;
         if (!medicos.length) mostrarMensaje(document.querySelector("#mensaje-formulario"), "No hay medicos disponibles para reservar. Comunicate con recepcion.", true);
-        await cargarTurnos();
+        await Promise.all([cargarTurnos(), comprobarCitaActiva()]);
     } catch (error) { mostrarErrorSolicitud(document.querySelector("#mensaje-formulario"), error); }
 }
 especialidad.addEventListener("change", () => { mostrarMedicos(); cargarTurnos(); });
 selectorMedico.addEventListener("change", cargarTurnos);
 fecha.addEventListener("change", cargarTurnos);
 formulario.addEventListener("change", actualizarBotonReserva);
+formulario.elements.idPaciente?.addEventListener("change", comprobarCitaActiva);
 document.querySelector("#actualizar-turnos").addEventListener("click", cargarTurnos);
 const busquedaPaciente = document.querySelector("#busqueda-paciente-reserva");
 let numeroSolicitudPaciente = 0;
@@ -92,7 +118,7 @@ busquedaPaciente?.addEventListener("submit", async evento => {
 });
 formulario.addEventListener("submit", async evento => {
     evento.preventDefault();
-    if (enviando || reservaConfirmada || !formulario.querySelector('input[name="idTurno"]:checked')) return;
+    if (enviando || reservaConfirmada || bloqueoPorCitaActiva || !formulario.querySelector('input[name="idTurno"]:checked')) return;
     enviando = true;
     await ejecutarEnvioFormulario(formulario, async datos => {
         // Capturar los datos antes de bloquear los campos impide cambios durante el envio.
@@ -102,7 +128,7 @@ formulario.addEventListener("submit", async evento => {
             reservaConfirmada = true;
             window.location.assign("/citas/" + respuesta.datos.idCita);
         } catch (error) {
-            if (error.codigoHttp === 409) await cargarTurnos();
+            if (error.codigoHttp === 409) await Promise.all([cargarTurnos(), comprobarCitaActiva()]);
             throw error;
         } finally { campos.disabled = false; }
     });

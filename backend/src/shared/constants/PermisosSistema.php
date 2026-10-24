@@ -17,11 +17,13 @@ final class PermisosSistema
         'disponibilidad.consultar' => ['administrador', 'recepcionista', 'paciente'],
         'citas.consultar' => ['administrador', 'recepcionista', 'medico', 'paciente'],
         'citas.reservar' => ['administrador', 'recepcionista', 'paciente'],
-        'citas.cancelar' => ['administrador', 'recepcionista', 'paciente'],
+        'citas.cancelar' => ['administrador', 'recepcionista', 'medico', 'paciente'],
         'citas.reprogramar' => ['administrador', 'recepcionista'],
         'reportes.consultar' => ['administrador'],
         'agenda.filtrar' => ['administrador', 'recepcionista', 'medico'],
         'citas.atender' => ['administrador', 'recepcionista', 'medico'],
+        'citas.confirmar' => ['administrador', 'recepcionista'],
+        'citas.inasistencia' => ['administrador', 'recepcionista', 'medico'],
         'citas.asistencia' => ['administrador', 'recepcionista'],
     ];
 

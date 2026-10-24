@@ -33,7 +33,11 @@ configurarListaPaginada(listarCitas, citas => {
         }
         const acciones = document.createElement("td");
         acciones.append(crearEnlaceAccion("Ver cita", "/citas/" + cita.idCita));
-        fila.append(crearCeldaTexto(formatearTurno(cita)), crearCeldaTexto(cita.nombrePaciente), medico, estado, acciones);
+        const paciente = crearCeldaTexto(cita.nombrePaciente);
+        const motivo = document.createElement("small"); motivo.className = "dato-secundario motivo-agenda";
+        motivo.textContent = cita.motivoCita ? cita.motivoCita.slice(0, 100) + (cita.motivoCita.length > 100 ? "..." : "") : "Sin motivo registrado";
+        paciente.append(motivo);
+        fila.append(crearCeldaTexto("#" + cita.idCita), crearCeldaTexto(formatearTurno(cita)), paciente, medico, estado, acciones);
         cuerpoTabla.append(fila);
     }
 }, cuerpoTabla, formulario => ({ fecha: formulario.elements.fecha.value, estado: formulario.elements.estado.value, idMedico: formulario.elements.idMedico?.value || "", idPaciente: formulario.elements.idPaciente.value }));

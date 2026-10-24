@@ -30,7 +30,13 @@ final class HorarioMedicoController
     public function obtenerConfiguracionAgenda(Usuario $usuario): never
     {
         \CitasMedicas\Shared\Constants\PermisosSistema::exigirPermiso($usuario,'citas.consultar');
-        RespuestaJson::enviarRespuestaJson(['datos'=>['duracionCitaMinutos'=>\CitasMedicas\Shared\Config\ConfiguracionAgenda::obtenerDuracionCitaMinutos()]]);
+        RespuestaJson::enviarRespuestaJson(['datos'=>\CitasMedicas\Shared\Config\ConfiguracionAgenda::obtenerConfiguracionPublica()]);
+    }
+
+    public function programarHorariosPorPeriodo(Usuario $usuario): never
+    {
+        $resultado = $this->horarioService->programarHorariosPorPeriodo($usuario, SolicitudHttp::obtenerCuerpoJson());
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Programacion procesada. Revisa el resumen de cada fecha.', 'datos' => $resultado]);
     }
 
 }

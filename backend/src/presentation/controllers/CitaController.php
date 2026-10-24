@@ -25,7 +25,7 @@ final class CitaController
     public function cancelarCita(Usuario $usuario, int $idCita): never
     {
         $resultado = $this->citaService->cancelarCita($usuario, $idCita, SolicitudHttp::obtenerCuerpoJson());
-        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Cita anulada. El turno vuelve a estar disponible.', 'datos' => $resultado]);
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Cita cancelada. El turno vuelve a estar disponible.', 'datos' => $resultado]);
     }
     public function reprogramarCita(Usuario $usuario, int $idCita): never
     {
@@ -45,6 +45,19 @@ final class CitaController
     public function listarMedicosParaAgenda(Usuario $usuario): never
     {
         RespuestaJson::enviarRespuestaJson(['datos'=>$this->citaService->listarMedicosParaAgenda($usuario)]);
+    }
+
+    public function marcarCitaInasistencia(Usuario $usuario, int $idCita): never
+    {
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Inasistencia registrada.', 'datos' => $this->citaService->marcarCitaInasistencia($usuario, $idCita)]);
+    }
+    public function confirmarCita(Usuario $usuario, int $idCita): never
+    {
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Cita confirmada.', 'datos' => $this->citaService->confirmarCita($usuario, $idCita)]);
+    }
+    public function listarCitasActivasPaciente(Usuario $usuario): never
+    {
+        RespuestaJson::enviarRespuestaJson(['datos' => $this->citaService->listarCitasActivasPaciente($usuario, $_GET)]);
     }
 
 }

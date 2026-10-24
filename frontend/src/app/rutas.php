@@ -42,7 +42,7 @@ $rutasVistas = [
     '/citas' => ['citas', 'Citas medicas', 'citas/lista-citas.php', 'citas/listar-citas.js', ['administrador', 'recepcionista', 'medico', 'paciente']],
     '/citas/nueva' => ['cita-nueva', 'Reservar cita', 'citas/formulario-cita.php', 'citas/formulario-cita.js', ['administrador', 'recepcionista', 'paciente']],
     '/horarios' => ['horarios', 'Horarios de atencion', 'horarios/lista-horarios.php', 'horarios/listar-horarios.js', ['administrador', 'medico']],
-    '/horarios/nuevo' => ['horario-nuevo', 'Crear horario', 'horarios/formulario-horario.php', 'horarios/formulario-horario.js', ['administrador']],
+    '/horarios/nuevo' => ['horario-nuevo', 'Programar horarios', 'horarios/formulario-horario.php', 'horarios/formulario-horario.js', ['administrador']],
     '/mi-perfil' => ['mi-perfil', 'Mi perfil', 'pacientes/detalle-paciente.php', 'pacientes/detalle-paciente.js', ['paciente']],
 ];
 

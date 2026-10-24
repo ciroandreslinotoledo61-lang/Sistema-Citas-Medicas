@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Data\Models;
@@ -9,7 +10,8 @@ final class Rol
         public readonly int $idRol,
         public readonly string $codigoRol,
         public readonly string $nombreRol
-    ) {}
+    ) {
+    }
 
     public static function crearRolDesdeRegistro(array $registroRol): self
     {

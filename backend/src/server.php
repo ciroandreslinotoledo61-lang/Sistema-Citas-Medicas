@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 // Router del servidor de desarrollo. Todo pasa por el punto de entrada.

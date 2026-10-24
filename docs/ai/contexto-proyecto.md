@@ -1,3 +1,5 @@
+> Actualización 24/10/2026: Esta copia incorpora la refactorización de arquitectura del 24 de octubre de 2026. Consulta [GUIA-ARQUITECTURA-Y-DEFENSA.md](../../GUIA-ARQUITECTURA-Y-DEFENSA.md) antes de continuar el desarrollo.
+
 # Contexto del proyecto
 
 Version 1.4.0 de Clinica. Stack: PHP 8.2 o posterior, PostgreSQL, PDO pdo_pgsql, HTML, CSS y JavaScript sin framework ni compilacion.

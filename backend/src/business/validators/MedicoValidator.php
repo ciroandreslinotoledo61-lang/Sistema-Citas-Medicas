@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Business\Validators;
@@ -11,8 +12,10 @@ final class MedicoValidator
     {
         $datosValidados = UsuarioValidator::validarDatosActualizacionUsuario($datos);
         $idEspecialidad = $datos['idEspecialidad'] ?? null;
-        if ((!is_int($idEspecialidad) && !(is_string($idEspecialidad) && ctype_digit($idEspecialidad))) ||
-            filter_var($idEspecialidad, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+        if (
+            (!is_int($idEspecialidad) && !(is_string($idEspecialidad) && ctype_digit($idEspecialidad))) ||
+            filter_var($idEspecialidad, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false
+        ) {
             throw new ErrorAplicacion('Selecciona una especialidad valida.', 422, ['idEspecialidad' => 'Selecciona una especialidad.']);
         }
         $matriculaProfesional = strtoupper(ValidarCamposFormulario::validarTexto($datos, 'matriculaProfesional', 'La matricula profesional', 40));

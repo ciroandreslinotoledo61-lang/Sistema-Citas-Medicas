@@ -1,3 +1,5 @@
+> Actualización 24/10/2026: La concurrencia PHP/PDO nativa se comprobó en esta refactorización; consulta [los resultados actuales](../refactorizacion/VERIFICACION.md). El documento siguiente conserva la descripción de la versión funcional 1.4.
+
 # Version 1.4: programacion, reservas y gestion medica
 
 ## Punto de partida

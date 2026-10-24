@@ -1,10 +1,12 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Business\Services;
 
 use CitasMedicas\Business\Validators\EspecialidadValidator;
 use CitasMedicas\Business\Validators\ValidarCamposFormulario;
+use CitasMedicas\Data\Config\Transaccion;
 use CitasMedicas\Data\Models\Especialidad;
 use CitasMedicas\Data\Repositories\EspecialidadRepository;
 use CitasMedicas\Shared\Errors\ErrorAplicacion;
@@ -13,8 +15,11 @@ final class EspecialidadService
 {
     private readonly EspecialidadRepository $especialidadRepository;
 
-    public function __construct(private readonly \PDO $conexionPostgresql)
+    private readonly Transaccion $transaccion;
+
+    public function __construct(\PDO $conexionPostgresql)
     {
+        $this->transaccion = new Transaccion($conexionPostgresql);
         $this->especialidadRepository = new EspecialidadRepository($conexionPostgresql);
     }
 
@@ -76,11 +81,10 @@ final class EspecialidadService
     public function cambiarEstadoEspecialidad(int $idEspecialidad, array $datos): Especialidad
     {
         $especialidadActiva = EspecialidadValidator::validarEstadoEspecialidad($datos);
-        $this->conexionPostgresql->beginTransaction();
-        try {
-            // Crear, reasignar o activar medicos bloquea esta misma especialidad.
+        return $this->transaccion->ejecutar(function () use ($idEspecialidad, $especialidadActiva): Especialidad {
+        // Crear, reasignar o activar medicos bloquea esta misma especialidad.
             $especialidad = $this->especialidadRepository->obtenerEspecialidadPorId($idEspecialidad, true)
-                ?? throw new ErrorAplicacion('La especialidad no existe.', 404);
+            ?? throw new ErrorAplicacion('La especialidad no existe.', 404);
             if (!$especialidadActiva && $this->especialidadRepository->contarMedicosActivosPorEspecialidad($idEspecialidad) > 0) {
                 throw new ErrorAplicacion('Primero desactiva o reasigna los medicos activos de esta especialidad.', 409);
             }
@@ -88,12 +92,9 @@ final class EspecialidadService
                 $this->especialidadRepository->cambiarEstadoEspecialidad($idEspecialidad, $especialidadActiva);
             }
             $especialidadActualizada = $this->obtenerEspecialidadPorId($idEspecialidad);
-            $this->conexionPostgresql->commit();
+
             return $especialidadActualizada;
-        } catch (\Throwable $error) {
-            if ($this->conexionPostgresql->inTransaction()) { $this->conexionPostgresql->rollBack(); }
-            throw $error;
-        }
+        });
     }
 
     private function exigirNombreEspecialidadDisponible(string $nombreEspecialidad, int $idEspecialidadExcluida = 0): void

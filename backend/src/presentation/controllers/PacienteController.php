@@ -1,15 +1,19 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Presentation\Controllers;
 
 use CitasMedicas\Business\Services\PacienteService;
+use CitasMedicas\Data\Models\Usuario;
 use CitasMedicas\Shared\Utils\RespuestaJson;
 use CitasMedicas\Shared\Utils\SolicitudHttp;
 
 final class PacienteController
 {
-    public function __construct(private readonly PacienteService $pacienteService) {}
+    public function __construct(private readonly PacienteService $pacienteService)
+    {
+    }
 
     public function registrarPacienteConHistoriaClinica(): never
     {
@@ -38,15 +42,15 @@ final class PacienteController
         RespuestaJson::enviarRespuestaJson(['mensaje' => 'Contacto actualizado.', 'datos' => $paciente->obtenerDatosPublicosPaciente()]);
     }
 
-    public function actualizarDatosPaciente(\CitasMedicas\Data\Models\Usuario $usuario, int $idPaciente): never
+    public function actualizarDatosPaciente(Usuario $usuario, int $idPaciente): never
     {
-        $paciente=$this->pacienteService->actualizarDatosPaciente($usuario,$idPaciente,SolicitudHttp::obtenerCuerpoJson());
-        RespuestaJson::enviarRespuestaJson(['mensaje'=>'Datos del paciente actualizados.','datos'=>$paciente->obtenerDatosPublicosPaciente()]);
-    }
-    public function cambiarEstadoPaciente(\CitasMedicas\Data\Models\Usuario $usuario, int $idPaciente): never
-    {
-        $paciente=$this->pacienteService->cambiarEstadoPaciente($usuario,$idPaciente,SolicitudHttp::obtenerCuerpoJson());
-        RespuestaJson::enviarRespuestaJson(['mensaje'=>'Estado actualizado. Sus citas e historia se conservan.','datos'=>$paciente->obtenerDatosPublicosPaciente()]);
+        $paciente = $this->pacienteService->actualizarDatosPaciente($usuario, $idPaciente, SolicitudHttp::obtenerCuerpoJson());
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Datos del paciente actualizados.','datos' => $paciente->obtenerDatosPublicosPaciente()]);
     }
 
+    public function cambiarEstadoPaciente(Usuario $usuario, int $idPaciente): never
+    {
+        $paciente = $this->pacienteService->cambiarEstadoPaciente($usuario, $idPaciente, SolicitudHttp::obtenerCuerpoJson());
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Estado actualizado. Sus citas e historia se conservan.','datos' => $paciente->obtenerDatosPublicosPaciente()]);
+    }
 }

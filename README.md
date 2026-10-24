@@ -6,7 +6,21 @@ La hora de Bolivia se aplica internamente a toda la aplicacion. La interfaz no m
 
 Esta version separa el trabajo de Administracion, Recepcion, Medico y Paciente. Incorpora bloques de atencion, turnos de 30 minutos por defecto, reservas, anulaciones, reprogramaciones y asistencia. Las pantallas consultan la API real; no muestran reservas ni estadisticas inventadas.
 
-Esta actualizacion agrega programacion por periodos, horas de 08:00 a 17:00, una sola cita activa por paciente y gestion de resultados por el medico. En una instalacion con 004, aplica solamente 005; no repitas el seeder. Guia: [programacion mensual](docs/ai/programacion-mensual.md).
+La base funcional 1.4 incluye programacion por periodos, horas de 08:00 a 17:00, una sola cita activa por paciente y gestion de resultados por el medico. Esta refactorizacion parte de esa version completa y no agrega migraciones. Guia funcional: [programacion mensual](docs/ai/programacion-mensual.md).
+
+## Refactorización de arquitectura — 24 de octubre de 2026
+
+El código de este paquete fue refactorizado usando CADEFAR como referencia: rutas por módulo, controladores breves, reglas y generación de turnos en Services, SQL por entidad, validadores específicos y transacciones compartidas. Las 48 rutas HTTP, los 65 archivos del frontend y las migraciones 001–005 se conservan.
+
+Empieza por [GUIA-ARQUITECTURA-Y-DEFENSA.md](GUIA-ARQUITECTURA-Y-DEFENSA.md). Incluye el recorrido exacto del registro de paciente, las consultas SQL y los comandos con `C:\php85\php.exe`.
+
+- [Aplicar esta entrega](ACTUALIZAR-ESTA-VERSION.md).
+- [Comparación con CADEFAR](docs/refactorizacion/COMPARACION-CADEFAR.md).
+- [Archivos modificados](docs/refactorizacion/ARCHIVOS-MODIFICADOS.md).
+- [Estructura completa](docs/refactorizacion/ESTRUCTURA-CARPETAS.md).
+- [Verificaciones y límites](docs/refactorizacion/VERIFICACION.md).
+
+Para una instalación que ya tiene 001–005, esta refactorización no necesita migraciones ni volver a ejecutar el seeder. Las secciones históricas siguientes describen el alcance funcional de 1.4; la guía de actualización de esta entrega está enlazada arriba.
 
 ## 1. Responsabilidades por rol
 
@@ -67,10 +81,10 @@ php -v
 php --ini
 ```
 
-Si Windows no reconoce `php`, agrega PHP de XAMPP al PATH de esa terminal:
+Si Windows no reconoce `php`, agrega tu carpeta PHP al PATH de esa terminal:
 
 ```powershell
-$env:Path += ";C:\xampp\php"
+$env:Path += ";C:\php85"
 php -v
 ```
 
@@ -361,7 +375,7 @@ php backend/tests/test_reserva_concurrente.php
 
 Preparacion, cobertura y limites del entorno de comprobacion: [docs/ai/pruebas.md](docs/ai/pruebas.md). No ejecutes pruebas de integracion en la base de trabajo.
 
-## 11. Avances pequenos para Git
+## 11. Referencia historica de los commits del avance 1.4
 
 Conserva tu repositorio y revisa los cambios antes de crear commits. No se subio nada a GitHub desde esta entrega.
 

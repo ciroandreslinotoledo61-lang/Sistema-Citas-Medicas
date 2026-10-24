@@ -1,10 +1,12 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Business\Services;
 
 use CitasMedicas\Business\Validators\UsuarioValidator;
 use CitasMedicas\Business\Validators\ValidarCamposFormulario;
+use CitasMedicas\Data\Config\Transaccion;
 use CitasMedicas\Data\Models\Usuario;
 use CitasMedicas\Data\Repositories\RolRepository;
 use CitasMedicas\Data\Repositories\UsuarioRepository;
@@ -16,8 +18,11 @@ final class UsuarioService
     private readonly UsuarioRepository $usuarioRepository;
     private readonly RolRepository $rolRepository;
 
-    public function __construct(private readonly \PDO $conexionPostgresql)
+    private readonly Transaccion $transaccion;
+
+    public function __construct(\PDO $conexionPostgresql)
     {
+        $this->transaccion = new Transaccion($conexionPostgresql);
         $this->usuarioRepository = new UsuarioRepository($conexionPostgresql);
         $this->rolRepository = new RolRepository($conexionPostgresql);
     }
@@ -44,7 +49,9 @@ final class UsuarioService
         $rol = $this->rolRepository->obtenerRolPorCodigo($datosValidados['codigoRol'])
             ?? throw new ErrorAplicacion('El rol no esta configurado.', 409);
         $idUsuario = $this->usuarioRepository->registrarUsuario(
-            $datosValidados, $rol->idRol, password_hash($datosValidados['contrasenaUsuario'], PASSWORD_DEFAULT)
+            $datosValidados,
+            $rol->idRol,
+            password_hash($datosValidados['contrasenaUsuario'], PASSWORD_DEFAULT)
         );
         return $this->obtenerUsuarioPorId($idUsuario);
     }
@@ -63,31 +70,27 @@ final class UsuarioService
         if ($idUsuario === $usuarioAutenticado->idUsuario) {
             throw new ErrorAplicacion('No puedes cambiar el estado de tu propia cuenta.', 409);
         }
-        $this->conexionPostgresql->beginTransaction();
-        try {
-            // El bloqueo del rol serializa los cambios del ultimo administrador.
+        return $this->transaccion->ejecutar(function () use ($idUsuario, $usuarioActivo): Usuario {
+        // El bloqueo del rol serializa los cambios del ultimo administrador.
             $this->rolRepository->obtenerRolPorCodigo(RolesSistema::ADMINISTRADOR, true);
             $usuario = $this->usuarioRepository->obtenerUsuarioPorId($idUsuario, true)
-                ?? throw new ErrorAplicacion('El usuario no existe.', 404);
+            ?? throw new ErrorAplicacion('El usuario no existe.', 404);
             if ($usuario->codigoRol === RolesSistema::MEDICO) {
                 throw new ErrorAplicacion('Cambia el estado de esta cuenta desde Medicos para validar su especialidad.', 409);
             }
-            if (!$usuarioActivo && $usuario->usuarioActivo && $usuario->codigoRol === RolesSistema::ADMINISTRADOR &&
-                $this->usuarioRepository->contarAdministradoresActivos() <= 1) {
+            if (
+                !$usuarioActivo && $usuario->usuarioActivo && $usuario->codigoRol === RolesSistema::ADMINISTRADOR &&
+                $this->usuarioRepository->contarAdministradoresActivos() <= 1
+            ) {
                 throw new ErrorAplicacion('Debe quedar al menos un administrador activo.', 409);
             }
             if ($usuario->usuarioActivo !== $usuarioActivo) {
                 $this->usuarioRepository->cambiarEstadoUsuario($idUsuario, $usuarioActivo);
             }
             $usuarioActualizado = $this->obtenerUsuarioPorId($idUsuario);
-            $this->conexionPostgresql->commit();
+
             return $usuarioActualizado;
-        } catch (\Throwable $error) {
-            if ($this->conexionPostgresql->inTransaction()) {
-                $this->conexionPostgresql->rollBack();
-            }
-            throw $error;
-        }
+        });
     }
 
     public function listarRolesSistema(): array

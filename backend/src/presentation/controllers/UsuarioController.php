@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Presentation\Controllers;
@@ -10,7 +11,9 @@ use CitasMedicas\Shared\Utils\SolicitudHttp;
 
 final class UsuarioController
 {
-    public function __construct(private readonly UsuarioService $usuarioService) {}
+    public function __construct(private readonly UsuarioService $usuarioService)
+    {
+    }
 
     public function listarUsuarios(): never
     {

@@ -1,6 +1,9 @@
 <?php
+
 declare(strict_types=1);
+
 namespace CitasMedicas\Shared\Config;
+
 final class ConfiguracionAgenda
 {
     public const ZONA_HORARIA_BOLIVIA = 'America/La_Paz';
@@ -12,6 +15,7 @@ final class ConfiguracionAgenda
         }
         return (int) $valor;
     }
+
     public static function obtenerHorarioClinica(): array
     {
         $apertura = CargarVariablesEntorno::obtenerVariableEntorno('CLINICA_HORA_APERTURA', '08:00');
@@ -21,10 +25,14 @@ final class ConfiguracionAgenda
                 throw new \RuntimeException('El horario de la clinica debe usar HH:00 o HH:30.');
             }
         }
-        if ($apertura >= $cierre) { throw new \RuntimeException('La apertura debe ser anterior al cierre.'); }
+        if ($apertura >= $cierre) {
+            throw new \RuntimeException('La apertura debe ser anterior al cierre.');
+        }
         $horas = [];
-        for ($hora = new \DateTimeImmutable('2000-01-01 ' . $apertura);
-            $hora <= new \DateTimeImmutable('2000-01-01 ' . $cierre); $hora = $hora->modify('+30 minutes')) {
+        for (
+            $hora = new \DateTimeImmutable('2000-01-01 ' . $apertura);
+            $hora <= new \DateTimeImmutable('2000-01-01 ' . $cierre); $hora = $hora->modify('+30 minutes')
+        ) {
             $horas[] = $hora->format('H:i');
         }
         return ['horaApertura' => $apertura, 'horaCierre' => $cierre, 'horasPermitidas' => $horas];
@@ -34,5 +42,4 @@ final class ConfiguracionAgenda
     {
         return ['duracionCitaMinutos' => self::obtenerDuracionCitaMinutos()] + self::obtenerHorarioClinica();
     }
-
 }

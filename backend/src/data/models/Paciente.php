@@ -1,11 +1,14 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Data\Models;
 
 final class Paciente
 {
-    public function __construct(private readonly array $registroPaciente) {}
+    public function __construct(private readonly array $registroPaciente)
+    {
+    }
 
     public function obtenerDatosPublicosPaciente(): array
     {

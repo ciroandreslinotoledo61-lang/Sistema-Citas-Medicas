@@ -7,7 +7,7 @@ require dirname(__DIR__) . '/src/bootstrap.php';
 echo 'PHP: ' . PHP_VERSION . PHP_EOL;
 echo 'php.ini: ' . (php_ini_loaded_file() ?: 'No se cargo ningun archivo') . PHP_EOL;
 $entornoCorrecto = PHP_VERSION_ID >= 80200;
-foreach (['pdo', 'pdo_pgsql', 'mbstring', 'curl', 'session'] as $extension) {
+foreach (['pdo', 'pdo_pgsql', 'mbstring', 'curl', 'session', 'ctype'] as $extension) {
     $disponible = extension_loaded($extension);
     echo $extension . ': ' . ($disponible ? 'OK' : 'FALTA') . PHP_EOL;
     $entornoCorrecto = $entornoCorrecto && $disponible;

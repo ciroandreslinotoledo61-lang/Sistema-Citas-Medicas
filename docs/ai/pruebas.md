@@ -1,3 +1,5 @@
+> Actualización 24/10/2026: Los resultados de esta entrega, incluidos PHP/PDO, PostgreSQL nativo y concurrencia entre procesos, están en [VERIFICACION.md](../refactorizacion/VERIFICACION.md). Las limitaciones de PGlite descritas más abajo corresponden a la entrega anterior.
+
 # Pruebas de la version 1.4
 
 ## Entorno usado y limites

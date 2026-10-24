@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Data\Models;
@@ -16,17 +17,22 @@ final class Usuario
         public readonly int $idRol,
         public readonly string $codigoRol,
         public readonly string $nombreRol
-    ) {}
+    ) {
+    }
 
     public static function crearUsuarioDesdeRegistro(array $registroUsuario): self
     {
         return new self(
             (int) $registroUsuario['id_usuario'],
-            $registroUsuario['nombres_usuario'], $registroUsuario['apellidos_usuario'],
-            $registroUsuario['correo_usuario'], $registroUsuario['contrasena_hash'],
+            $registroUsuario['nombres_usuario'],
+            $registroUsuario['apellidos_usuario'],
+            $registroUsuario['correo_usuario'],
+            $registroUsuario['contrasena_hash'],
             in_array($registroUsuario['usuario_activo'], [true, 1, '1', 't', 'true'], true),
-            (int) $registroUsuario['version_credenciales'], (int) $registroUsuario['id_rol'],
-            $registroUsuario['codigo_rol'], $registroUsuario['nombre_rol']
+            (int) $registroUsuario['version_credenciales'],
+            (int) $registroUsuario['id_rol'],
+            $registroUsuario['codigo_rol'],
+            $registroUsuario['nombre_rol']
         );
     }
 

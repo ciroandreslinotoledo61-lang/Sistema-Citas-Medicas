@@ -1,5 +1,7 @@
 # Agenda, perfiles y reportes - version 1.3.0
 
+Nota historica: este archivo documenta la version 1.3 y migracion 004. Para actualizar el ZIP actual con 004 ya instalada, aplicar solo 005 segun [programacion-mensual.md](programacion-mensual.md). La regla de cita activa, el horario general y los permisos medicos vigentes estan en ese documento.
+
 ## Cambios solicitados
 
 | Requisito de la revision | Resultado |

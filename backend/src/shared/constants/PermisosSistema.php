@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 namespace CitasMedicas\Shared\Constants;
 
 use CitasMedicas\Data\Models\Usuario;
@@ -8,21 +10,23 @@ use CitasMedicas\Shared\Errors\ErrorAplicacion;
 final class PermisosSistema
 {
     public const ROLES_POR_OPERACION = [
-        'usuarios.gestionar' => ['administrador'],
-        'pacientes.gestionar' => ['administrador', 'recepcionista'],
-        'especialidades.gestionar' => ['administrador'],
-        'medicos.gestionar' => ['administrador'],
-        'horarios.crear' => ['administrador'],
-        'horarios.consultar' => ['administrador', 'medico'],
-        'disponibilidad.consultar' => ['administrador', 'recepcionista', 'paciente'],
-        'citas.consultar' => ['administrador', 'recepcionista', 'medico', 'paciente'],
-        'citas.reservar' => ['administrador', 'recepcionista', 'paciente'],
-        'citas.cancelar' => ['administrador', 'recepcionista', 'paciente'],
-        'citas.reprogramar' => ['administrador', 'recepcionista'],
-        'reportes.consultar' => ['administrador'],
-        'agenda.filtrar' => ['administrador', 'recepcionista', 'medico'],
-        'citas.atender' => ['administrador', 'recepcionista', 'medico'],
-        'citas.asistencia' => ['administrador', 'recepcionista'],
+        'usuarios.gestionar' => [RolesSistema::ADMINISTRADOR],
+        'pacientes.gestionar' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA],
+        'especialidades.gestionar' => [RolesSistema::ADMINISTRADOR],
+        'medicos.gestionar' => [RolesSistema::ADMINISTRADOR],
+        'horarios.crear' => [RolesSistema::ADMINISTRADOR],
+        'horarios.consultar' => [RolesSistema::ADMINISTRADOR, RolesSistema::MEDICO],
+        'disponibilidad.consultar' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA, RolesSistema::PACIENTE],
+        'citas.consultar' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA, RolesSistema::MEDICO, RolesSistema::PACIENTE],
+        'citas.reservar' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA, RolesSistema::PACIENTE],
+        'citas.cancelar' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA, RolesSistema::MEDICO, RolesSistema::PACIENTE],
+        'citas.reprogramar' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA],
+        'reportes.consultar' => [RolesSistema::ADMINISTRADOR],
+        'agenda.filtrar' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA, RolesSistema::MEDICO],
+        'citas.atender' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA, RolesSistema::MEDICO],
+        'citas.confirmar' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA],
+        'citas.inasistencia' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA, RolesSistema::MEDICO],
+        'citas.asistencia' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA],
     ];
 
     public static function tienePermiso(string $codigoRol, string $operacion): bool

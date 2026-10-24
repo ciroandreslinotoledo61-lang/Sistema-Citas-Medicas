@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Data\Repositories;
@@ -12,7 +13,9 @@ final class EspecialidadRepository
         WHERE medicos.id_especialidad = especialidades.id_especialidad AND usuarios.usuario_activo = TRUE)
         AS cantidad_medicos_activos FROM especialidades';
 
-    public function __construct(private readonly \PDO $conexionPostgresql) {}
+    public function __construct(private readonly \PDO $conexionPostgresql)
+    {
+    }
 
     public function listarEspecialidadesPorBusqueda(string $busqueda, int $pagina): array
     {

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Data\Repositories;
@@ -7,7 +8,9 @@ use CitasMedicas\Data\Models\HistoriaClinica;
 
 final class HistoriaClinicaRepository
 {
-    public function __construct(private readonly \PDO $conexionPostgresql) {}
+    public function __construct(private readonly \PDO $conexionPostgresql)
+    {
+    }
 
     public function crearHistoriaClinicaParaPaciente(int $idPaciente): HistoriaClinica
     {

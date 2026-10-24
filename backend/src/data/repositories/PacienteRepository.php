@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Data\Repositories;
@@ -12,7 +13,9 @@ final class PacienteRepository
         FROM pacientes INNER JOIN usuarios ON usuarios.id_usuario = pacientes.id_usuario
         INNER JOIN historias_clinicas ON historias_clinicas.id_paciente = pacientes.id_paciente';
 
-    public function __construct(private readonly \PDO $conexionPostgresql) {}
+    public function __construct(private readonly \PDO $conexionPostgresql)
+    {
+    }
 
     public function registrarPaciente(array $datosPaciente, int $idUsuario): int
     {
@@ -72,11 +75,29 @@ final class PacienteRepository
 
     public function actualizarDatosPaciente(int $idPaciente, array $datos): void
     {
-        $campos=['cedulaIdentidad','fechaNacimiento','sexoPaciente','telefonoPaciente','direccionPaciente','nombreContactoEmergencia','telefonoContactoEmergencia'];
-        $consulta=$this->conexionPostgresql->prepare('UPDATE pacientes SET cedula_identidad=:cedulaIdentidad,fecha_nacimiento=:fechaNacimiento,sexo_paciente=:sexoPaciente,
+        $campos = ['cedulaIdentidad','fechaNacimiento','sexoPaciente','telefonoPaciente','direccionPaciente','nombreContactoEmergencia','telefonoContactoEmergencia'];
+        $consulta = $this->conexionPostgresql->prepare('UPDATE pacientes SET cedula_identidad=:cedulaIdentidad,fecha_nacimiento=:fechaNacimiento,sexo_paciente=:sexoPaciente,
             telefono_paciente=:telefonoPaciente,direccion_paciente=:direccionPaciente,nombre_contacto_emergencia=:nombreContactoEmergencia,
             telefono_contacto_emergencia=:telefonoContactoEmergencia WHERE id_paciente=:idPaciente');
-        $consulta->execute(['idPaciente'=>$idPaciente] + array_intersect_key($datos,array_flip($campos)));
+        $consulta->execute(['idPaciente' => $idPaciente] + array_intersect_key($datos, array_flip($campos)));
     }
 
+    public function bloquearPaciente(int $idPaciente): ?array
+    {
+        $consulta = $this->conexionPostgresql->prepare(
+            'SELECT pacientes.id_paciente, pacientes.id_usuario, usuarios.usuario_activo
+             FROM pacientes JOIN usuarios ON usuarios.id_usuario = pacientes.id_usuario
+             WHERE pacientes.id_paciente = :idPaciente FOR UPDATE OF pacientes, usuarios'
+        );
+        $consulta->execute(['idPaciente' => $idPaciente]);
+        return $consulta->fetch() ?: null;
+    }
+
+    public function obtenerIdPacientePorUsuario(int $idUsuario): ?int
+    {
+        $consulta = $this->conexionPostgresql->prepare('SELECT id_paciente FROM pacientes WHERE id_usuario = :idUsuario');
+        $consulta->execute(['idUsuario' => $idUsuario]);
+        $resultado = $consulta->fetchColumn();
+        return $resultado === false ? null : (int) $resultado;
+    }
 }

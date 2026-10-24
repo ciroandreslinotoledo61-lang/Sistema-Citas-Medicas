@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Business\Validators;
@@ -17,12 +18,16 @@ final class PacienteValidator
         $fechaNacimiento = ValidarCamposFormulario::validarTexto($datos, 'fechaNacimiento', 'La fecha de nacimiento', 10);
         $fechaInterpretada = \DateTimeImmutable::createFromFormat('!Y-m-d', $fechaNacimiento);
         $fechaActual = new \DateTimeImmutable('today');
-        if (!$fechaInterpretada || $fechaInterpretada->format('Y-m-d') !== $fechaNacimiento ||
-            $fechaInterpretada > $fechaActual || $fechaInterpretada < $fechaActual->modify('-120 years')) {
+        if (
+            !$fechaInterpretada || $fechaInterpretada->format('Y-m-d') !== $fechaNacimiento ||
+            $fechaInterpretada > $fechaActual || $fechaInterpretada < $fechaActual->modify('-120 years')
+        ) {
             throw new ErrorAplicacion('Revisa la fecha de nacimiento.', 422, ['fechaNacimiento' => 'Selecciona una fecha real, no futura, de los ultimos 120 anos.']);
         }
         $sexo = $datos['sexoPaciente'] ?? 'no_especificado';
-        if (!is_string($sexo) || !in_array($sexo, ['no_especificado','femenino','masculino','otro'], true)) { throw new ErrorAplicacion('Selecciona una opcion valida para sexo.', 422); }
+        if (!is_string($sexo) || !in_array($sexo, ['no_especificado','femenino','masculino','otro'], true)) {
+            throw new ErrorAplicacion('Selecciona una opcion valida para sexo.', 422);
+        }
         return $datosValidados + ['sexoPaciente' => $sexo,
             'cedulaIdentidad' => $cedulaIdentidad, 'fechaNacimiento' => $fechaNacimiento,
         ] + self::validarDatosContactoPaciente($datos);
@@ -46,10 +51,22 @@ final class PacienteValidator
     {
         return self::validarDatosActualizacionPaciente($datos) + ['contrasenaUsuario' => ValidarCamposFormulario::validarContrasenaRegistro($datos)];
     }
+
     public static function validarEstadoPaciente(array $datos): bool
     {
-        if (!array_key_exists('pacienteActivo',$datos) || !is_bool($datos['pacienteActivo'])) { throw new ErrorAplicacion('El estado del paciente debe ser true o false.',422); }
+        if (!array_key_exists('pacienteActivo', $datos) || !is_bool($datos['pacienteActivo'])) {
+            throw new ErrorAplicacion('El estado del paciente debe ser true o false.', 422);
+        }
         return $datos['pacienteActivo'];
     }
 
+    public static function validarFiltrosPacientes(array $parametros): array
+    {
+        $filtros = ValidarCamposFormulario::validarParametrosBusqueda($parametros);
+        $estado = $parametros['estado'] ?? '';
+        if (!is_string($estado) || !in_array($estado, ['', 'activo', 'inactivo'], true)) {
+            throw new ErrorAplicacion('El estado no es valido.', 422);
+        }
+        return $filtros + ['estado' => $estado];
+    }
 }

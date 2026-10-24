@@ -56,7 +56,7 @@ Todos los archivos *-api.js, cliente-api.js, ClienteApiServidor.php, ProteccionV
 | --- | --- |
 | Administrador | Panel, Pacientes, Medicos, Especialidades y Usuarios |
 | Recepcionista | Panel y Pacientes |
-| Medico | Panel con su cuenta y aviso de agenda aun no disponible |
+| Medico | Panel, Mi agenda, Mis horarios y resultado de sus citas |
 | Paciente | Panel y Mi perfil, sin formulario de edicion de contacto |
 
 Este apartado describe el avance visual inicial. En la version 1.3, horarios, citas y reportes ya estan implementados; consultas y tratamientos siguen pendientes. No se agregaron botones sin destino ni solicitudes para esos modulos. Cuando existan sus rutas y permisos, sus metadatos se pueden incorporar a modulos-disponibles.php y sus vistas a features/.
@@ -115,3 +115,11 @@ Los turnos se presentan como radios con etiqueta y foco de teclado. Cambiar medi
 ## Actualizacion 1.3
 
 Reportes usa la paleta central, filtros responsive y tablas desplazables. Pacientes permite edicion completa y estado; Medicos incluye telefono. La agenda muestra inicio y fin del turno, sin identificadores de zona. Ver actualizacion-agenda-reportes.md y pruebas.md para el alcance actual.
+
+## Version 1.4: programacion y gestion medica
+
+/horarios/nuevo conserva su ruta y ofrece periodo o un dia, dias de semana y selects con minutos 00/30. Obtiene rango y duracion desde /disponibilidad/configuracion. El resumen contiene contadores y detalle por fecha, sin redirigir al guardar.
+
+La reserva consulta citas/activas al cargar o cambiar paciente, muestra el motivo del bloqueo y enlaces a las citas activas. La validacion del backend sigue siendo obligatoria. Mi agenda agrega codigo y motivo breve; conserva la tabla desplazable. El detalle incorpora formulario de cancelacion con resumen, motivo requerido para Medico, acciones segun hora/estado e historial de cambios.
+
+Se mantienen paleta, menu y variables CSS. Revision responsive de las seis vistas afectadas a 1440, 768, 390 y 320 px descrita en pruebas.md. No se muestra una ciudad ni identificador de zona horaria.

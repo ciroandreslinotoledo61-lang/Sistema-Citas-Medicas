@@ -1,16 +1,18 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Business\Services;
 
 use CitasMedicas\Business\Validators\MedicoValidator;
 use CitasMedicas\Business\Validators\ValidarCamposFormulario;
+use CitasMedicas\Data\Config\Transaccion;
 use CitasMedicas\Data\Models\Medico;
-use CitasMedicas\Data\Repositories\MedicoRepository;
-use CitasMedicas\Data\Repositories\EspecialidadRepository;
-use CitasMedicas\Data\Repositories\UsuarioRepository;
-use CitasMedicas\Data\Repositories\RolRepository;
 use CitasMedicas\Data\Repositories\CitaRepository;
+use CitasMedicas\Data\Repositories\EspecialidadRepository;
+use CitasMedicas\Data\Repositories\MedicoRepository;
+use CitasMedicas\Data\Repositories\RolRepository;
+use CitasMedicas\Data\Repositories\UsuarioRepository;
 use CitasMedicas\Shared\Constants\RolesSistema;
 use CitasMedicas\Shared\Errors\ErrorAplicacion;
 
@@ -20,8 +22,15 @@ final class MedicoService
     private readonly EspecialidadRepository $especialidadRepository;
     private readonly UsuarioRepository $usuarioRepository;
 
-    public function __construct(private readonly \PDO $conexionPostgresql)
+    private readonly Transaccion $transaccion;
+    private readonly RolRepository $rolRepository;
+    private readonly CitaRepository $citaRepository;
+
+    public function __construct(\PDO $conexionPostgresql)
     {
+        $this->transaccion = new Transaccion($conexionPostgresql);
+        $this->rolRepository = new RolRepository($conexionPostgresql);
+        $this->citaRepository = new CitaRepository($conexionPostgresql);
         $this->medicoRepository = new MedicoRepository($conexionPostgresql);
         $this->especialidadRepository = new EspecialidadRepository($conexionPostgresql);
         $this->usuarioRepository = new UsuarioRepository($conexionPostgresql);
@@ -47,19 +56,19 @@ final class MedicoService
     {
         $datosValidados = MedicoValidator::validarDatosRegistroMedico($datos);
         $contrasenaHash = password_hash($datosValidados['contrasenaUsuario'], PASSWORD_DEFAULT);
-        $this->conexionPostgresql->beginTransaction();
         try {
-            $this->exigirEspecialidadActiva($datosValidados['idEspecialidad']);
-            $this->exigirDatosUnicosMedico($datosValidados);
-            $rolMedico = (new RolRepository($this->conexionPostgresql))->obtenerRolPorCodigo(RolesSistema::MEDICO)
+            return $this->transaccion->ejecutar(function () use ($datosValidados, $contrasenaHash): Medico {
+                $this->exigirEspecialidadActiva($datosValidados['idEspecialidad']);
+                $this->exigirDatosUnicosMedico($datosValidados);
+                $rolMedico = $this->rolRepository->obtenerRolPorCodigo(RolesSistema::MEDICO)
                 ?? throw new ErrorAplicacion('El rol Medico no esta configurado.', 409);
-            $idUsuario = $this->usuarioRepository->registrarUsuario($datosValidados, $rolMedico->idRol, $contrasenaHash);
-            $idMedico = $this->medicoRepository->registrarPerfilMedico($idUsuario, $datosValidados);
-            $medico = $this->obtenerMedicoPorId($idMedico);
-            $this->conexionPostgresql->commit();
-            return $medico;
+                $idUsuario = $this->usuarioRepository->registrarUsuario($datosValidados, $rolMedico->idRol, $contrasenaHash);
+                $idMedico = $this->medicoRepository->registrarPerfilMedico($idUsuario, $datosValidados);
+                $medico = $this->obtenerMedicoPorId($idMedico);
+
+                return $medico;
+            });
         } catch (\Throwable $error) {
-            if ($this->conexionPostgresql->inTransaction()) { $this->conexionPostgresql->rollBack(); }
             if ($error instanceof \PDOException && (string) $error->getCode() === '23505') {
                 throw new ErrorAplicacion('El correo o la matricula profesional ya estan registrados.', 409);
             }
@@ -70,25 +79,25 @@ final class MedicoService
     public function actualizarDatosMedico(int $idMedico, array $datos): Medico
     {
         $datosValidados = MedicoValidator::validarDatosActualizacionMedico($datos);
-        $this->conexionPostgresql->beginTransaction();
         try {
-            $medico = $this->medicoRepository->obtenerMedicoPorId($idMedico, true)
+            return $this->transaccion->ejecutar(function () use ($idMedico, $datosValidados): Medico {
+                $medico = $this->medicoRepository->obtenerMedicoPorId($idMedico, true)
                 ?? throw new ErrorAplicacion('El medico no existe.', 404);
-            if ($medico->idEspecialidad !== $datosValidados['idEspecialidad']) {
-                $this->exigirMedicoSinCitasVigentes($idMedico);
-            }
+                if ($medico->idEspecialidad !== $datosValidados['idEspecialidad']) {
+                    $this->exigirMedicoSinCitasVigentes($idMedico);
+                }
             // Un medico inactivo puede conservar su especialidad inactiva al corregir sus datos.
-            if ($medico->medicoActivo || $medico->idEspecialidad !== $datosValidados['idEspecialidad']) {
-                $this->exigirEspecialidadActiva($datosValidados['idEspecialidad']);
-            }
-            $this->exigirDatosUnicosMedico($datosValidados, $medico->idMedico, $medico->idUsuario);
-            $this->usuarioRepository->actualizarDatosUsuario($medico->idUsuario, $datosValidados);
-            $this->medicoRepository->actualizarPerfilMedico($idMedico, $datosValidados);
-            $medicoActualizado = $this->obtenerMedicoPorId($idMedico);
-            $this->conexionPostgresql->commit();
-            return $medicoActualizado;
+                if ($medico->medicoActivo || $medico->idEspecialidad !== $datosValidados['idEspecialidad']) {
+                    $this->exigirEspecialidadActiva($datosValidados['idEspecialidad']);
+                }
+                $this->exigirDatosUnicosMedico($datosValidados, $medico->idMedico, $medico->idUsuario);
+                $this->usuarioRepository->actualizarDatosUsuario($medico->idUsuario, $datosValidados);
+                $this->medicoRepository->actualizarPerfilMedico($idMedico, $datosValidados);
+                $medicoActualizado = $this->obtenerMedicoPorId($idMedico);
+
+                return $medicoActualizado;
+            });
         } catch (\Throwable $error) {
-            if ($this->conexionPostgresql->inTransaction()) { $this->conexionPostgresql->rollBack(); }
             if ($error instanceof \PDOException && (string) $error->getCode() === '23505') {
                 throw new ErrorAplicacion('El correo o la matricula profesional ya estan registrados.', 409);
             }
@@ -99,10 +108,9 @@ final class MedicoService
     public function cambiarEstadoMedico(int $idMedico, array $datos): Medico
     {
         $medicoActivo = MedicoValidator::validarEstadoMedico($datos);
-        $this->conexionPostgresql->beginTransaction();
-        try {
+        return $this->transaccion->ejecutar(function () use ($idMedico, $medicoActivo): Medico {
             $medico = $this->medicoRepository->obtenerMedicoPorId($idMedico, true)
-                ?? throw new ErrorAplicacion('El medico no existe.', 404);
+            ?? throw new ErrorAplicacion('El medico no existe.', 404);
             if (!$medicoActivo && $medico->medicoActivo) {
                 $this->exigirMedicoSinCitasVigentes($idMedico);
             }
@@ -114,17 +122,14 @@ final class MedicoService
                 $this->usuarioRepository->cambiarEstadoUsuario($medico->idUsuario, $medicoActivo);
             }
             $medicoActualizado = $this->obtenerMedicoPorId($idMedico);
-            $this->conexionPostgresql->commit();
+
             return $medicoActualizado;
-        } catch (\Throwable $error) {
-            if ($this->conexionPostgresql->inTransaction()) { $this->conexionPostgresql->rollBack(); }
-            throw $error;
-        }
+        });
     }
 
     private function exigirMedicoSinCitasVigentes(int $idMedico): void
     {
-        if ((new CitaRepository($this->conexionPostgresql))->medicoTieneCitasVigentes($idMedico, date('Y-m-d H:i:s'))) {
+        if ($this->citaRepository->medicoTieneCitasVigentes($idMedico, date('Y-m-d H:i:s'))) {
             throw new ErrorAplicacion('Primero anula o reprograma las citas vigentes del medico antes de desactivarlo o cambiar su especialidad.', 409);
         }
     }

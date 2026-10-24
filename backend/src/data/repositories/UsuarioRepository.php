@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Data\Repositories;
@@ -10,7 +11,9 @@ final class UsuarioRepository
     private const CONSULTA_USUARIO = 'SELECT usuarios.*, roles.codigo_rol, roles.nombre_rol
         FROM usuarios INNER JOIN roles ON roles.id_rol = usuarios.id_rol';
 
-    public function __construct(private readonly \PDO $conexionPostgresql) {}
+    public function __construct(private readonly \PDO $conexionPostgresql)
+    {
+    }
 
     public function obtenerUsuarioPorId(int $idUsuario, bool $bloquearRegistro = false): ?Usuario
     {

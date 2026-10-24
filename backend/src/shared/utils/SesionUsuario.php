@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Shared\Utils;
@@ -53,5 +54,36 @@ final class SesionUsuario
     {
         $_SESSION = [];
         session_regenerate_id(true);
+    }
+
+    public static function obtenerIdUsuario(): int
+    {
+        return (int) ($_SESSION['idUsuario'] ?? 0);
+    }
+
+    public static function obtenerVersionCredenciales(): int
+    {
+        return (int) ($_SESSION['versionCredenciales'] ?? 0);
+    }
+
+    public static function obtenerInicioVentanaIntentos(): int
+    {
+        return (int) ($_SESSION['inicioVentanaIntentos'] ?? 0);
+    }
+
+    public static function obtenerIntentosFallidos(): int
+    {
+        return (int) ($_SESSION['intentosFallidos'] ?? 0);
+    }
+
+    public static function reiniciarIntentos(int $momento): void
+    {
+        $_SESSION['inicioVentanaIntentos'] = $momento;
+        $_SESSION['intentosFallidos'] = 0;
+    }
+
+    public static function registrarIntentoFallido(): void
+    {
+        $_SESSION['intentosFallidos'] = self::obtenerIntentosFallidos() + 1;
     }
 }

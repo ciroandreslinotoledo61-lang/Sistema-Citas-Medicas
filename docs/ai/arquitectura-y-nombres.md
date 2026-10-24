@@ -1,68 +1,24 @@
-# Arquitectura y nombres
+# Arquitectura y nombres vigentes
 
-## Responsabilidad de cada capa
+Actualizada el 24 de octubre de 2026. [Guía completa y ejemplo de registro de paciente](../../GUIA-ARQUITECTURA-Y-DEFENSA.md).
 
-| Capa | Hace | Ejemplo |
-| --- | --- | --- |
-| presentation/routes | Asocia metodo y URL con la accion; aplica permisos | RutasApi |
-| presentation/middlewares | Verifica origen, sesion, rol y CSRF | VerificarRolUsuario |
-| presentation/controllers | Lee la entrada y entrega una respuesta JSON | PacienteController |
-| business/validators | Valida tipos, formato, longitudes y fechas | PacienteValidator |
-| business/services | Coordina reglas y operaciones atomicas | PacienteService |
-| data/repositories | Ejecuta SQL con parametros | PacienteRepository |
-| data/models | Representa registros y define datos publicos | Usuario, Paciente |
-| data/config | Configura una conexion PDO por proceso | ConexionPostgresql |
-| shared | Agrupa errores, configuracion y utilidades comunes | ErrorAplicacion |
-| frontend/src/api | Comunica las vistas con la API | cliente-api.js |
-| frontend/src/routes | Impide servir vistas de otros roles | ProteccionVista |
-| frontend/src/features | Agrupa pantallas y acciones por modulo | pacientes |
-| frontend/src/components | Reutiliza campos, mensajes y paginacion | campos-contacto.php |
+| Ubicación | Responsabilidad |
+| --- | --- |
+| `presentation/routes` | Define endpoints, métodos, controlador, acción y requisitos de rol. `RutasApi::definir()` reúne los módulos. |
+| `presentation/http` | `EnrutadorApi` resuelve el endpoint y ejecuta middleware; `FabricaControladores` compone dependencias; `RutaHttp` describe la ruta. |
+| `presentation/middlewares` | Origen, CSRF, sesión y rol general. |
+| `presentation/controllers` | Lee datos HTTP, delega en Services y devuelve JSON. |
+| `business/services` | Casos de uso, coordinación de validadores y repositorios, permisos de negocio, alcance propio, generación de intervalos y límites de las transacciones. |
+| `business/validators` | Formatos, tipos, filtros y condiciones de la entrada por módulo. |
+| `data/repositories` | Consultas SQL, parámetros, bloqueos y persistencia. No decide permisos ni genera intervalos. |
+| `data/models` | Entidades PHP y representación pública, sin ORM. |
+| `data/config` | PDO y ejecución de transacciones con el aislamiento solicitado por el servicio. |
+| `shared` | Configuración, constantes, errores y utilidades. |
 
-## Convenciones
+Se mantienen nombres de clase en PascalCase y métodos/variables en camelCase descriptivo en español. Las carpetas usan minúsculas, de acuerdo con el cargador de `bootstrap.php`; los archivos de clases mantienen su nombre exacto. El frontend conserva módulos JavaScript ES y vistas por feature.
 
-| Elemento | Convencion | Ejemplo |
-| --- | --- | --- |
-| Clase | PascalCase; entidad y responsabilidad | HistoriaClinicaRepository |
-| Metodo o funcion | camelCase; verbo y objeto completo | obtenerPacientePorIdUsuario |
-| Variable | camelCase; contenido reconocible | usuarioAutenticado |
-| Tabla PostgreSQL | snake_case en plural | historias_clinicas |
-| Campo PostgreSQL | snake_case explicito | fecha_apertura_historia |
-| Clave primaria y foranea | id mas entidad completa | id_historia_clinica |
-| URL | minusculas y guiones | /api/autenticacion/iniciar-sesion |
-| Archivo de clase PHP | mismo nombre que la clase | PacienteService.php |
-| Archivo funcional JS/PHP | minusculas y guiones | registrar-paciente.js |
+La implementación no necesita Composer ni un contenedor de dependencias externo. Los servicios conservan sus constructores PHP con PDO para las pruebas y el uso existente. La fábrica centraliza la construcción de controladores en la entrada HTTP.
 
-No se usan nombres como `getData`, `doIt`, `repo1`, `u` o `p` para representar operaciones o entidades principales. Los sufijos Controller, Service, Repository y Validator se mantienen por consistencia con CADEFAR.
+`AgendaValidator` y las dos consultas de disponibilidad expuestas por `HorarioMedicoService` conservan delegaciones compatibles. Las llamadas HTTP usan los módulos específicos. La matriz detallada de movimientos está en [COMPARACION-CADEFAR.md](../refactorizacion/COMPARACION-CADEFAR.md).
 
-## Ejemplo para explicar el registro
-
-1. El formulario envia JSON a `POST /api/autenticacion/registro-paciente`.
-2. Los middlewares comprueban origen y token CSRF.
-3. PacienteController lee el JSON.
-4. PacienteService llama a validarDatosRegistroPaciente.
-5. El servicio calcula el hash y abre una transaccion.
-6. UsuarioRepository inserta la cuenta con rol Paciente.
-7. PacienteRepository inserta el perfil.
-8. HistoriaClinicaRepository crea la historia vacia.
-9. El servicio confirma la transaccion y el controlador devuelve 201.
-10. Si falla una insercion, el servicio revierte toda la operacion.
-
-## Sesion y permisos
-
-El frontend renderiza las vistas privadas solo despues de consultar la sesion al backend. El backend vuelve a comprobar los permisos en cada solicitud. Ocultar un enlace no concede ni reemplaza autorizacion.
-
-La sesion guarda el id del usuario y una version de credenciales. En cada acceso se comprueba en la base que la cuenta siga activa y que la version coincida. Desactivar o reactivar una cuenta incrementa esa version, por lo que las sesiones anteriores dejan de ser validas.
-
-Las mutaciones requieren un token CSRF. Login y logout regeneran el identificador de sesion. Las respuestas privadas usan Cache-Control no-store.
-
-## Limites del avance actual
-
-El limite de intentos de login es por sesion y sirve como control basico local; borrar la cookie permite iniciar otra ventana. Un despliegue publico necesita limitacion persistente por cuenta/origen, registro de eventos y monitoreo. El servidor PHP incorporado y las cuentas de prueba se usan solo en desarrollo.
-
-La base por si sola no exige que todo paciente tenga historia: esa regla se garantiza en la transaccion del servicio. La FK y el UNIQUE garantizan que una historia apunte a un paciente valido y que no existan dos historias para el mismo paciente.
-
-## Especialidades y Medicos
-
-EspecialidadService valida el catalogo y controla su estado. MedicoService registra la cuenta con UsuarioRepository y el perfil con MedicoRepository dentro de una transaccion. Para crear, reasignar o activar, bloquea la especialidad con SELECT FOR UPDATE y comprueba que este activa.
-
-cambiarEstadoEspecialidad bloquea esa misma fila antes de contar medicos activos. Este orden permite que las operaciones relacionadas compartan un punto de coordinacion. El estado del medico no se duplica: se toma de usuarios.usuario_activo.
+Los scripts, migraciones y seeders son infraestructura de instalación. La lógica del sistema y sus consultas de negocio siguen las capas anteriores.

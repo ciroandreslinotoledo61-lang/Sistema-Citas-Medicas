@@ -1,9 +1,10 @@
 <?php
+
 declare(strict_types=1);
+
 namespace CitasMedicas\Data\Repositories;
 
 use CitasMedicas\Data\Models\Cita;
-use CitasMedicas\Data\Models\Usuario;
 
 final class CitaRepository
 {
@@ -20,7 +21,9 @@ final class CitaRepository
         JOIN usuarios usuario_medico ON usuario_medico.id_usuario = medicos.id_usuario
         JOIN especialidades ON especialidades.id_especialidad = COALESCE(citas.id_especialidad_reserva, medicos.id_especialidad)";
 
-    public function __construct(private readonly \PDO $conexionPostgresql) {}
+    public function __construct(private readonly \PDO $conexionPostgresql)
+    {
+    }
 
     public function obtenerCitaPorId(int $idCita, bool $bloquear = false): ?Cita
     {
@@ -31,14 +34,32 @@ final class CitaRepository
         return $registro ? new Cita($registro) : null;
     }
 
-    public function listarCitas(Usuario $usuario, array $filtros, string $ahora): array
+    public function listarCitas(array $filtros, string $ahora, ?int $idUsuarioPaciente = null, ?int $idUsuarioMedico = null): array
     {
-        $condiciones = []; $parametros = ['ahora' => $ahora];
-        if ($usuario->codigoRol === 'paciente') { $condiciones[] = 'pacientes.id_usuario = :idPropietario'; $parametros['idPropietario'] = $usuario->idUsuario; }
-        if ($usuario->codigoRol === 'medico') { $condiciones[] = 'medicos.id_usuario = :idPropietario'; $parametros['idPropietario'] = $usuario->idUsuario; }
-        if ($filtros['fecha'] !== '') { $condiciones[] = 'horarios.fecha_atencion = :fecha'; $parametros['fecha'] = $filtros['fecha']; }
-        if ($filtros['estado'] !== '') { $condiciones[] = 'citas.estado_cita = :estado'; $parametros['estado'] = $filtros['estado']; }
-        foreach (['idMedico' => 'medicos.id_medico', 'idPaciente' => 'pacientes.id_paciente'] as $campo => $columna) { if ($filtros[$campo] !== null) { $condiciones[] = $columna . ' = :' . $campo; $parametros[$campo] = $filtros[$campo]; } }
+        $condiciones = [];
+        $parametros = ['ahora' => $ahora];
+        if ($idUsuarioPaciente !== null) {
+            $condiciones[] = 'pacientes.id_usuario = :idUsuarioPaciente';
+            $parametros['idUsuarioPaciente'] = $idUsuarioPaciente;
+        }
+        if ($idUsuarioMedico !== null) {
+            $condiciones[] = 'medicos.id_usuario = :idUsuarioMedico';
+            $parametros['idUsuarioMedico'] = $idUsuarioMedico;
+        }
+        if ($filtros['fecha'] !== '') {
+            $condiciones[] = 'horarios.fecha_atencion = :fecha';
+            $parametros['fecha'] = $filtros['fecha'];
+        }
+        if ($filtros['estado'] !== '') {
+            $condiciones[] = 'citas.estado_cita = :estado';
+            $parametros['estado'] = $filtros['estado'];
+        }
+        foreach (['idMedico' => 'medicos.id_medico', 'idPaciente' => 'pacientes.id_paciente'] as $campo => $columna) {
+            if ($filtros[$campo] !== null) {
+                $condiciones[] = $columna . ' = :' . $campo;
+                $parametros[$campo] = $filtros[$campo];
+            }
+        }
         $condiciones[] = "concat_ws(' ', usuario_paciente.nombres_usuario, usuario_paciente.apellidos_usuario,
             pacientes.cedula_identidad, usuario_medico.nombres_usuario, usuario_medico.apellidos_usuario,
             especialidades.nombre_especialidad) ILIKE :busqueda";
@@ -46,29 +67,12 @@ final class CitaRepository
         $consulta = $this->conexionPostgresql->prepare(self::CONSULTA_CITA . ' WHERE ' . implode(' AND ', $condiciones) .
             " ORDER BY CASE WHEN turnos.fecha_hora_inicio > :ahora AND citas.estado_cita IN ('pendiente','confirmada') THEN 0 ELSE 1 END,
               turnos.fecha_hora_inicio, citas.id_cita LIMIT 21 OFFSET :desplazamiento");
-        foreach ($parametros as $nombre => $valor) { $consulta->bindValue(':' . $nombre, $valor); }
+        foreach ($parametros as $nombre => $valor) {
+            $consulta->bindValue(':' . $nombre, $valor);
+        }
         $consulta->bindValue(':desplazamiento', ($filtros['pagina'] - 1) * 20, \PDO::PARAM_INT);
         $consulta->execute();
         return array_map(static fn (array $registro): Cita => new Cita($registro), $consulta->fetchAll());
-    }
-
-    public function bloquearPaciente(int $idPaciente): ?array
-    {
-        $consulta = $this->conexionPostgresql->prepare(
-            'SELECT pacientes.id_paciente, pacientes.id_usuario, usuarios.usuario_activo
-             FROM pacientes JOIN usuarios ON usuarios.id_usuario = pacientes.id_usuario
-             WHERE pacientes.id_paciente = :idPaciente FOR UPDATE OF pacientes, usuarios'
-        );
-        $consulta->execute(['idPaciente' => $idPaciente]);
-        return $consulta->fetch() ?: null;
-    }
-
-    public function obtenerIdPacientePorUsuario(int $idUsuario): ?int
-    {
-        $consulta = $this->conexionPostgresql->prepare('SELECT id_paciente FROM pacientes WHERE id_usuario = :idUsuario');
-        $consulta->execute(['idUsuario' => $idUsuario]);
-        $resultado = $consulta->fetchColumn();
-        return $resultado === false ? null : (int) $resultado;
     }
 
     public function turnoEstaOcupado(int $idTurno): bool
@@ -83,7 +87,7 @@ final class CitaRepository
         $consulta = $this->conexionPostgresql->prepare(
             "SELECT citas.id_cita FROM citas JOIN turnos ON turnos.id_turno = citas.id_turno
              WHERE citas.id_paciente = :idPaciente AND citas.id_cita <> :idCitaExcluida
-             AND citas.estado_cita NOT IN ('cancelada', 'reprogramada')
+             AND citas.estado_cita IN ('pendiente', 'confirmada')
              AND turnos.fecha_hora_inicio < :fin AND turnos.fecha_hora_fin > :inicio LIMIT 1"
         );
         $consulta->execute(['idPaciente' => $idPaciente, 'idCitaExcluida' => $idCitaExcluida, 'inicio' => $inicio, 'fin' => $fin]);
@@ -136,15 +140,23 @@ final class CitaRepository
         $consulta = $this->conexionPostgresql->prepare("SELECT c.id_cita FROM citas c JOIN turnos t USING(id_turno)
             JOIN horarios_medicos h USING(id_horario_medico) WHERE h.id_medico=:idMedico AND c.id_cita<>:idCitaExcluida
             AND c.estado_cita NOT IN ('cancelada','reprogramada') AND t.fecha_hora_inicio<:fin AND t.fecha_hora_fin>:inicio LIMIT 1");
-        $consulta->execute(compact('idMedico','inicio','fin','idCitaExcluida'));
+        $consulta->execute(compact('idMedico', 'inicio', 'fin', 'idCitaExcluida'));
         return $consulta->fetchColumn() !== false;
     }
-    public function listarMedicosParaAgenda(Usuario $usuario): array
+
+    public function pacienteTieneCitaActiva(int $idPaciente, int $idCitaExcluida = 0): bool
     {
-        $consulta = $this->conexionPostgresql->prepare("SELECT m.id_medico, concat_ws(' ',u.nombres_usuario,u.apellidos_usuario) AS nombre_medico, u.usuario_activo
-            FROM medicos m JOIN usuarios u USING(id_usuario)" . ($usuario->codigoRol === 'medico' ? ' WHERE m.id_usuario=:idUsuario' : '') . ' ORDER BY nombre_medico,m.id_medico');
-        $consulta->execute($usuario->codigoRol === 'medico' ? ['idUsuario'=>$usuario->idUsuario] : []);
-        return array_map(static fn(array $fila): array => ['idMedico'=>(int)$fila['id_medico'], 'nombreMedico'=>$fila['nombre_medico'], 'medicoActivo'=>in_array($fila['usuario_activo'],[true,1,'1','t','true'],true)], $consulta->fetchAll());
+        $consulta = $this->conexionPostgresql->prepare("SELECT id_cita FROM citas WHERE id_paciente = :idPaciente
+            AND id_cita <> :idCitaExcluida AND estado_cita IN ('pendiente', 'confirmada') LIMIT 1");
+        $consulta->execute(compact('idPaciente', 'idCitaExcluida'));
+        return $consulta->fetchColumn() !== false;
     }
 
+    public function listarCitasActivasPaciente(int $idPaciente): array
+    {
+        $consulta = $this->conexionPostgresql->prepare(self::CONSULTA_CITA .
+            " WHERE citas.id_paciente = :idPaciente AND citas.estado_cita IN ('pendiente', 'confirmada') ORDER BY turnos.fecha_hora_inicio, citas.id_cita");
+        $consulta->execute(['idPaciente' => $idPaciente]);
+        return array_map(static fn (array $registro): Cita => new Cita($registro), $consulta->fetchAll());
+    }
 }

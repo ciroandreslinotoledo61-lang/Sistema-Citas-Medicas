@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Presentation\Controllers;
@@ -9,7 +10,9 @@ use CitasMedicas\Shared\Utils\SolicitudHttp;
 
 final class AutenticacionController
 {
-    public function __construct(private readonly AutenticacionService $autenticacionService) {}
+    public function __construct(private readonly AutenticacionService $autenticacionService)
+    {
+    }
 
     public function iniciarSesionUsuario(): never
     {

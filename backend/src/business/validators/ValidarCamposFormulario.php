@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Business\Validators;
@@ -37,8 +38,10 @@ final class ValidarCamposFormulario
     public static function validarContrasenaRegistro(array $datos): string
     {
         $contrasenaUsuario = $datos['contrasenaUsuario'] ?? null;
-        if (!is_string($contrasenaUsuario) || strlen($contrasenaUsuario) < 12 ||
-            strlen($contrasenaUsuario) > 72 || str_contains($contrasenaUsuario, "\0")) {
+        if (
+            !is_string($contrasenaUsuario) || strlen($contrasenaUsuario) < 12 ||
+            strlen($contrasenaUsuario) > 72 || str_contains($contrasenaUsuario, "\0")
+        ) {
             throw new ErrorAplicacion('Revisa la clave de acceso.', 422, [
                 'contrasenaUsuario' => 'Usa entre 12 y 72 bytes. Para texto ASCII, cada caracter ocupa un byte.',
             ]);
@@ -66,5 +69,33 @@ final class ValidarCamposFormulario
             throw new ErrorAplicacion('La pagina solicitada no es valida.', 422);
         }
         return ['busqueda' => $busqueda, 'pagina' => $pagina];
+    }
+
+    public static function validarIdentificador(array $datos, string $campo): int
+    {
+        $valor = $datos[$campo] ?? null;
+        if (
+            (!is_int($valor) && !is_string($valor)) ||
+            !preg_match('/^[1-9][0-9]*$/', (string) $valor) ||
+            filter_var($valor, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false
+        ) {
+            throw new ErrorAplicacion('Selecciona un registro valido.', 422, [$campo => 'Selecciona una opcion valida.']);
+        }
+        return (int) $valor;
+    }
+
+    public static function validarFecha(mixed $valor, bool $opcional = false): string
+    {
+        if ($opcional && ($valor === '' || $valor === null)) {
+            return '';
+        }
+        if (!is_string($valor) || !preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $valor)) {
+            throw new ErrorAplicacion('La fecha no es valida. Usa AAAA-MM-DD.', 422);
+        }
+        $fecha = \DateTimeImmutable::createFromFormat('!Y-m-d', $valor);
+        if (!$fecha || str_starts_with($valor, '0000-') || $fecha->format('Y-m-d') !== $valor) {
+            throw new ErrorAplicacion('La fecha no existe.', 422);
+        }
+        return $valor;
     }
 }

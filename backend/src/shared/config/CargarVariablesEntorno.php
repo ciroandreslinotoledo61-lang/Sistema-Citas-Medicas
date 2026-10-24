@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Shared\Config;
@@ -20,9 +21,11 @@ final class CargarVariablesEntorno
             }
             $nombreVariable = $coincidencia[1];
             $valorVariable = trim($coincidencia[2]);
-            if (strlen($valorVariable) >= 2 &&
+            if (
+                strlen($valorVariable) >= 2 &&
                 (($valorVariable[0] === '"' && str_ends_with($valorVariable, '"')) ||
-                 ($valorVariable[0] === "'" && str_ends_with($valorVariable, "'")))) {
+                 ($valorVariable[0] === "'" && str_ends_with($valorVariable, "'")))
+            ) {
                 $valorVariable = substr($valorVariable, 1, -1);
             }
             if (getenv($nombreVariable) === false) {

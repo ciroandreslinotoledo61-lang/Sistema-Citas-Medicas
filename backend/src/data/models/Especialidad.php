@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Data\Models;
@@ -11,7 +12,8 @@ final class Especialidad
         public readonly string $descripcionEspecialidad,
         public readonly bool $especialidadActiva,
         public readonly int $cantidadMedicosActivos
-    ) {}
+    ) {
+    }
 
     public static function crearEspecialidadDesdeRegistro(array $registroEspecialidad): self
     {

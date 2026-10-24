@@ -1,10 +1,14 @@
 <?php
+
 declare(strict_types=1);
+
 namespace CitasMedicas\Data\Models;
 
 final class Cita
 {
-    public function __construct(private readonly array $registro) {}
+    public function __construct(private readonly array $registro)
+    {
+    }
 
     public function perteneceAlPaciente(int $idUsuario): bool
     {
@@ -29,6 +33,7 @@ final class Cita
             'estadoCita' => $registro['estado_cita'], 'motivoCita' => $registro['motivo_cita'],
             'asistenciaRegistrada' => $registro['asistencia_registrada'],
             'motivoCancelacion' => $registro['motivo_cancelacion'],
+            'historialCambios' => is_array($registro['historial_cambios'] ?? null) ? $registro['historial_cambios'] : json_decode($registro['historial_cambios'] ?? '[]', true, 512, JSON_THROW_ON_ERROR),
             'idCitaOrigen' => $registro['id_cita_origen'] === null ? null : (int) $registro['id_cita_origen'],
         ];
     }

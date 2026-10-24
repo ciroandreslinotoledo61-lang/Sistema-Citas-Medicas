@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Business\Services;
@@ -11,16 +12,17 @@ use CitasMedicas\Shared\Utils\SesionUsuario;
 
 final class AutenticacionService
 {
-    public function __construct(private readonly UsuarioRepository $usuarioRepository) {}
+    public function __construct(private readonly UsuarioRepository $usuarioRepository)
+    {
+    }
 
     public function iniciarSesionUsuario(array $datos): Usuario
     {
         $datosValidados = UsuarioValidator::validarDatosInicioSesion($datos);
-        if ((int) ($_SESSION['inicioVentanaIntentos'] ?? 0) < time() - 300) {
-            $_SESSION['inicioVentanaIntentos'] = time();
-            $_SESSION['intentosFallidos'] = 0;
+        if (SesionUsuario::obtenerInicioVentanaIntentos() < time() - 300) {
+            SesionUsuario::reiniciarIntentos(time());
         }
-        if ((int) ($_SESSION['intentosFallidos'] ?? 0) >= 5) {
+        if (SesionUsuario::obtenerIntentosFallidos() >= 5) {
             throw new ErrorAplicacion('Espera cinco minutos antes de volver a intentar.', 429);
         }
         $usuario = $this->usuarioRepository->obtenerUsuarioPorCorreo($datosValidados['correoUsuario']);
@@ -29,7 +31,7 @@ final class AutenticacionService
             ? $usuario->verificarContrasenaUsuario($datosValidados['contrasenaUsuario'])
             : password_verify($datosValidados['contrasenaUsuario'], '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.');
         if (!$usuario || !$contrasenaValida || !$usuario->usuarioActivo) {
-            $_SESSION['intentosFallidos'] = (int) ($_SESSION['intentosFallidos'] ?? 0) + 1;
+            SesionUsuario::registrarIntentoFallido();
             throw new ErrorAplicacion('Correo o clave de acceso incorrectos.', 401);
         }
         SesionUsuario::establecerUsuarioAutenticado($usuario->idUsuario, $usuario->versionCredenciales);
@@ -38,13 +40,15 @@ final class AutenticacionService
 
     public function obtenerUsuarioAutenticado(): Usuario
     {
-        $idUsuario = (int) ($_SESSION['idUsuario'] ?? 0);
+        $idUsuario = SesionUsuario::obtenerIdUsuario();
         if ($idUsuario < 1) {
             throw new ErrorAplicacion('Inicia sesion para continuar.', 401);
         }
         $usuario = $this->usuarioRepository->obtenerUsuarioPorId($idUsuario);
-        if (!$usuario || !$usuario->usuarioActivo ||
-            $usuario->versionCredenciales !== (int) ($_SESSION['versionCredenciales'] ?? 0)) {
+        if (
+            !$usuario || !$usuario->usuarioActivo ||
+            $usuario->versionCredenciales !== SesionUsuario::obtenerVersionCredenciales()
+        ) {
             SesionUsuario::limpiarSesionUsuario();
             throw new ErrorAplicacion('Tu sesion ya no esta disponible. Inicia sesion otra vez.', 401);
         }

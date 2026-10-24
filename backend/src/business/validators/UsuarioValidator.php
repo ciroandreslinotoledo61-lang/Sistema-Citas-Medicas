@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Business\Validators;
@@ -33,8 +34,10 @@ final class UsuarioValidator
     {
         $correoUsuario = ValidarCamposFormulario::validarCorreoUsuario($datos);
         $contrasenaUsuario = $datos['contrasenaUsuario'] ?? '';
-        if (!is_string($contrasenaUsuario) || $contrasenaUsuario === '' ||
-            strlen($contrasenaUsuario) > 72 || str_contains($contrasenaUsuario, "\0")) {
+        if (
+            !is_string($contrasenaUsuario) || $contrasenaUsuario === '' ||
+            strlen($contrasenaUsuario) > 72 || str_contains($contrasenaUsuario, "\0")
+        ) {
             throw new ErrorAplicacion('Correo o clave de acceso incorrectos.', 401);
         }
         return ['correoUsuario' => $correoUsuario, 'contrasenaUsuario' => $contrasenaUsuario];

@@ -1,6 +1,8 @@
+> Actualización 24/10/2026: Esta copia incorpora la refactorización de arquitectura del 24 de octubre de 2026. Consulta [GUIA-ARQUITECTURA-Y-DEFENSA.md](../../GUIA-ARQUITECTURA-Y-DEFENSA.md) antes de continuar el desarrollo.
+
 # Contexto del proyecto
 
-Version 1.3.0 de Clinica. Stack: PHP 8.2 o posterior, PostgreSQL, PDO pdo_pgsql, HTML, CSS y JavaScript sin framework ni compilacion.
+Version 1.4.0 de Clinica. Stack: PHP 8.2 o posterior, PostgreSQL, PDO pdo_pgsql, HTML, CSS y JavaScript sin framework ni compilacion.
 
 ## Implementado
 
@@ -12,7 +14,7 @@ Version 1.3.0 de Clinica. Stack: PHP 8.2 o posterior, PostgreSQL, PDO pdo_pgsql,
 - Panel y navegacion por rol; controles de propiedad en el backend.
 - README con matriz de responsabilidades, casos implementados y pendientes, prioridades y flujos principales.
 
-Paciente significa cliente: reserva y anula solo sus citas; elige medico y turno. Recepcion registra pacientes, gestiona citas y asistencia. Medico consulta solo sus bloques y citas, con datos basicos de esos pacientes. Administrador gestiona recursos y operaciones administrativas; no escribe informacion clinica por ser administrador.
+Paciente significa cliente: reserva y anula solo sus citas; elige medico y turno. Recepcion registra pacientes, gestiona citas y asistencia. Medico consulta solo sus bloques y citas; registra Atendida/Inasistencia y cancela futuras con motivo obligatorio. Administrador gestiona recursos y operaciones administrativas; no escribe informacion clinica por ser administrador.
 
 ## Pendiente
 
@@ -30,8 +32,10 @@ Edicion o retiro de bloques, consulta clinica, historial completo, tratamientos,
 
 ## Actualizar
 
-Leer ACTUALIZAR-ESTA-VERSION.md. Mantener migraciones 001 a 003 y aplicar 004 mediante backend/scripts/actualizar-agenda-reportes.php. Las 11 tablas se conservan. La migracion 004 agrega duracion por bloque/turno, sexo opcional y telefono medico; conserva las horas de las reservas anteriores y ajusta las asistencias a Atendida.
+Leer ACTUALIZAR-ESTA-VERSION.md. Con migraciones 001 a 004 ya instaladas, aplicar solo 005 mediante backend/scripts/actualizar-programacion-mensual.php. No repetir migraciones anteriores ni seeder. Las 11 tablas se conservan. La migracion 004 agrega duracion por bloque/turno, sexo opcional y telefono medico; conserva las horas de las reservas anteriores y ajusta las asistencias a Atendida.
 
 Las pruebas con PHP WebAssembly y un adaptador PDO de QA sobre PostgreSQL embebido, los recorridos de navegador y sus limites se describen en docs/ai/pruebas.md. La configuracion Apache/XAMPP y concurrencia sobre un servidor PostgreSQL independiente deben verificarse en el entorno de instalacion.
 
 Version 1.3 agrega reportes administrativos, edicion completa y estado de pacientes, telefono medico, duracion configurable y filtro de medico. No mostrar zona horaria en pantallas. Ver actualizacion-agenda-reportes.md.
+
+Version 1.4 agrega programacion por periodos, jornada 08:00-17:00, minutos 00/30, una cita activa por paciente y trazabilidad del resultado medico. Conservar todas las reservas previas, incluidas las duplicidades; no habilitar nuevas reservas hasta resolverlas. Consultar programacion-mensual.md.

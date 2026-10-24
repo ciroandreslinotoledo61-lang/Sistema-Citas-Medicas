@@ -1,6 +1,6 @@
 # Diccionario de datos
 
-Fuentes: migraciones 001 a 004 en `backend/src/data/migrations`. La migracion contiene exactamente 11 tablas del dominio; no hay tablas de herramientas externas.
+Fuentes: migraciones 001 a 005 en `backend/src/data/migrations`. La migracion contiene exactamente 11 tablas del dominio; no hay tablas de herramientas externas.
 
 Las claves IDENTITY se generan en PostgreSQL. Las FK usan la accion predeterminada NO ACTION: no se eliminan registros relacionados de forma automatica. Los valores de entrada se validan tambien en la capa business.
 
@@ -194,7 +194,7 @@ Las 11 tablas se conservan. Campos agregados a citas:
 | Campo | Tipo | Proposito |
 | --- | --- | --- |
 | asistencia_registrada | VARCHAR(12), NOT NULL, defecto pendiente | pendiente, asistio o no_asistio; CHECK |
-| motivo_cancelacion | VARCHAR(300), NOT NULL, defecto vacio | Motivo opcional al anular |
+| motivo_cancelacion | VARCHAR(300), NOT NULL, defecto vacio | Motivo al cancelar; obligatorio por servicio para Medico desde 005 |
 | id_usuario_registro | BIGINT, FK usuarios, nullable | Responsable de la reserva |
 | id_usuario_actualizacion | BIGINT, FK usuarios, nullable | Responsable del ultimo cambio de estado o asistencia |
 | fecha_actualizacion_cita | TIMESTAMPTZ, nullable | Momento del ultimo cambio |
@@ -219,3 +219,21 @@ La ausencia de cruces de bloques y de citas del mismo paciente se controla en se
 ck_turnos_duracion valida el intervalo contra duracion_turno_minutos. uq_turnos_horario_intervalo reemplaza la unicidad solo por inicio, para conservar reservas anteriores de 15 minutos durante la conversion. tr_citas_evitar_cruces bloquea medico/paciente y rechaza solapamientos con SQLSTATE 23P01; la ocupacion del mismo turno mantiene el indice parcial previo. Indices nuevos: usuarios(fecha_registro_usuario), citas(estado_cita).
 
 pacienteActivo y medicoActivo representan usuarios.usuario_activo. No se duplica ese estado en los perfiles. No se agregan tablas.
+
+## Migracion 005
+
+Se conservan las once tablas. No se cambian las horas ni estados de citas existentes, usuarios o claves.
+
+| Tabla | Campo / indice | Definicion |
+| --- | --- | --- |
+| citas | excepcion_cita_activa_previa | BOOLEAN NOT NULL DEFAULT FALSE; true solo en duplicidades activas detectadas al instalar 005 |
+| citas | historial_cambios | JSONB NOT NULL DEFAULT []; arreglo de eventos posteriores a 005 |
+| citas | uq_citas_paciente_activa | UNIQUE(id_paciente) parcial: estado pendiente/confirmada y excepcion=false |
+
+tr_citas_politica_y_trazabilidad valida estados, no permite cambiar paciente/turno en la misma cita, bloquea el paciente y rechaza nuevas activas con SQLSTATE P2001. Incluye todas las citas activas al comprobar, tambien las exceptuadas. Un INSERT no puede activar la excepcion y un UPDATE solo la conserva en una cita legada que sigue activa. Al finalizar la cita, la excepcion se retira. La migracion repetida no vuelve a marcar excepciones.
+
+P2002 identifica transicion invalida o estado/asistencia incoherente. El trigger agrega auditoria y conserva el arreglo anterior en UPDATE. El indice parcial protege nuevas reservas incluso ante escrituras simultaneas; el servicio vuelve a validar bajo bloqueo del paciente. El trigger 004 y el indice de ocupacion por turno permanecen.
+
+El horario general se centraliza en ConfiguracionAgenda; no se agrega un CHECK que invalide los bloques historicos fuera de 08:00-17:00. Solo las altas de horarios nuevas se limitan. Los turnos reservados anteriores conservan su duracion, aunque sea de 15 minutos.
+
+005 ajusta validar_cruces_reserva_cita: las citas finales siguen ocupando el intervalo del medico, pero dejan de bloquear al paciente para otra reserva futura. Esto tambien se comprueba con una atencion terminada antes del fin nominal de un turno mas largo.

@@ -21,7 +21,7 @@ function obtenerModulosDisponibles(string $codigoRol): array
             'titulo' => $codigoRol === 'medico' ? 'Mis horarios' : 'Horarios de atencion',
             'ruta' => '/horarios', 'prefijo' => 'horario', 'icono' => 'calendario',
             'descripcion' => $codigoRol === 'medico' ? 'Tus bloques de atencion asignados.' : 'Bloques de disponibilidad y generacion automatica de turnos.',
-            'rutaRegistro' => $codigoRol === 'administrador' ? '/horarios/nuevo' : '', 'accionRegistro' => 'Crear horario',
+            'rutaRegistro' => $codigoRol === 'administrador' ? '/horarios/nuevo' : '', 'accionRegistro' => 'Programar horarios',
             'roles' => ['administrador', 'medico'],
         ],
         [

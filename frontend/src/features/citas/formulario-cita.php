@@ -14,6 +14,7 @@ $esReprogramacion = $idRegistro > 0;
         <p id="mensaje-busqueda-paciente" class="mensaje" role="status" hidden></p>
     </form>
     <?php endif; ?>
+    <p class="nota-informativa" id="aviso-cita-activa" role="status" hidden></p>
     <form id="formulario-cita" method="post">
         <fieldset id="campos-cita" disabled>
             <legend class="solo-lector">Datos de la reserva</legend>

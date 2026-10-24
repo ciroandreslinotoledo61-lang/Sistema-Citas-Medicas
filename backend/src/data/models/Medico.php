@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace CitasMedicas\Data\Models;
@@ -17,15 +18,19 @@ final class Medico
         public readonly bool $especialidadActiva,
         public readonly bool $medicoActivo,
         public readonly string $telefonoMedico = ''
-    ) {}
+    ) {
+    }
 
     public static function crearMedicoDesdeRegistro(array $registroMedico): self
     {
         return new self(
-            (int) $registroMedico['id_medico'], (int) $registroMedico['id_usuario'],
+            (int) $registroMedico['id_medico'],
+            (int) $registroMedico['id_usuario'],
             (int) $registroMedico['id_especialidad'],
-            $registroMedico['nombres_usuario'], $registroMedico['apellidos_usuario'],
-            $registroMedico['correo_usuario'], $registroMedico['matricula_profesional'],
+            $registroMedico['nombres_usuario'],
+            $registroMedico['apellidos_usuario'],
+            $registroMedico['correo_usuario'],
+            $registroMedico['matricula_profesional'],
             $registroMedico['nombre_especialidad'],
             in_array($registroMedico['especialidad_activa'], [true, 1, '1', 't', 'true'], true),
             in_array($registroMedico['usuario_activo'], [true, 1, '1', 't', 'true'], true),

@@ -1,9 +1,11 @@
 <?php
+
 declare(strict_types=1);
 
 use CitasMedicas\Presentation\Middlewares\VerificarOrigenSolicitud;
 use CitasMedicas\Presentation\Middlewares\VerificarTokenCsrf;
-use CitasMedicas\Presentation\Routes\RutasApi;
+use CitasMedicas\Presentation\Http\EnrutadorApi;
+use CitasMedicas\Presentation\Http\FabricaControladores;
 use CitasMedicas\Shared\Errors\ErrorAplicacion;
 use CitasMedicas\Shared\Utils\RespuestaJson;
 use CitasMedicas\Shared\Utils\SesionUsuario;
@@ -15,7 +17,7 @@ try {
     if (!in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'HEAD', 'OPTIONS'], true)) {
         VerificarTokenCsrf::exigirTokenCsrfValido();
     }
-    RutasApi::atenderSolicitudApi();
+    (new EnrutadorApi(new FabricaControladores()))->atenderSolicitud();
 } catch (ErrorAplicacion $error) {
     RespuestaJson::enviarRespuestaJson(['mensaje' => $error->getMessage(), 'erroresCampos' => $error->erroresCampos], $error->codigoHttp);
 } catch (PDOException $error) {

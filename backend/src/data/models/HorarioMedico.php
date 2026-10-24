@@ -1,10 +1,14 @@
 <?php
+
 declare(strict_types=1);
+
 namespace CitasMedicas\Data\Models;
 
 final class HorarioMedico
 {
-    public function __construct(private readonly array $registro) {}
+    public function __construct(private readonly array $registro)
+    {
+    }
 
     public function obtenerDatosPublicosHorario(): array
     {

@@ -1,30 +1,51 @@
-# Actualizar a la version 1.3.0
+# Aplicar la refactorización de arquitectura
 
-Esta actualizacion parte del ZIP Sistema-Citas-Medicas-main.zip entregado por el usuario. Integra agenda de 30 minutos, perfiles y reportes en las capas existentes.
+Esta entrega parte del ZIP `Sistema-Citas-Medicas-prueba-astra-mensual.zip`, versión funcional 1.4.0 con migraciones 001–005. Es el proyecto completo. No incluye `.git`, archivos `.env`, contraseñas personales ni una copia de PostgreSQL.
 
-## Instalacion existente
+## Usar una copia separada
 
-1. Guarda tus cambios actuales en un commit o una copia completa del proyecto. Conserva .git y ambos .env. Crea tambien un respaldo de PostgreSQL desde pgAdmin (Backup). Los commits no guardan los datos de PostgreSQL.
-2. Deten backend y frontend. Aplica el parche siguiendo LEEME-PRIMERO.md del paquete. Usa primero git apply --check; si hay conflicto, compara los archivos afectados y conserva tus cambios, sin forzar la aplicacion.
-3. Si ya usas la agenda de la version 1.2 con migraciones 001, 002 y 003, ejecuta SOLO:
+1. Detén tus dos servidores PHP con `Ctrl+C`.
+2. Extrae `Clinica-Vida-Salud-Refactorizado.zip` en otra carpeta y abre esa carpeta en VS Code.
+3. Copia tus archivos `backend/.env` y `frontend/.env` de la instalación actual a las mismas ubicaciones de la copia refactorizada. No los reemplaces por los ejemplos si ya están configurados.
+4. Comprueba `CITA_DURACION_MINUTOS=30`, la URL del frontend, `API_URL` y los datos de PostgreSQL.
+5. Si tu base ya tiene 001–005, **esta refactorización no requiere ejecutar migraciones ni el seeder**. Puede usar la misma configuración de conexión; probarla sobre un respaldo de la base permite comparar sin alterar tu trabajo diario.
+6. Desde la raíz de la copia ejecuta:
 
 ```powershell
-php backend/scripts/verificar-entorno.php --conexion
-php backend/scripts/actualizar-agenda-reportes.php
+& "C:\php85\php.exe" backend/scripts/verificar-entorno.php --conexion
+& "C:\php85\php.exe" backend/tests/ejecutar-pruebas.php
 ```
 
-La migracion 004 se ejecuta en una transaccion y es repetible. No borra usuarios, citas, historias ni turnos. Convierte la disponibilidad futura a 30 minutos y actualiza las asistencias previas a Atendida. Las reservas anteriores mantienen sus horas; su intervalo bloquea cualquier nuevo turno que se cruce.
+Terminal 1:
 
-4. Puedes agregar CITA_DURACION_MINUTOS=30 al backend/.env. Si falta, ya se usa 30. APP_TIMEZONE anterior se ignora; ambos servicios usan la hora de Bolivia internamente. No reemplaces tus .env por los ejemplos.
-5. Inicia ambos servidores como indica el README y recarga con Ctrl+F5. Revisa Reportes como Administrador, el filtro de medico en Citas y la edicion/estado de Pacientes. Crea un bloque futuro de una hora: debe generar dos turnos.
-6. Ejecuta pruebas en una base separada terminada en _pruebas y revisa git diff antes del commit.
+```powershell
+& "C:\php85\php.exe" -S 127.0.0.1:8000 -t backend/public backend/src/server.php
+```
 
-Si falla la migracion, se revierte la transaccion. Corrige conexion, permisos o migraciones anteriores antes de iniciar los servidores. No ejecutes migrar-base-datos.php ni cargar-datos-iniciales.php en tu base con usuarios.
+Terminal 2:
 
-## Instalacion nueva
+```powershell
+& "C:\php85\php.exe" -S 127.0.0.1:8080 -t frontend/public frontend/src/server.php
+```
 
-Sigue el README: base vacia, migraciones 001, 002, 003 y 004 en ese orden; despues cargar-datos-iniciales.php. Se conservan las once tablas.
+Abre <http://127.0.0.1:8080> y recorre Administración, Recepción, Médico y Paciente. Las instrucciones para una base completamente nueva siguen en el README. La migración inicial y el seeder no se repiten sobre una base que ya contiene cuentas.
 
-## Regresar a la version anterior
+## Incorporar los cambios a tu repositorio existente
 
-El parche se puede revertir con git apply -R despues de verificarlo con --check. Eso solo revierte archivos. Si ya aplicaste la migracion, restaura tambien el respaldo de PostgreSQL correspondiente antes de usar el codigo anterior. Hazlo con los servidores detenidos. No se incluye una migracion inversa que elimine datos nuevos.
+La carpeta extraída no contiene el historial Git de tu repositorio. Conserva tu carpeta `.git` y tu rama actual. No ejecutes `git init` ni hagas un cambio de rama para instalar este código.
+
+Consulta `docs/refactorizacion/ARCHIVOS-MODIFICADOS.md` y compara los archivos con VS Code. Integra las modificaciones y añade los nuevos archivos indicados. Es importante copiar también `presentation/http`, las rutas por módulo, los nuevos validadores, `DisponibilidadService`, `DisponibilidadController`, `TurnoRepository` y `Transaccion`; copiar únicamente los servicios dejaría referencias incompletas.
+
+Si tienes cambios posteriores al ZIP adjunto, compáralos antes de reemplazar un archivo. Ningún archivo original fue eliminado. No se hicieron commits ni push desde esta entrega.
+
+```powershell
+git status --short
+git diff --check
+git diff --stat
+```
+
+## Pruebas con datos
+
+`backend/tests/ejecutar-pruebas.php --integracion` exige una base separada cuyo nombre termine en `_pruebas`, con las cinco migraciones y datos iniciales. No apunta automáticamente a otra base: debes configurarla mediante `DB_NAME` y sus credenciales.
+
+La guía detallada y los resultados están en `docs/refactorizacion/VERIFICACION.md`. La antigua guía de actualización de 1.3 a 1.4 quedó preservada como documento histórico en `docs/refactorizacion/ACTUALIZACION-1.4-HISTORICA.md`.

@@ -1,0 +1,7 @@
+.git
+**/.env
+**/.env.*
+**/tests
+docs
+*.zip
+*.log

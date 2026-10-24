@@ -20,9 +20,29 @@ try {
         exit(0);
     }
     $tablas = (int) $db->query("SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")->fetchColumn();
-    if ($tablas !== 0) {
-        throw new RuntimeException('Usa una base NUEVA y vacia. No se modificaron las tablas existentes.');
+    
+if ($tablas !== 0) {
+    if (getenv('ALLOW_IMPORTED_DATABASE') !== 'true') {
+        throw new RuntimeException('La base existente no esta autorizada.');
     }
+
+    $columnas = (int) $db->query(
+        "SELECT count(*) FROM information_schema.columns
+        WHERE table_schema='public'
+        AND table_name='citas'
+        AND column_name IN ('historial_cambios','excepcion_cita_activa_previa')"
+    )->fetchColumn();
+
+    if ($columnas !== 2 ||
+        !$db->query("SELECT to_regclass('public.usuarios')")->fetchColumn()) {
+        throw new RuntimeException('La base importada no tiene la estructura esperada.');
+    }
+
+    $db->commit();
+    echo "Base importada reconocida; se conservan los datos.\n";
+    exit(0);
+}
+
     if (getenv('INITIALIZE_EMPTY_DATABASE') !== 'true') {
         throw new RuntimeException('Para inicializar la base vacia configura INITIALIZE_EMPTY_DATABASE=true.');
     }

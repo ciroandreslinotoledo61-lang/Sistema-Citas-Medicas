@@ -12,7 +12,7 @@ use CitasMedicas\Shared\Utils\SesionUsuario;
 
 final class AutenticacionService
 {
-    public function __construct(private readonly UsuarioRepository $usuarioRepository)
+    public function __construct(private readonly UsuarioRepository $usuarioRepository,private readonly BitacoraService $bitacoraService)
     {
     }
 
@@ -32,8 +32,10 @@ final class AutenticacionService
             : password_verify($datosValidados['contrasenaUsuario'], '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.');
         if (!$usuario || !$contrasenaValida || !$usuario->usuarioActivo) {
             SesionUsuario::registrarIntentoFallido();
+            $this->bitacoraService->registrarEventoAutenticacion(null,'iniciar_sesion','rechazado');
             throw new ErrorAplicacion('Correo o clave de acceso incorrectos.', 401);
         }
+        $this->bitacoraService->registrarEventoAutenticacion($usuario,'iniciar_sesion','exito');
         SesionUsuario::establecerUsuarioAutenticado($usuario->idUsuario, $usuario->versionCredenciales);
         return $usuario;
     }
@@ -57,6 +59,7 @@ final class AutenticacionService
 
     public function cerrarSesionUsuario(): void
     {
+        $this->bitacoraService->registrarEventoAutenticacion($this->obtenerUsuarioAutenticado(),'cerrar_sesion','exito');
         SesionUsuario::limpiarSesionUsuario();
     }
 }

@@ -5,6 +5,9 @@ declare(strict_types=1);
 function obtenerModulosDisponibles(string $codigoRol): array
 {
     $modulos = [
+        ['titulo'=>'Mi historial clinico','ruta'=>'/historial-clinico','prefijo'=>'historial','icono'=>'informacion','descripcion'=>'Mis atenciones, diagnosticos y tratamientos.','rutaRegistro'=>'','accionRegistro'=>'','roles'=>['paciente']],
+        ['titulo'=>'Consultas e historial','ruta'=>'/consultas','prefijo'=>'consulta','icono'=>'medicos','descripcion'=>'Atenciones registradas y continuidad clinica.','rutaRegistro'=>'','accionRegistro'=>'','roles'=>['medico']],
+        ['titulo'=>'Bitacora','ruta'=>'/bitacora','prefijo'=>'bitacora','icono'=>'informacion','descripcion'=>'Actividades, responsables y resultados.','rutaRegistro'=>'','accionRegistro'=>'','roles'=>['administrador']],
         ['titulo'=>'Reportes', 'ruta'=>'/reportes', 'prefijo'=>'reportes', 'icono'=>'panel', 'descripcion'=>'Citas por fecha, medico, especialidad y estado. Pacientes registrados.', 'rutaRegistro'=>'', 'accionRegistro'=>'', 'roles'=>['administrador']],
         [
             'titulo' => $codigoRol === 'paciente' ? 'Mis citas' : ($codigoRol === 'medico' ? 'Mi agenda' : 'Citas medicas'),

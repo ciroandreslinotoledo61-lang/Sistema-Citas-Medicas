@@ -71,7 +71,7 @@ try {
     rechazarCitas(fn() => (new MedicoService($conexion))->cambiarEstadoMedico($bloque['idMedico'], ['medicoActivo' => false]), 409);
     $ocupada = $citas->reservarCita($recepcionista, ['idPaciente' => $datosPrueba->pacientes[1]['idPaciente'], 'idTurno' => $turnosPrimero[1]['idTurno']]);
     rechazarCitas(fn() => $citas->reprogramarCita($recepcionista, $primera['idCita'], ['idTurno' => $ocupada['idTurno']]), 409);
-    comprobarCitas($citas->obtenerCita($pacientePrimero, $primera['idCita'])['estadoCita'] === 'confirmada', 'Un fallo conserva la reserva original.');
+    comprobarCitas($citas->obtenerCita($pacientePrimero, $primera['idCita'])['estadoCita'] === 'programada', 'Un fallo conserva la reserva original.');
     // Forzar un fallo DESPUES de modificar la cita original permite comprobar el rollback completo.
     $restriccionPrueba = 'prueba_reprogramacion_' . $datosPrueba->identificador;
     $conexion->exec('ALTER TABLE citas ADD CONSTRAINT ' . $restriccionPrueba . ' CHECK (id_cita_origen IS NULL OR id_cita_origen <> ' . (int) $primera['idCita'] . ') NOT VALID');
@@ -80,7 +80,7 @@ try {
             $citas->reprogramarCita($recepcionista, $primera['idCita'], ['idTurno' => $turnosSegundo[0]['idTurno']]);
             throw new RuntimeException('La restriccion de prueba no se ejecuto.');
         } catch (PDOException $error) { comprobarCitas($error->getCode() === '23514', 'Fallo forzado en la nueva reserva.'); }
-        comprobarCitas($citas->obtenerCita($pacientePrimero, $primera['idCita'])['estadoCita'] === 'confirmada', 'Rollback restaura la cita despues de modificarla.');
+        comprobarCitas($citas->obtenerCita($pacientePrimero, $primera['idCita'])['estadoCita'] === 'programada', 'Rollback restaura la cita despues de modificarla.');
         comprobarCitas(count($horarios->listarTurnosDisponibles($pacientePrimero, ['idMedico' => $datosPrueba->medicos[1]->idMedico, 'fecha' => $fecha])) === 4, 'Rollback no ocupa el turno nuevo.');
     } finally { $conexion->exec('ALTER TABLE citas DROP CONSTRAINT ' . $restriccionPrueba); }
     $nueva = $citas->reprogramarCita($recepcionista, $primera['idCita'], ['idTurno' => $turnosSegundo[0]['idTurno']]);

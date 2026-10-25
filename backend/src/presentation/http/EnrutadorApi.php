@@ -32,6 +32,8 @@ final class EnrutadorApi
                 continue;
             }
             $usuario = $this->autorizarRuta($definicion);
+            // Identidad validada en servidor; reiniciar contexto tambien en registros publicos.
+            if($usuario!==null || $metodo!=='GET')$this->controladores->obtenerBitacoraService()->establecerUsuarioResponsable($usuario);
             $argumentos = $this->resolverArgumentos($definicion, $parametros, $usuario);
             $controlador = $this->controladores->obtener($definicion->controlador);
             $controlador->{$definicion->accion}(...$argumentos);

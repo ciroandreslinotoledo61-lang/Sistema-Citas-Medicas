@@ -100,30 +100,28 @@ try {
     rechazarPeriodo(fn()=>$alInicio->marcarCitaAtendida($medico,$idCita),409);
     rechazarPeriodo(fn()=>$alInicio->marcarCitaInasistencia($medico,$cita['idCita']),409);
     $siguiente=$alInicio->reservarCita($paciente,['idTurno'=>$turnos[1]['idTurno']]);
-    comprobarPeriodo($siguiente['estadoCita']==='confirmada','Atendida libera la regla de cita activa.');
+    comprobarPeriodo($siguiente['estadoCita']==='programada','Atendida libera la regla de cita activa.');
     $alFin=new CitaService($conexion,new DateTimeImmutable($fecha.' 09:00'));
     rechazarPeriodo(fn()=>$alFin->marcarCitaInasistencia($otroMedico,$siguiente['idCita']),404);
     comprobarPeriodo($alFin->marcarCitaInasistencia($medico,$siguiente['idCita'])['estadoCita']==='no_asistio','Inasistencia al final del turno.');
     $administrativa=$alFin->reservarCita($recepcionista,['idPaciente'=>$idPaciente,'idTurno'=>$turnos[4]['idTurno']]);
-    comprobarPeriodo($administrativa['estadoCita']==='confirmada','Inasistencia libera la regla de cita activa.');
+    comprobarPeriodo($administrativa['estadoCita']==='programada','Inasistencia libera la regla de cita activa.');
     $aLasDiez=new CitaService($conexion,new DateTimeImmutable($fecha.' 10:00'));
     comprobarPeriodo($aLasDiez->registrarAsistencia($recepcionista,$administrativa['idCita'],['asistenciaRegistrada'=>'asistio'])['estadoCita']==='atendida','Recepcion conserva asistencia.');
     $administrativa=$aLasDiez->reservarCita($recepcionista,['idPaciente'=>$idPaciente,'idTurno'=>$turnos[6]['idTurno']]);
     $aLasDoce=new CitaService($conexion,new DateTimeImmutable($fecha.' 12:00'));
-    comprobarPeriodo($aLasDoce->obtenerCita($paciente,$administrativa['idCita'])['estadoCita']==='confirmada','No se atiende automaticamente al pasar la hora.');
+    comprobarPeriodo($aLasDoce->obtenerCita($paciente,$administrativa['idCita'])['estadoCita']==='programada','No se atiende automaticamente al pasar la hora.');
     comprobarPeriodo($aLasDoce->registrarAsistencia($recepcionista,$administrativa['idCita'],['asistenciaRegistrada'=>'no_asistio'])['estadoCita']==='no_asistio','Recepcion conserva inasistencia.');
-    // Una cita programada preexistente se puede confirmar sin una nueva reserva.
+    // El valor predeterminado de PostgreSQL ahora es programada.
     $consulta=$conexion->prepare('INSERT INTO citas(id_paciente,id_turno,id_usuario_registro) VALUES(:paciente,:turno,:usuario) RETURNING id_cita');
     $consulta->execute(['paciente'=>$idPaciente,'turno'=>$turnos[12]['idTurno'],'usuario'=>$recepcionista->idUsuario]);
     $programada=(int)$consulta->fetchColumn();
-    rechazarPeriodo(fn()=>$aLasDoce->confirmarCita($medico,$programada),403);
-    comprobarPeriodo($aLasDoce->confirmarCita($recepcionista,$programada)['estadoCita']==='confirmada','Programada pasa a confirmada.');
-    rechazarPeriodo(fn()=>$aLasDoce->confirmarCita($recepcionista,$programada),409);
+    comprobarPeriodo($aLasDoce->obtenerCita($paciente,$programada)['estadoCita']==='programada','Estado predeterminado real.');
     $aLasDoce->cancelarCita($paciente,$programada,[]);
     $historial=$citas->listarCitas($paciente,[])['elementos'];
     comprobarPeriodo(count($historial)===6,'Se conservan los seis registros del paciente.');
     foreach ($historial as $registro) { comprobarPeriodo(!$registro['puedeCancelar'] && !$registro['puedeMarcarAtendida'],'Estados finales sin acciones.'); }
-    try { $conexion->exec("UPDATE citas SET estado_cita='confirmada' WHERE id_cita=".$idCita); throw new RuntimeException('Reactivacion SQL permitida.'); }
+    try { $conexion->exec("UPDATE citas SET estado_cita='programada' WHERE id_cita=".$idCita); throw new RuntimeException('Reactivacion SQL permitida.'); }
     catch (PDOException $error) { comprobarPeriodo((string)$error->getCode()==='P2002','SQL impide reactivar una cita final.'); }
     // Una atencion terminada antes del fin nominal no bloquea otra especialidad.
     $fechaLarga=$inicioMes->modify('+2 months')->format('Y-m-d');
@@ -138,7 +136,7 @@ try {
     $larga=$citas->reservarCita($paciente,['idTurno'=>$turnosLargos[0]['idTurno']]);
     $temprano=new CitaService($conexion,new DateTimeImmutable($fechaLarga.' 08:01'));
     $temprano->marcarCitaAtendida($medico,$larga['idCita']);
-    comprobarPeriodo($temprano->reservarCita($paciente,['idTurno'=>$turnosCortos[1]['idTurno']])['estadoCita']==='confirmada','Atendida no bloquea al paciente aunque quede tiempo nominal.');
+    comprobarPeriodo($temprano->reservarCita($paciente,['idTurno'=>$turnosCortos[1]['idTurno']])['estadoCita']==='programada','Atendida no bloquea al paciente aunque quede tiempo nominal.');
     $otraActiva=$citas->listarCitasActivasPaciente($paciente,[])[0];
     $temprano->cancelarCita($paciente,$otraActiva['idCita'],[]);
     (new MedicoService($conexion))->cambiarEstadoMedico($segundo['idMedico'],['medicoActivo'=>false]);

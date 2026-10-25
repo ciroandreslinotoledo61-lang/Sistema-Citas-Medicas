@@ -1,6 +1,7 @@
-import { obtenerCita, cancelarCita, marcarCitaInasistencia, confirmarCita, marcarCitaAtendida } from "./citas-api.js";
+import { obtenerCita, cancelarCita, marcarCitaInasistencia, marcarCitaAtendida } from "./citas-api.js";
 import { formatearTurno, crearEstadoCita, estadosAsistencia, mostrarResumenCampos, estadosCita } from "./presentacion-citas.js";
 import { ejecutarEnvioFormulario, mostrarErrorSolicitud, mostrarMensaje } from "../../components/formularios.js";
+const estadosHistoricos = { ...estadosCita, pendiente: "Programada (anterior)", confirmada: "Confirmada (anterior)" };
 const idCita = Number(document.body.dataset.idRegistro);
 const mensaje = document.querySelector("#mensaje-detalle");
 const formulario = document.querySelector("#formulario-anulacion");
@@ -16,6 +17,10 @@ function mostrarCita(cita) {
         ["Motivo de consulta", cita.motivoCita], ["Asistencia", estadosAsistencia[cita.asistenciaRegistrada]],
         ...(cita.motivoCancelacion ? [["Motivo de cancelacion", cita.motivoCancelacion]] : []),
     ]);
+    const resultado=document.querySelector("#resultado-reprogramacion");resultado.hidden=!cita.resultadoReprogramacion;
+    if(cita.resultadoReprogramacion){const n=cita.resultadoReprogramacion;resultado.textContent=`Ultima reserva de esta reprogramacion: #${n.idCita} | ${estadosCita[n.estadoCita]} | ${formatearTurno(n)}`;}
+    document.querySelector("#acciones-clinicas").hidden=!(cita.puedeRegistrarConsulta||cita.idConsulta||cita.puedeVerHistoriaClinica);
+    for(const [selector,visible,ruta] of [["#registrar-consulta",cita.puedeRegistrarConsulta,"/consultas/nueva?cita="+cita.idCita],["#ver-consulta",cita.idConsulta,"/consultas/"+cita.idConsulta],["#ver-historia",cita.puedeVerHistoriaClinica,"/historial-clinico/"+cita.idPaciente]]){const a=document.querySelector(selector);a.hidden=!visible;a.href=ruta;}
     const enlaceOrigen = document.querySelector("#enlace-cita-origen");
     enlaceOrigen.hidden = !cita.idCitaOrigen;
     if (cita.idCitaOrigen) { enlaceOrigen.textContent = "Reprogramada desde la reserva #" + cita.idCitaOrigen; }
@@ -29,8 +34,6 @@ function mostrarCita(cita) {
     document.querySelector("#registrar-asistencia").hidden = !cita.puedeMarcarAtendida;
     document.querySelector("#registrar-inasistencia").hidden = !cita.puedeRegistrarInasistencia;
     acciones.hidden = !(cita.puedeCancelar || cita.puedeReprogramar || cita.puedeMarcarAtendida || cita.puedeRegistrarInasistencia);
-    document.querySelector("#confirmar-cita").hidden = !cita.puedeConfirmar;
-    if (cita.puedeConfirmar) acciones.hidden = false;
     document.querySelector("#explicacion-acciones").textContent = cita.explicacionAcciones;
     formulario.elements.motivoCancelacion.required = cita.requiereMotivoCancelacion;
     document.querySelector("#etiqueta-motivo-cancelacion").textContent = "Motivo de cancelacion " + (cita.requiereMotivoCancelacion ? "(obligatorio)" : "(opcional)");
@@ -41,7 +44,7 @@ function mostrarCita(cita) {
     for (const cambio of cita.historialCambios || []) {
         const item = document.createElement("li");
         const fecha = new Intl.DateTimeFormat("es-BO", { timeZone: "America/La_Paz", dateStyle: "short", timeStyle: "short" }).format(new Date(cambio.fechaHora));
-        item.textContent = `${fecha} | ${cambio.nombreUsuario || "Registro del sistema"} | ${cambio.estadoAnterior ? (estadosCita[cambio.estadoAnterior] || cambio.estadoAnterior) + " -> " : "Reserva: "}${estadosCita[cambio.estadoNuevo] || cambio.estadoNuevo}${cambio.motivoCancelacion ? " | " + cambio.motivoCancelacion : ""}`;
+        item.textContent = `${fecha} | ${cambio.nombreUsuario || "Registro del sistema"} | ${cambio.estadoAnterior ? (estadosHistoricos[cambio.estadoAnterior] || cambio.estadoAnterior) + " -> " : "Reserva: "}${estadosHistoricos[cambio.estadoNuevo] || cambio.estadoNuevo}${cambio.motivoCancelacion ? " | " + cambio.motivoCancelacion : ""}`;
         historial.append(item);
     }
     if (!historial.children.length) { const item = document.createElement("li"); item.textContent = "Registro anterior a esta actualizacion. No se reconstruyen cambios que no fueron registrados."; historial.append(item); }
@@ -77,9 +80,3 @@ async function guardarAsistencia(asistencia) {
 }
 document.querySelector("#registrar-asistencia").addEventListener("click", () => guardarAsistencia("asistio"));
 document.querySelector("#registrar-inasistencia").addEventListener("click", () => guardarAsistencia("no_asistio"));
-document.querySelector("#confirmar-cita").addEventListener("click", async evento => {
-    const boton = evento.currentTarget; boton.disabled = true;
-    try { const respuesta = await confirmarCita(idCita); mostrarCita(respuesta.datos); mostrarMensaje(mensaje, respuesta.mensaje); }
-    catch (error) { mostrarErrorSolicitud(mensaje, error); }
-    finally { boton.disabled = false; }
-});

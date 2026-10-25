@@ -1,7 +1,7 @@
 """Prueba opcional: requiere Python 3.9+, PHP y una base NUEVA terminada en _pruebas.
 
-Inicia servidores propios. La base debe tener las migraciones 001-005 y solo
-las cuatro cuentas del seeder. Deja datos sintéticos para inspección.
+Inicia servidores propios. La base debe tener las migraciones 001-008 y solo
+las cuatro cuentas del seeder. Deja datos sinteticos para inspeccion.
 """
 from pathlib import Path
 import argparse
@@ -79,7 +79,7 @@ def main():
                 else:
                     raise RuntimeError("El servidor PHP no quedo disponible.")
             resultados = ejecutar(api, frontend, clave)
-            print(f"OK: {len(resultados)} comprobaciones HTTP registradas; 48 endpoints y vistas por rol.")
+            print(f"OK: {len(resultados)} comprobaciones HTTP registradas; contrato previo y vistas por rol.")
             print("Los datos sinteticos quedan en la base de pruebas para inspeccion.")
         finally:
             for servidor in reversed(servidores):

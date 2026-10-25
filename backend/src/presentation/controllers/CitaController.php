@@ -64,11 +64,6 @@ final class CitaController
         RespuestaJson::enviarRespuestaJson(['mensaje' => 'Inasistencia registrada.', 'datos' => $this->citaService->marcarCitaInasistencia($usuario, $idCita)]);
     }
 
-    public function confirmarCita(Usuario $usuario, int $idCita): never
-    {
-        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Cita confirmada.', 'datos' => $this->citaService->confirmarCita($usuario, $idCita)]);
-    }
-
     public function listarCitasActivasPaciente(Usuario $usuario): never
     {
         RespuestaJson::enviarRespuestaJson(['datos' => $this->citaService->listarCitasActivasPaciente($usuario, $_GET)]);

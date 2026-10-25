@@ -10,6 +10,9 @@ use CitasMedicas\Shared\Errors\ErrorAplicacion;
 final class PermisosSistema
 {
     public const ROLES_POR_OPERACION = [
+        'historial.consultar'=>[RolesSistema::MEDICO,RolesSistema::PACIENTE],
+        'consultas.escribir'=>[RolesSistema::MEDICO],
+        'bitacora.consultar' => [RolesSistema::ADMINISTRADOR],
         'usuarios.gestionar' => [RolesSistema::ADMINISTRADOR],
         'pacientes.gestionar' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA],
         'especialidades.gestionar' => [RolesSistema::ADMINISTRADOR],
@@ -24,7 +27,6 @@ final class PermisosSistema
         'reportes.consultar' => [RolesSistema::ADMINISTRADOR],
         'agenda.filtrar' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA, RolesSistema::MEDICO],
         'citas.atender' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA, RolesSistema::MEDICO],
-        'citas.confirmar' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA],
         'citas.inasistencia' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA, RolesSistema::MEDICO],
         'citas.asistencia' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA],
     ];

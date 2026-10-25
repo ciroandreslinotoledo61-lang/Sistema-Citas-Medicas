@@ -13,7 +13,7 @@ final class CitaValidator
         $filtros = ValidarCamposFormulario::validarParametrosBusqueda($parametros);
         $filtros['fecha'] = ValidarCamposFormulario::validarFecha($parametros['fecha'] ?? '', true);
         $estado = $parametros['estado'] ?? '';
-        if (!is_string($estado) || !in_array($estado, ['', 'pendiente', 'confirmada', 'cancelada', 'reprogramada', 'no_asistio', 'atendida'], true)) {
+        if (!is_string($estado) || !in_array($estado, ['', 'programada', 'cancelada', 'reprogramada', 'no_asistio', 'atendida'], true)) {
             throw new ErrorAplicacion('El estado de la cita no es valido.', 422);
         }
         $filtros['estado'] = $estado;

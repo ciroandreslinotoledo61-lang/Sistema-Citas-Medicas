@@ -13,7 +13,7 @@ $esMedico = $usuarioAutenticado['codigoRol'] === 'medico';
         <input name="idPaciente" type="hidden" value="">
         <?php if (!$esPaciente && !$esMedico): ?><label>Medico<select name="idMedico" id="filtro-medico-agenda"><option value="">Todos los medicos</option></select></label><?php endif; ?>
         <label>Fecha<input name="fecha" type="date"></label>
-        <label>Estado<select name="estado"><option value="">Todos</option><option value="confirmada">Confirmada</option><option value="pendiente">Programada</option><option value="cancelada">Cancelada</option><option value="reprogramada">Reprogramada</option><option value="no_asistio">Inasistencia</option><option value="atendida">Atendida</option></select></label>
+        <label>Estado<select name="estado"><option value="">Todos</option><option value="programada">Programada</option><option value="cancelada">Cancelada</option><option value="reprogramada">Reprogramada</option><option value="no_asistio">Inasistencia</option><option value="atendida">Atendida</option></select></label>
         <button class="boton boton-secundario" type="submit">Filtrar</button>
     </form>
     <p id="filtro-paciente-activo" class="nota-informativa" hidden></p>

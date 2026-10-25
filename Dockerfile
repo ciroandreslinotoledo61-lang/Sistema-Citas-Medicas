@@ -1,7 +1,7 @@
 FROM php:8.3-apache-bookworm
-# curl, mbstring y ctype ya vienen compiladas en esta imagen oficial.
-RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev \
-    && docker-php-ext-install pdo_pgsql \
+# Instalamos mbstring explicitamente para las validaciones de usuario.
+RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev libonig-dev \
+    && docker-php-ext-install pdo_pgsql mbstring \
     && rm -rf /var/lib/apt/lists/* \
     && a2enmod rewrite
 WORKDIR /var/www/app

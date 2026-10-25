@@ -29,6 +29,10 @@ $rutasVistas = [
     '/' => ['inicio', 'Portal de pacientes', 'inicio/inicio.php', '', null],
     '/iniciar-sesion' => ['iniciar-sesion', 'Iniciar sesion', 'auth/iniciar-sesion.php', 'auth/iniciar-sesion.js', null],
     '/registro-paciente' => ['registro-paciente', 'Crear cuenta de paciente', 'pacientes/formulario-registro.php', 'pacientes/registrar-paciente.js', null],
+    '/bitacora'=>['bitacora','Bitacora del sistema','bitacora/bitacora.php','bitacora/bitacora.js',['administrador']],
+    '/consultas'=>['consultas','Mis consultas','consultas/lista-consultas.php','consultas/listar-consultas.js',['medico']],
+    '/consultas/nueva'=>['consulta-nueva','Registrar consulta','consultas/formulario-consulta.php','consultas/formulario-consulta.js',['medico']],
+    '/historial-clinico'=>['historial-clinico','Mi historial clinico','consultas/historial-clinico.php','consultas/listar-consultas.js',['paciente']],
     '/reportes' => ['reportes', 'Reportes administrativos', 'reportes/reportes.php', 'reportes/reportes.js', ['administrador']],
     '/panel' => ['panel', 'Panel principal', 'panel/panel.php', '', []],
     '/usuarios' => ['usuarios', 'Usuarios', 'usuarios/lista-usuarios.php', 'usuarios/listar-usuarios.js', ['administrador']],
@@ -49,6 +53,14 @@ $rutasVistas = [
 try {
     if (isset($rutasVistas[$rutaActual])) {
         [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] = $rutasVistas[$rutaActual];
+    } elseif(preg_match('#^/consultas/([1-9][0-9]*)(/editar)?$#',$rutaActual,$coincidencia)){
+        $idRegistro=(int)$coincidencia[1];
+        [$paginaActual,$tituloPagina,$vista,$moduloJavascript,$rolesPermitidos]=isset($coincidencia[2])
+            ?['consulta-editar','Editar consulta','consultas/formulario-consulta.php','consultas/formulario-consulta.js',['medico']]
+            :['consulta-detalle','Detalle de consulta','consultas/detalle-consulta.php','consultas/detalle-consulta.js',['medico','paciente']];
+    } elseif(preg_match('#^/historial-clinico/([1-9][0-9]*)$#',$rutaActual,$coincidencia)){
+        $idRegistro=(int)$coincidencia[1];
+        [$paginaActual,$tituloPagina,$vista,$moduloJavascript,$rolesPermitidos]=['historial-clinico','Historial clinico','consultas/historial-clinico.php','consultas/listar-consultas.js',['medico','paciente']];
     } elseif (preg_match('#^/citas/([1-9][0-9]*)(/reprogramar)?$#', $rutaActual, $coincidencia)) {
         $idRegistro = (int) $coincidencia[1];
         $esReprogramacion = isset($coincidencia[2]);

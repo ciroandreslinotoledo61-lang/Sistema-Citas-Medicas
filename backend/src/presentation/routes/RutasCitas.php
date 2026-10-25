@@ -93,14 +93,6 @@ final class RutasCitas
                 [],
                 ['usuario', 'idCita'],
             ),
-            new RutaHttp(
-                'PATCH',
-                '/api/citas/{idCita}/confirmacion',
-                CitaController::class,
-                'confirmarCita',
-                [],
-                ['usuario', 'idCita'],
-            ),
         ];
     }
 }

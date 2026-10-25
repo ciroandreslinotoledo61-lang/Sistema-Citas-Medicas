@@ -65,7 +65,7 @@ final class CitaRepository
             especialidades.nombre_especialidad) ILIKE :busqueda";
         $parametros['busqueda'] = '%' . $filtros['busqueda'] . '%';
         $consulta = $this->conexionPostgresql->prepare(self::CONSULTA_CITA . ' WHERE ' . implode(' AND ', $condiciones) .
-            " ORDER BY CASE WHEN turnos.fecha_hora_inicio > :ahora AND citas.estado_cita IN ('pendiente','confirmada') THEN 0 ELSE 1 END,
+            " ORDER BY CASE WHEN turnos.fecha_hora_inicio > :ahora AND citas.estado_cita IN ('programada') THEN 0 ELSE 1 END,
               turnos.fecha_hora_inicio, citas.id_cita LIMIT 21 OFFSET :desplazamiento");
         foreach ($parametros as $nombre => $valor) {
             $consulta->bindValue(':' . $nombre, $valor);
@@ -87,7 +87,7 @@ final class CitaRepository
         $consulta = $this->conexionPostgresql->prepare(
             "SELECT citas.id_cita FROM citas JOIN turnos ON turnos.id_turno = citas.id_turno
              WHERE citas.id_paciente = :idPaciente AND citas.id_cita <> :idCitaExcluida
-             AND citas.estado_cita IN ('pendiente', 'confirmada')
+             AND citas.estado_cita IN ('programada')
              AND turnos.fecha_hora_inicio < :fin AND turnos.fecha_hora_fin > :inicio LIMIT 1"
         );
         $consulta->execute(['idPaciente' => $idPaciente, 'idCitaExcluida' => $idCitaExcluida, 'inicio' => $inicio, 'fin' => $fin]);
@@ -100,7 +100,7 @@ final class CitaRepository
             "SELECT citas.id_cita FROM citas JOIN turnos ON turnos.id_turno = citas.id_turno
              JOIN horarios_medicos horarios ON horarios.id_horario_medico = turnos.id_horario_medico
              WHERE horarios.id_medico = :idMedico AND turnos.fecha_hora_fin > :ahora
-             AND citas.estado_cita IN ('pendiente', 'confirmada') LIMIT 1"
+             AND citas.estado_cita IN ('programada') LIMIT 1"
         );
         $consulta->execute(['idMedico' => $idMedico, 'ahora' => $ahora]);
         return $consulta->fetchColumn() !== false;
@@ -110,7 +110,7 @@ final class CitaRepository
     {
         $consulta = $this->conexionPostgresql->prepare(
             "INSERT INTO citas (id_paciente, id_turno, motivo_cita, estado_cita, id_usuario_registro, id_cita_origen, id_especialidad_reserva)
-             VALUES (:idPaciente, :idTurno, :motivo, 'confirmada', :idUsuario, :idCitaOrigen, :idEspecialidad) RETURNING id_cita"
+             VALUES (:idPaciente, :idTurno, :motivo, 'programada', :idUsuario, :idCitaOrigen, :idEspecialidad) RETURNING id_cita"
         );
         $consulta->execute(['idPaciente' => $idPaciente, 'idTurno' => $idTurno, 'motivo' => $motivo,
             'idUsuario' => $idUsuario, 'idCitaOrigen' => $idCitaOrigen, 'idEspecialidad' => $idEspecialidad]);
@@ -147,7 +147,7 @@ final class CitaRepository
     public function pacienteTieneCitaActiva(int $idPaciente, int $idCitaExcluida = 0): bool
     {
         $consulta = $this->conexionPostgresql->prepare("SELECT id_cita FROM citas WHERE id_paciente = :idPaciente
-            AND id_cita <> :idCitaExcluida AND estado_cita IN ('pendiente', 'confirmada') LIMIT 1");
+            AND id_cita <> :idCitaExcluida AND estado_cita IN ('programada') LIMIT 1");
         $consulta->execute(compact('idPaciente', 'idCitaExcluida'));
         return $consulta->fetchColumn() !== false;
     }
@@ -155,8 +155,20 @@ final class CitaRepository
     public function listarCitasActivasPaciente(int $idPaciente): array
     {
         $consulta = $this->conexionPostgresql->prepare(self::CONSULTA_CITA .
-            " WHERE citas.id_paciente = :idPaciente AND citas.estado_cita IN ('pendiente', 'confirmada') ORDER BY turnos.fecha_hora_inicio, citas.id_cita");
+            " WHERE citas.id_paciente = :idPaciente AND citas.estado_cita IN ('programada') ORDER BY turnos.fecha_hora_inicio, citas.id_cita");
         $consulta->execute(['idPaciente' => $idPaciente]);
         return array_map(static fn (array $registro): Cita => new Cita($registro), $consulta->fetchAll());
+    }
+    /** Llamar despues de autorizar la cita inicial. La ruta evita ciclos historicos. */
+    public function obtenerResultadoReprogramacion(int $idCita): ?array
+    {
+        $q=$this->conexionPostgresql->prepare("WITH RECURSIVE cadena AS (
+            SELECT id_cita,estado_cita,id_turno,ARRAY[id_cita] camino,0 nivel FROM citas WHERE id_cita=:id
+            UNION ALL SELECT c.id_cita,c.estado_cita,c.id_turno,x.camino||c.id_cita,x.nivel+1
+            FROM citas c JOIN cadena x ON c.id_cita_origen=x.id_cita WHERE NOT c.id_cita=ANY(x.camino))
+            SELECT c.id_cita,c.estado_cita,t.fecha_hora_inicio,t.fecha_hora_fin FROM cadena c JOIN turnos t USING(id_turno)
+            WHERE nivel>0 ORDER BY nivel DESC,id_cita DESC LIMIT 1");
+        $q->execute(['id'=>$idCita]);$r=$q->fetch();
+        return $r?['idCita'=>(int)$r['id_cita'],'estadoCita'=>$r['estado_cita'],'fechaHoraInicio'=>$r['fecha_hora_inicio'],'fechaHoraFin'=>$r['fecha_hora_fin']]:null;
     }
 }

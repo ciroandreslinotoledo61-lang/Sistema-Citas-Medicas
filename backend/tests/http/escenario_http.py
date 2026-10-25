@@ -128,7 +128,7 @@ def ejecutar(base, front, clave):
     recep.request('PATCH', f'/citas/{cid}/asistencia', {'asistenciaRegistrada': 'asistio'}, esperado=409)
     medicoNuevo.request('PATCH', f'/citas/{cid}/atencion', {}, esperado=409)
     medicoNuevo.request('PATCH', f'/citas/{cid}/inasistencia', {}, esperado=409)
-    recep.request('PATCH', f'/citas/{cid}/confirmacion', {}, esperado=409)
+    recep.request('PATCH', f'/citas/{cid}/confirmacion', {}, esperado=404)
     segunda = recep.request('PATCH', f'/citas/{cid}/reprogramacion', {'idTurno': turnos[1]['idTurno']}, 201)['datos']
     cid2 = segunda['idCita']
     assert segunda['idCitaOrigen'] == cid

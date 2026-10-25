@@ -1,4 +1,4 @@
-> Documento histórico de la entrega anterior. Para la refactorización actual lee el archivo ACTUALIZAR-ESTA-VERSION.md de la raíz. Las rutas de sus ejemplos corresponden al paquete anterior.
+> Documento historico de la entrega anterior. Para la refactorizacion actual lee el archivo ACTUALIZAR-ESTA-VERSION.md de la raiz. Las rutas de sus ejemplos corresponden al paquete anterior.
 
 # Actualizar a la version 1.4.0
 

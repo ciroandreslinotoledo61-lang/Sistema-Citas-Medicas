@@ -69,30 +69,13 @@ $especialidadesActivo = str_starts_with($paginaActual, 'especialidad');
             </div>
         </details>
         <a href="/reportes" <?= $paginaActual === 'reportes' ? 'aria-current="page"' : '' ?>><?= mostrarIcono('panel') ?><span>Reportes administrativos</span></a>
-        <span class="etiqueta-menu">PROXIMOS MODULOS</span>
-        <details class="grupo-menu grupo-menu-pendiente">
-            <summary><?= mostrarIcono('calendario') ?><span>Consultorios</span><span class="chevron-menu" aria-hidden="true"></span></summary>
-            <div class="grupo-opciones">
-                <span class="enlace-pendiente">Gestionar consultorios <small>Pendiente</small></span>
-            </div>
-        </details>
-        <details class="grupo-menu grupo-menu-pendiente">
-            <summary><?= mostrarIcono('informacion') ?><span>Bitacora del sistema</span><span class="chevron-menu" aria-hidden="true"></span></summary>
-            <div class="grupo-opciones">
-                <span class="enlace-pendiente">Consultar bitacora <small>Pendiente</small></span>
-            </div>
-        </details>
-        <details class="grupo-menu grupo-menu-pendiente">
-            <summary><?= mostrarIcono('panel') ?><span>Mas funcionalidades</span><span class="chevron-menu" aria-hidden="true"></span></summary>
-            <div class="grupo-opciones">
-                <span class="enlace-pendiente">Consultas e historial <small>Pendiente</small></span>
-                <span class="enlace-pendiente">Laboratorio digital <small>Pendiente</small></span>
-            </div>
-        </details>
+        <a href="/bitacora" <?= $paginaActual==='bitacora'?'aria-current="page"':'' ?>><?= mostrarIcono('informacion') ?><span>Bitacora del sistema</span></a>
         <?php elseif ($esPaciente): ?>
         <span class="etiqueta-menu">MI ESPACIO</span>
         <a href="/mi-perfil" <?= $paginaActual === 'mi-perfil' ? 'aria-current="page"' : '' ?>><?= mostrarIcono('perfil') ?><span>Mi perfil</span></a>
         <?php endif; ?>
+        <?php if($rolMenu==='medico'): ?><a href="/consultas" <?= str_starts_with($paginaActual,'consulta')?'aria-current="page"':'' ?>><?= mostrarIcono('medicos') ?><span>Consultas e historial</span></a>
+        <?php elseif($esPaciente): ?><a href="/historial-clinico" <?= $paginaActual==='historial-clinico'?'aria-current="page"':'' ?>><?= mostrarIcono('informacion') ?><span>Mi historial clinico</span></a><?php endif; ?>
     </nav>
     <div class="pie-lateral">
         <div class="usuario-lateral">

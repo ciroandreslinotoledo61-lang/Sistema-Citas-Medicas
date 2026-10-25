@@ -7,11 +7,11 @@ export function formatearFecha(fecha) {
 export function formatearTurno(cita) {
     return `${formatearFecha(cita.fechaHoraInicio)} | ${cita.fechaHoraInicio.slice(11, 16)} - ${cita.fechaHoraFin.slice(11, 16)}`;
 }
-export const estadosCita = { pendiente: "Programada", confirmada: "Confirmada", cancelada: "Cancelada", reprogramada: "Reprogramada", no_asistio: "Inasistencia", atendida: "Atendida" };
+export const estadosCita = { programada: "Programada", cancelada: "Cancelada", reprogramada: "Reprogramada", no_asistio: "Inasistencia", atendida: "Atendida" };
 export const estadosAsistencia = { pendiente: "Sin registrar", asistio: "Asistio", no_asistio: "No asistio" };
 export function crearEstadoCita(cita) {
     const insignia = document.createElement("span");
-    insignia.className = "insignia " + (["confirmada", "atendida"].includes(cita.estadoCita) ? "activa" : "inactiva");
+    insignia.className = "insignia " + (["programada", "atendida"].includes(cita.estadoCita) ? "activa" : "inactiva");
     insignia.textContent = estadosCita[cita.estadoCita] || cita.estadoCita;
     return insignia;
 }

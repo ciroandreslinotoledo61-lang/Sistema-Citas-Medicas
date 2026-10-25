@@ -12,5 +12,4 @@ export const listarMedicosParaAgenda = () => solicitarApi("/agenda/medicos");
 export const obtenerConfiguracionAgenda = () => solicitarApi("/disponibilidad/configuracion");
 export const marcarCitaAtendida = idCita => solicitarApi("/citas/" + idCita + "/atencion", "PATCH");
 export const marcarCitaInasistencia = idCita => solicitarApi("/citas/" + idCita + "/inasistencia", "PATCH");
-export const confirmarCita = idCita => solicitarApi("/citas/" + idCita + "/confirmacion", "PATCH");
 export const listarCitasActivasPaciente = idPaciente => solicitarApi("/citas/activas" + (idPaciente ? "?" + new URLSearchParams({ idPaciente }) : ""));

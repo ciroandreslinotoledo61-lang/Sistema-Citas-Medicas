@@ -30,6 +30,8 @@ if (in_array('--integracion', $argv, true)) {
         'test_reportes_perfiles.php',
         'test_programacion_periodos.php',
         'test_migracion_005.php',
+        'test_migracion_006.php',
+        'test_consultas_bitacora.php',
         'test_reserva_concurrente.php',
         'test_transacciones_capas.php',
     ]);

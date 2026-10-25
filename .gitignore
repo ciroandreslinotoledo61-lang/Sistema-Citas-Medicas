@@ -13,3 +13,17 @@ Thumbs.db
 .idea/
 .vscode/
 coverage/
+
+# Respaldos fuera del repositorio
+*.backup
+*.dump
+backups/
+
+# Caches de pruebas Python
+__pycache__/
+*.py[cod]
+
+docs/ai/
+
+/ENTREGA-EXPRESS-RENDER.md
+/ACTUALIZAR-ESTA-VERSION.md

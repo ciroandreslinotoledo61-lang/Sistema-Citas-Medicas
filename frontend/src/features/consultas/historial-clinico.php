@@ -1,0 +1,8 @@
+<section class="titulo-vista"><div><p class="sobretitulo">CONTINUIDAD DE ATENCION</p><h1>Historial clinico</h1><p>Antecedentes y atenciones autorizadas. Las reservas y sus estados se consultan en Citas.</p></div></section>
+<section class="tarjeta" id="historia-clinica" hidden><h2 id="nombre-paciente"></h2><dl class="datos-paciente" id="antecedentes-paciente"></dl>
+<details id="editar-antecedentes" hidden><summary>Actualizar antecedentes</summary><form id="formulario-historia">
+<label>Tipo de sangre<select name="tipoSangre"><option value="">Sin registrar</option><?php foreach(['A+','A-','B+','B-','AB+','AB-','O+','O-'] as $t): ?><option><?= $t ?></option><?php endforeach; ?></select></label>
+<label>Alergias<textarea name="alergias" maxlength="5000" rows="3"></textarea></label><label>Antecedentes<textarea name="antecedentes" maxlength="5000" rows="3"></textarea></label>
+<p id="mensaje-formulario" class="mensaje" role="status" hidden></p><button type="submit" class="boton">Guardar antecedentes</button></form></details></section>
+<section class="tarjeta margen-superior"><h2>Atenciones registradas</h2><form id="formulario-busqueda" class="filtros"><label>Paciente o CI<input name="busqueda" maxlength="80"></label><label>Desde<input type="date" name="fechaDesde"></label><label>Hasta<input type="date" name="fechaHasta"></label><button class="boton" type="submit">Buscar</button></form>
+<p id="mensaje-listado" class="mensaje" role="status" hidden></p><div class="tabla-contenedor" tabindex="0" aria-label="Consultas registradas"><table><thead><tr><th>Fecha</th><th>Paciente</th><th>Medico</th><th>Cita</th><th>Acciones</th></tr></thead><tbody id="filas-consultas"></tbody></table></div><?php require dirname(__DIR__,2).'/components/paginacion.php'; ?></section>

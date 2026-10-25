@@ -533,3 +533,14 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 #aviso-cita-activa a { display: inline-block; margin-right: 8px; }
 #resumen-programacion .tabla-contenedor { max-height: 420px; }
 @media (max-width: 480px) { .seleccion-dias label { flex: 1 1 42%; } }
+
+/* Extensiones clinicas con los mismos tokens de color y puntos de adaptacion. */
+.tratamiento-formulario { min-width:0; margin:1rem 0; padding:1rem; border:1px solid var(--linea); border-radius:var(--radio); }
+.tratamiento-resumen { padding:.8rem 1rem; margin-block:.8rem; border-left:4px solid var(--turquesa); background:var(--celeste); border-radius:8px; }
+.texto-clinico,#antecedentes-paciente dd { white-space:pre-wrap; overflow-wrap:anywhere; }
+#formulario-consulta > label,#formulario-historia > label { display:grid; gap:.4rem; margin-block:1rem; }
+#lista-versiones details { padding:1rem; border-bottom:1px solid var(--linea); }
+#lista-versiones summary,#editar-antecedentes summary { cursor:pointer; font-weight:700; }
+.filtros { display:flex; flex-wrap:wrap; gap:1rem; align-items:end; margin-bottom:1.5rem; }
+.filtros label { flex:1 1 150px; min-width:0; margin:0; }
+.filtros-bitacora { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr)); }

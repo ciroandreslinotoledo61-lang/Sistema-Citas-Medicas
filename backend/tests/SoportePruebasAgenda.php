@@ -56,6 +56,8 @@ final class SoportePruebasAgenda
         try {
             // Los identificadores proceden de registros creados por esta instancia.
             $filtroCitas = "id_paciente IN (SELECT id_paciente FROM pacientes WHERE id_usuario IN ($identificadores))";
+            $this->conexion->exec("DELETE FROM tratamientos WHERE id_consulta IN (SELECT id_consulta FROM consultas WHERE id_cita IN (SELECT id_cita FROM citas WHERE $filtroCitas))");
+            $this->conexion->exec("DELETE FROM consultas WHERE id_cita IN (SELECT id_cita FROM citas WHERE $filtroCitas)");
             $this->conexion->exec("UPDATE citas SET id_cita_origen = NULL WHERE $filtroCitas");
             $this->conexion->exec("DELETE FROM citas WHERE $filtroCitas");
             $this->conexion->exec("DELETE FROM turnos WHERE id_horario_medico IN (SELECT id_horario_medico FROM horarios_medicos WHERE id_medico IN (SELECT id_medico FROM medicos WHERE id_usuario IN ($identificadores)))");

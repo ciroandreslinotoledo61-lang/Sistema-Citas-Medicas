@@ -18,7 +18,9 @@ final class RutasApi
             RutasPacientes::definir(),
             RutasEspecialidades::definir(),
             RutasMedicos::definir(),
-            RutasAgenda::definir()
+            RutasAgenda::definir(),
+            RutasBitacora::definir(),
+            RutasConsultas::definir()
         );
     }
 }

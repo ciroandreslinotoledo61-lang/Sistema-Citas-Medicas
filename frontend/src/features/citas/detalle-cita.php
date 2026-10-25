@@ -7,12 +7,13 @@
     <a class="enlace" id="enlace-cita-origen" hidden></a>
     <p id="explicacion-acciones" class="nota-informativa"></p>
     <div class="acciones" id="acciones-cita" hidden>
-        <button class="boton" type="button" id="confirmar-cita" hidden>Confirmar cita</button>
         <a class="boton boton-secundario" id="reprogramar-cita" hidden>Reprogramar</a>
         <button class="boton boton-peligro" type="button" id="mostrar-anulacion" hidden>Cancelar cita</button>
         <button class="boton" type="button" id="registrar-asistencia" hidden>Marcar atendida</button>
         <button class="boton boton-secundario" type="button" id="registrar-inasistencia" hidden>Registrar inasistencia</button>
     </div>
+    <p id="resultado-reprogramacion" class="nota-informativa" hidden></p>
+    <div class="acciones margen-superior" id="acciones-clinicas" hidden><a class="boton" id="registrar-consulta" hidden>Registrar consulta</a><a class="boton" id="ver-consulta" hidden>Ver consulta</a><a class="boton boton-secundario" id="ver-historia" hidden>Historial clinico</a></div>
     <form id="formulario-anulacion" class="separacion-formulario" method="post" hidden>
         <h3>Cancelar esta cita</h3><p>El turno quedara libre. La cita cancelada se conserva en el historial.</p>
         <dl class="datos-paciente" id="resumen-cancelacion"></dl>

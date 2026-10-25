@@ -17,13 +17,17 @@ final class FabricaControladores
     public function obtenerAutenticacionService(): Services\AutenticacionService
     {
         return $this->autenticacionService ??= new Services\AutenticacionService(
-            new UsuarioRepository(ConexionPostgresql::obtenerConexionPostgresql())
+            new UsuarioRepository(ConexionPostgresql::obtenerConexionPostgresql()),$this->obtenerBitacoraService()
         );
     }
+
+    public function obtenerBitacoraService():Services\BitacoraService {return new Services\BitacoraService($this->conexion());}
 
     public function obtener(string $clase): object
     {
         return match ($clase) {
+            Controllers\ConsultaController::class => new Controllers\ConsultaController(new Services\ConsultaService($this->conexion()),new Services\HistoriaClinicaService($this->conexion())),
+            Controllers\BitacoraController::class => new Controllers\BitacoraController($this->obtenerBitacoraService()),
             Controllers\EstadoController::class => new Controllers\EstadoController(),
             Controllers\TokenCsrfController::class => new Controllers\TokenCsrfController(),
             Controllers\AutenticacionController::class => new Controllers\AutenticacionController($this->obtenerAutenticacionService()),

@@ -21,8 +21,7 @@ final class ReporteRepository
     {
         [$where,$parametros] = $this->construirFiltrosCitas($filtros);
         $consulta = $this->conexionPostgresql->prepare("SELECT count(*) AS total,
-            count(*) FILTER(WHERE c.estado_cita='pendiente') AS programadas,
-            count(*) FILTER(WHERE c.estado_cita='confirmada') AS confirmadas,
+            count(*) FILTER(WHERE c.estado_cita='programada') AS programadas,
             count(*) FILTER(WHERE c.estado_cita='atendida') AS atendidas,
             count(*) FILTER(WHERE c.estado_cita='cancelada') AS canceladas,
             count(*) FILTER(WHERE c.estado_cita='no_asistio') AS inasistencias,

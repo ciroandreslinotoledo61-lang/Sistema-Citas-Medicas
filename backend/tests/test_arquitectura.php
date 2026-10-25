@@ -16,7 +16,7 @@ function comprobarArquitectura(bool $condicion, string $mensaje): void
 }
 
 $rutas = RutasApi::definir();
-comprobarArquitectura(count($rutas) === 48, 'Debe conservarse el contrato de las 48 rutas.');
+comprobarArquitectura(count($rutas) === 56, 'Debe conservarse el contrato de las 56 rutas.');
 $contratos = [];
 foreach ($rutas as $ruta) {
     $clave = $ruta->metodo . ' ' . $ruta->ruta;
@@ -57,4 +57,4 @@ foreach (glob($fuente . '/data/repositories/*.php') as $archivo) {
     $codigo = file_get_contents($archivo);
     comprobarArquitectura(!preg_match('/Business\\\\|Presentation\\\\|->codigoRol|PermisosSistema|DateTimeImmutable/', $codigo), 'Reglas o permisos en repositorio: ' . basename($archivo));
 }
-echo "OK: 48 rutas unicas, firmas de controladores, parametros y dependencias entre capas.\n";
+echo "OK: 56 rutas unicas, firmas de controladores, parametros y dependencias entre capas.\n";

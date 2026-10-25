@@ -23,6 +23,7 @@ final class CitaService
 {
     public const MENSAJE_CITA_ACTIVA = 'Ya tienes una cita activa. Para reservar una nueva cita, primero debes completar o cancelar tu cita actual.';
     private readonly CitaRepository $citaRepository;
+    private readonly \CitasMedicas\Data\Repositories\ConsultaRepository $consultaRepository;
     private readonly TurnoRepository $turnoRepository;
     private readonly PacienteRepository $pacienteRepository;
     private readonly MedicoRepository $medicoRepository;
@@ -31,6 +32,7 @@ final class CitaService
 
     public function __construct(\PDO $conexionPostgresql, private readonly ?\DateTimeImmutable $momentoReferencia = null)
     {
+        $this->consultaRepository=new \CitasMedicas\Data\Repositories\ConsultaRepository($conexionPostgresql);
         $this->citaRepository = new CitaRepository($conexionPostgresql);
         $this->turnoRepository = new TurnoRepository($conexionPostgresql);
         $this->pacienteRepository = new PacienteRepository($conexionPostgresql);
@@ -57,7 +59,14 @@ final class CitaService
 
     public function obtenerCita(Usuario $usuario, int $idCita): array
     {
-        return $this->prepararDatosCita($this->exigirCitaAutorizada($usuario, $idCita), $usuario);
+        $datos=$this->prepararDatosCita($this->exigirCitaAutorizada($usuario,$idCita),$usuario);
+        $datos['resultadoReprogramacion']=$datos['estadoCita']==='reprogramada'?$this->citaRepository->obtenerResultadoReprogramacion($idCita):null;
+        if($usuario->codigoRol===RolesSistema::MEDICO){
+            $datos['idConsulta']=$this->consultaRepository->obtenerIdConsultaPorCita($idCita);
+            $datos['puedeRegistrarConsulta']=$datos['idConsulta']===null&&in_array($datos['estadoCita'],['programada','atendida'],true)&&new \DateTimeImmutable($datos['fechaHoraInicio'])<=$this->obtenerAhora();
+            $datos['puedeVerHistoriaClinica']=in_array($datos['estadoCita'],['programada','atendida'],true);
+        }
+        return $datos;
     }
 
     public function reservarCita(Usuario $usuario, array $datos): array
@@ -146,20 +155,6 @@ final class CitaService
         return $this->guardarAsistenciaCita($usuario, $idCita, 'no_asistio');
     }
 
-    public function confirmarCita(Usuario $usuario, int $idCita): array
-    {
-        PermisosSistema::exigirPermiso($usuario, 'citas.confirmar');
-        return $this->ejecutarTransaccion(function () use ($usuario, $idCita): array {
-            $cita = $this->exigirCitaAutorizada($usuario, $idCita, true);
-            $this->exigirCitaModificable($cita);
-            if ($cita->obtenerDatosPublicosCita()['estadoCita'] !== 'pendiente') {
-                throw new ErrorAplicacion('Solo se puede confirmar una cita programada.', 409);
-            }
-            $this->citaRepository->actualizarEstadoCita($idCita, 'confirmada', $usuario->idUsuario);
-            return $this->obtenerCita($usuario, $idCita);
-        });
-    }
-
     public function listarCitasActivasPaciente(Usuario $usuario, array $parametros): array
     {
         PermisosSistema::exigirPermiso($usuario, 'citas.reservar');
@@ -181,7 +176,7 @@ final class CitaService
     {
         return $this->ejecutarTransaccion(function () use ($usuario, $idCita, $asistencia): array {
             $cita = $this->exigirCitaAutorizada($usuario, $idCita, true)->obtenerDatosPublicosCita();
-            if (!in_array($cita['estadoCita'], ['pendiente', 'confirmada'], true) || $cita['asistenciaRegistrada'] !== 'pendiente') {
+            if (!in_array($cita['estadoCita'], ['programada'], true) || $cita['asistenciaRegistrada'] !== 'pendiente') {
                 throw new ErrorAplicacion('La asistencia ya fue registrada o la cita ya no esta vigente.', 409);
             }
             $limite = new \DateTimeImmutable($asistencia === 'asistio' ? $cita['fechaHoraInicio'] : $cita['fechaHoraFin']);
@@ -212,7 +207,7 @@ final class CitaService
     {
         $datos = $cita->obtenerDatosPublicosCita();
         if (
-            !in_array($datos['estadoCita'], ['pendiente', 'confirmada'], true) ||
+            !in_array($datos['estadoCita'], ['programada'], true) ||
             $datos['asistenciaRegistrada'] !== 'pendiente' || new \DateTimeImmutable($datos['fechaHoraInicio']) <= $this->obtenerAhora()
         ) {
             throw new ErrorAplicacion('Solo se pueden cancelar o reprogramar citas vigentes antes del inicio del turno.', 409);
@@ -288,7 +283,7 @@ final class CitaService
     private function prepararDatosCita(Cita $cita, Usuario $usuario): array
     {
         $datos = $cita->obtenerDatosPublicosCita();
-        $vigente = in_array($datos['estadoCita'], ['pendiente', 'confirmada'], true) && $datos['asistenciaRegistrada'] === 'pendiente';
+        $vigente = in_array($datos['estadoCita'], ['programada'], true) && $datos['asistenciaRegistrada'] === 'pendiente';
         $inicio = new \DateTimeImmutable($datos['fechaHoraInicio']);
         $fin = new \DateTimeImmutable($datos['fechaHoraFin']);
         $ahora = $this->obtenerAhora();
@@ -297,7 +292,6 @@ final class CitaService
         $datos['puedeMarcarAtendida'] = $vigente && $inicio <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.atender');
         $datos['puedeRegistrarAsistencia'] = $vigente && $inicio <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.asistencia');
         $datos['puedeRegistrarInasistencia'] = $vigente && $fin <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.inasistencia');
-        $datos['puedeConfirmar'] = $vigente && $datos['estadoCita'] === 'pendiente' && $inicio > $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.confirmar');
         $datos['requiereMotivoCancelacion'] = $usuario->codigoRol === RolesSistema::MEDICO;
         $datos['explicacionAcciones'] = !$vigente ? 'Esta cita es final y conserva su historial.'
             : ($inicio > $ahora ? 'Puedes cancelar antes del inicio. La atencion se registra desde el inicio del turno y la inasistencia desde su final.'

@@ -6,13 +6,13 @@
 <label>Hasta<input name="fechaHasta" type="date" required value="<?= date('Y-m-d') ?>"></label>
 <label>Medico<select name="idMedico"><option value="">Todos los medicos</option></select></label>
 <label>Especialidad<select name="idEspecialidad"><option value="">Todas las especialidades</option></select></label>
-<label>Estado<select name="estado"><option value="">Todos los estados</option><option value="pendiente">Programada</option><option value="confirmada">Confirmada</option><option value="atendida">Atendida</option><option value="cancelada">Cancelada</option><option value="no_asistio">Inasistencia</option><option value="reprogramada">Reprogramada</option></select></label>
+<label>Estado<select name="estado"><option value="">Todos los estados</option><option value="programada">Programada</option><option value="atendida">Atendida</option><option value="cancelada">Cancelada</option><option value="no_asistio">Inasistencia</option><option value="reprogramada">Reprogramada</option></select></label>
 <button class="boton" type="submit">Consultar reporte</button></form></section>
 <p id="mensaje-reporte" class="mensaje margen-superior" role="status">Cargando reporte...</p>
 <div id="contenido-reporte" hidden>
 <p id="periodo-reporte" class="nota-informativa" aria-live="polite"></p>
 <div class="totales-reporte margen-superior" aria-label="Totales del periodo">
-<?php foreach (['total'=>'Total de citas','programadas'=>'Programadas','confirmadas'=>'Confirmadas','atendidas'=>'Atendidas','canceladas'=>'Canceladas','inasistencias'=>'Inasistencias','reprogramadas'=>'Reprogramadas','pacientesRegistrados'=>'Pacientes registrados'] as $clave=>$nombre): ?>
+<?php foreach (['total'=>'Total de citas','programadas'=>'Programadas','atendidas'=>'Atendidas','canceladas'=>'Canceladas','inasistencias'=>'Inasistencias','reprogramadas'=>'Reprogramadas','pacientesRegistrados'=>'Pacientes registrados'] as $clave=>$nombre): ?>
 <section class="tarjeta total-reporte"><h2><?= escaparTextoHtml($nombre) ?></h2><strong id="total-<?= escaparTextoHtml($clave) ?>">--</strong></section>
 <?php endforeach; ?></div>
 <div class="grupos-reporte margen-superior">

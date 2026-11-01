@@ -8,6 +8,12 @@ use CitasMedicas\Shared\Errors\ErrorAplicacion;
 
 final class SolicitudHttp
 {
+    public static function obtenerDireccionCliente(): string
+    {
+        // Solo la direccion del servidor; las cabeceras proxy requieren una politica de confianza.
+        return $_SERVER['REMOTE_ADDR'] ?? 'local';
+    }
+
     public static function obtenerCuerpoJson(): array
     {
         if (!str_starts_with(strtolower($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json')) {

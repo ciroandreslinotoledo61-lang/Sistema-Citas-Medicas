@@ -7,3 +7,7 @@ export function iniciarSesionUsuario(datosUsuario) {
 export function registrarCuentaPaciente(datosPaciente) {
     return solicitarApi("/autenticacion/registro-paciente", "POST", datosPaciente);
 }
+
+export function cambiarContrasena(datos) {
+    return solicitarApi("/autenticacion/cambiar-contrasena", "POST", datos);
+}

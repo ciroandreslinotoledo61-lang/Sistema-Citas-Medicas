@@ -14,6 +14,7 @@ $pruebas = [
     'test_arquitectura.php',
     'test_validaciones.php',
     'test_permisos.php',
+    'test_credenciales_validacion.php',
     'test_validaciones_especialidades_medicos.php',
     'test_validaciones_agenda.php',
     'test_validaciones_actualizacion.php',
@@ -34,6 +35,7 @@ if (in_array('--integracion', $argv, true)) {
         'test_consultas_bitacora.php',
         'test_reserva_concurrente.php',
         'test_transacciones_capas.php',
+        'test_credenciales_transacciones.php',
     ]);
 }
 foreach ($pruebas as $prueba) {

@@ -14,9 +14,20 @@ function mostrarUsuariosEnTabla(usuarios) {
         insignia.textContent = usuario.usuarioActivo ? "Activo" : "Inactivo";
         insignia.className = "insignia " + (usuario.usuarioActivo ? "activa" : "inactiva");
         celdaEstado.append(insignia);
+        if (usuario.requiereCambioContrasena) {
+            const aviso = document.createElement("span");
+            aviso.className = "ayuda";
+            aviso.textContent = " Cambio de contrasena obligatorio";
+            celdaEstado.append(aviso);
+        }
         const celdaAcciones = document.createElement("td");
         celdaAcciones.className = "acciones-tabla";
         celdaAcciones.append(crearEnlaceAccion("Editar", "/usuarios/" + usuario.idUsuario + "/editar"));
+        if (usuario.idUsuario === usuarioAutenticado.idUsuario) {
+            celdaAcciones.append(crearEnlaceAccion("Cambiar mi contrasena", "/cambiar-contrasena"));
+        } else if (usuario.usuarioActivo) {
+            celdaAcciones.append(crearEnlaceAccion("Restablecer contrasena", "/usuarios/" + usuario.idUsuario + "/restablecer-contrasena"));
+        }
         if (usuario.codigoRol === "medico") {
             celdaAcciones.append(crearEnlaceAccion("Gestionar medico", "/medicos"));
         } else if (usuario.idUsuario !== usuarioAutenticado.idUsuario) {

@@ -16,7 +16,7 @@ final class AutenticacionController
 
     public function iniciarSesionUsuario(): never
     {
-        $usuario = $this->autenticacionService->iniciarSesionUsuario(SolicitudHttp::obtenerCuerpoJson());
+        $usuario = $this->autenticacionService->iniciarSesionUsuario(SolicitudHttp::obtenerCuerpoJson(), SolicitudHttp::obtenerDireccionCliente());
         RespuestaJson::enviarRespuestaJson(['mensaje' => 'Sesion iniciada.', 'datos' => $usuario->obtenerDatosPublicosUsuario()]);
     }
 

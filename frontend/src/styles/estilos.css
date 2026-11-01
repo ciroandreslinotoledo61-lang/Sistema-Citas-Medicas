@@ -223,6 +223,8 @@ tbody tr:hover { background: var(--celeste); }
 
 /* 5. Formularios, perfiles y mensajes */
 .formulario-ancho { max-width: 850px; border-top: 4px solid var(--turquesa); }
+.confirmacion-restablecimiento { flex-direction: row; align-items: flex-start; gap: 12px; margin-top: 20px; }
+.confirmacion-restablecimiento input { width: 20px; min-height: 20px; margin: 1px 0 0; flex: 0 0 20px; }
 label { display: flex; flex-direction: column; gap: 7px; font-size: 12px; font-weight: 600; margin-bottom: 19px; }
 input, select, textarea { width: 100%; min-height: 44px; padding: 11px 12px; border: 1px solid var(--campo-borde); border-radius: 7px; background: var(--papel); color: var(--tinta); font-size: 13px; line-height: 1.5; }
 input::placeholder, textarea::placeholder { color: var(--secundario); font-weight: 400; }

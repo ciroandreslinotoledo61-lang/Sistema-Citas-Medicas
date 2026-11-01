@@ -27,6 +27,9 @@ async function enviarSolicitudHttp(rutaApi, opciones = {}) {
         throw new ErrorSolicitudApi("El servidor devolvio una respuesta no valida.", respuesta.status);
     }
     if (!respuesta.ok) {
+        if (respuesta.status === 403 && contenido.erroresCampos?.cambioContrasenaRequerido && window.location.pathname !== "/cambiar-contrasena") {
+            window.location.assign("/cambiar-contrasena");
+        }
         throw new ErrorSolicitudApi(contenido.mensaje || "No se pudo completar la solicitud.", respuesta.status, contenido.erroresCampos);
     }
     return contenido;

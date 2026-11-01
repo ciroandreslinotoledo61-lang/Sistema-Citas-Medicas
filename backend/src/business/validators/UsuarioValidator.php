@@ -43,6 +43,63 @@ final class UsuarioValidator
         return ['correoUsuario' => $correoUsuario, 'contrasenaUsuario' => $contrasenaUsuario];
     }
 
+    public static function validarCambioContrasena(array $datos): array
+    {
+        self::exigirCamposPermitidos($datos, ['contrasenaActual', 'nuevaContrasena', 'confirmacionContrasena']);
+        $actual = $datos['contrasenaActual'] ?? null;
+        if (!is_string($actual) || $actual === '' || strlen($actual) > 72 || str_contains($actual, "\0")) {
+            throw new ErrorAplicacion('Revisa la contrasena actual.', 422, [
+                'contrasenaActual' => 'Escribe tu contrasena actual.',
+            ]);
+        }
+        // Reutiliza los limites compatibles con password_hash sin recortar espacios.
+        try {
+            $nueva = ValidarCamposFormulario::validarContrasenaRegistro([
+                'contrasenaUsuario' => $datos['nuevaContrasena'] ?? null,
+                'confirmacionContrasena' => $datos['confirmacionContrasena'] ?? null,
+            ]);
+        } catch (ErrorAplicacion $error) {
+            $campos = $error->erroresCampos;
+            if (isset($campos['contrasenaUsuario'])) {
+                $campos['nuevaContrasena'] = $campos['contrasenaUsuario'];
+                unset($campos['contrasenaUsuario']);
+            }
+            throw new ErrorAplicacion($error->getMessage(), $error->codigoHttp, $campos);
+        }
+        if (!preg_match('/\p{L}/u', $nueva) || !preg_match('/[0-9]/', $nueva) || preg_match('/^(.{1,6})\1+$/usD', $nueva)) {
+            throw new ErrorAplicacion('La nueva contrasena es demasiado predecible.', 422, [
+                'nuevaContrasena' => 'Usa letras y numeros, sin patrones repetidos; entre 12 y 72 bytes.',
+            ]);
+        }
+        return ['contrasenaActual' => $actual, 'nuevaContrasena' => $nueva,
+            'confirmacionContrasena' => $datos['confirmacionContrasena']];
+    }
+
+    public static function validarRestablecimientoContrasena(array $datos): string
+    {
+        self::exigirCamposPermitidos($datos, ['contrasenaTemporal', 'confirmarRestablecimiento']);
+        if (($datos['confirmarRestablecimiento'] ?? null) !== true) {
+            throw new ErrorAplicacion('Confirma el restablecimiento de esta cuenta.', 422, [
+                'confirmarRestablecimiento' => 'Debes confirmar el restablecimiento.',
+            ]);
+        }
+        $temporal = $datos['contrasenaTemporal'] ?? null;
+        if (!is_string($temporal) || !preg_match('/^[a-f0-9]{24}$/D', $temporal)
+            || count(array_unique(str_split($temporal))) < 6 || preg_match('/^(.{1,12})\1+$/D', $temporal)) {
+            throw new ErrorAplicacion('Genera una nueva contrasena temporal.', 422, [
+                'contrasenaTemporal' => 'Usa el generador seguro del formulario.',
+            ]);
+        }
+        return $temporal;
+    }
+
+    private static function exigirCamposPermitidos(array $datos, array $campos): void
+    {
+        if (array_diff(array_keys($datos), $campos) !== []) {
+            throw new ErrorAplicacion('La solicitud contiene campos no permitidos.', 422);
+        }
+    }
+
     public static function validarEstadoUsuario(array $datos): bool
     {
         if (!isset($datos['usuarioActivo']) || !is_bool($datos['usuarioActivo'])) {

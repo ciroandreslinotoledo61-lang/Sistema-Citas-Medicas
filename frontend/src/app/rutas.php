@@ -35,6 +35,7 @@ $rutasVistas = [
     '/historial-clinico'=>['historial-clinico','Mi historial clinico','consultas/historial-clinico.php','consultas/listar-consultas.js',['paciente']],
     '/reportes' => ['reportes', 'Reportes administrativos', 'reportes/reportes.php', 'reportes/reportes.js', ['administrador']],
     '/panel' => ['panel', 'Panel principal', 'panel/panel.php', '', []],
+    '/cambiar-contrasena' => ['cambiar-contrasena', 'Cambiar contrasena', 'auth/cambiar-contrasena.php', 'auth/cambiar-contrasena.js', []],
     '/usuarios' => ['usuarios', 'Usuarios', 'usuarios/lista-usuarios.php', 'usuarios/listar-usuarios.js', ['administrador']],
     '/usuarios/nuevo' => ['usuario-nuevo', 'Nuevo usuario', 'usuarios/formulario-usuario.php', 'usuarios/formulario-usuario.js', ['administrador']],
     '/pacientes' => ['pacientes', 'Pacientes', 'pacientes/lista-pacientes.php', 'pacientes/listar-pacientes.js', ['administrador', 'recepcionista']],
@@ -67,6 +68,10 @@ try {
         [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] = $esReprogramacion
             ? ['cita-reprogramar', 'Reprogramar cita', 'citas/formulario-cita.php', 'citas/formulario-cita.js', ['administrador', 'recepcionista']]
             : ['cita-detalle', 'Detalle de cita', 'citas/detalle-cita.php', 'citas/detalle-cita.js', ['administrador', 'recepcionista', 'medico', 'paciente']];
+    } elseif (preg_match('#^/usuarios/([1-9][0-9]*)/restablecer-contrasena$#', $rutaActual, $coincidencia)) {
+        $idRegistro = (int) $coincidencia[1];
+        [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] =
+            ['usuario-restablecer-contrasena', 'Restablecer contrasena', 'usuarios/restablecer-contrasena.php', 'usuarios/restablecer-contrasena.js', ['administrador']];
     } elseif (preg_match('#^/usuarios/([1-9][0-9]*)/editar$#', $rutaActual, $coincidencia)) {
         $idRegistro = (int) $coincidencia[1];
         [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] =

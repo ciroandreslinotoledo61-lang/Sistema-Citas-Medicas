@@ -5,7 +5,8 @@ $esAdmin = $rolMenu === 'administrador';
 $esRecepcion = $rolMenu === 'recepcionista';
 $esPaciente = $rolMenu === 'paciente';
 $pacientesActivo = str_starts_with($paginaActual, 'paciente');
-$usuariosActivo = str_starts_with($paginaActual, 'usuario');
+$usuariosActivo = str_starts_with($paginaActual, 'usuario') || $paginaActual === 'cambiar-contrasena';
+$cambioObligatorio = $usuarioAutenticado['requiereCambioContrasena'] ?? false;
 $medicosActivo = str_starts_with($paginaActual, 'medico');
 $especialidadesActivo = str_starts_with($paginaActual, 'especialidad');
 ?>
@@ -20,6 +21,9 @@ $especialidadesActivo = str_starts_with($paginaActual, 'especialidad');
     </div>
     <p class="etiqueta-menu">PRINCIPAL</p>
     <nav class="menu-lateral" aria-label="Navegacion principal">
+        <?php if ($cambioObligatorio): ?>
+        <a href="/cambiar-contrasena" aria-current="page"><?= mostrarIcono('candado') ?><span>Cambiar contrasena</span></a>
+        <?php else: ?>
         <a href="/panel" <?= $paginaActual === 'panel' ? 'aria-current="page"' : '' ?>><?= mostrarIcono('panel') ?><span>Panel principal</span></a>
 
         <details class="grupo-menu" <?= str_starts_with($paginaActual, 'cita') ? 'open' : '' ?>>
@@ -56,7 +60,7 @@ $especialidadesActivo = str_starts_with($paginaActual, 'especialidad');
             <div class="grupo-opciones">
                 <a href="/usuarios" <?= $paginaActual === 'usuarios' || $paginaActual === 'usuario-editar' ? 'aria-current="page"' : '' ?>>Administrar cuentas</a>
                 <a href="/usuarios/nuevo" <?= $paginaActual === 'usuario-nuevo' ? 'aria-current="page"' : '' ?>>Crear usuario</a>
-                <span class="enlace-pendiente">Cambiar contrasena <small>Pendiente</small></span>
+                <a href="/cambiar-contrasena" <?= $paginaActual === 'cambiar-contrasena' ? 'aria-current="page"' : '' ?>>Cambiar contrasena</a>
             </div>
         </details>
         <details class="grupo-menu" <?= ($medicosActivo || $especialidadesActivo) ? 'open' : '' ?>>
@@ -76,6 +80,11 @@ $especialidadesActivo = str_starts_with($paginaActual, 'especialidad');
         <?php endif; ?>
         <?php if($rolMenu==='medico'): ?><a href="/consultas" <?= str_starts_with($paginaActual,'consulta')?'aria-current="page"':'' ?>><?= mostrarIcono('medicos') ?><span>Consultas e historial</span></a>
         <?php elseif($esPaciente): ?><a href="/historial-clinico" <?= $paginaActual==='historial-clinico'?'aria-current="page"':'' ?>><?= mostrarIcono('informacion') ?><span>Mi historial clinico</span></a><?php endif; ?>
+        <?php if (!$esAdmin): ?>
+        <span class="etiqueta-menu">MI CUENTA</span>
+        <a href="/cambiar-contrasena" <?= $paginaActual === 'cambiar-contrasena' ? 'aria-current="page"' : '' ?>><?= mostrarIcono('candado') ?><span>Cambiar contrasena</span></a>
+        <?php endif; ?>
+        <?php endif; ?>
     </nav>
     <div class="pie-lateral">
         <div class="usuario-lateral">

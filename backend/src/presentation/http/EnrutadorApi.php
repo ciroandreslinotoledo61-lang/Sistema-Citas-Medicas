@@ -51,6 +51,12 @@ final class EnrutadorApi
             return null;
         }
         $usuario = VerificarSesionUsuario::exigirUsuarioAutenticado($this->controladores->obtenerAutenticacionService());
+        if ($usuario->requiereCambioContrasena && !in_array($ruta->ruta, [
+            '/api/autenticacion/sesion', '/api/autenticacion/cambiar-contrasena',
+        ], true)) {
+            throw new ErrorAplicacion('Establece una contrasena personal para continuar.', 403,
+                ['cambioContrasenaRequerido' => 'Establece una contrasena personal para continuar.']);
+        }
         if ($ruta->roles !== []) {
             VerificarRolUsuario::exigirRolPermitido($usuario, $ruta->roles);
         }

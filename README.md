@@ -8,6 +8,7 @@ Los nuevos turnos duran **30 minutos** con la configuracion entregada. La hora d
 
 ## Novedades
 
+- Cambio de contrasena para los cuatro roles y restablecimiento administrativo con clave temporal, cambio obligatorio, revocacion de sesiones y limites persistentes. Requiere la nueva migracion 009; consulta [la guia de autenticacion](docs/uso/usuarios-autenticacion.md) antes de aplicarla. No se aplica automaticamente al desplegar.
 - Nuevas citas en `programada`; 006 normaliza `pendiente` y `confirmada` sin borrar eventos anteriores. La asistencia `pendiente` se conserva. El origen de una reprogramacion muestra tambien el resultado de su ultimo destino.
 - Bitacora administrativa automatica, con filtros y paginacion, sin secretos ni contenido clinico.
 - Consulta y tratamientos en una transaccion; la cita pasa a Atendida. Correcciones con versiones previas y deteccion de ediciones simultaneas.
@@ -19,6 +20,8 @@ Los nuevos turnos duran **30 minutos** con la configuracion entregada. La hora d
 | Operacion | Administrador | Recepcionista | Medico | Paciente |
 | --- | --- | --- | --- | --- |
 | Usuarios administrativos, medicos y especialidades | Gestiona | No | No | No |
+| Cambiar contrasena propia | Si | Si | Si | Si |
+| Restablecer contrasena de otra cuenta activa | Si | No | No | No |
 | Pacientes y datos personales | Gestiona | Gestiona | Datos basicos de sus citas | Perfil propio |
 | Programar horarios por dia/periodo | Si | No | Consulta propios | No |
 | Reservar | Para pacientes | Para pacientes | No | Para si mismo |
@@ -62,14 +65,14 @@ php --ini
 php backend/scripts/verificar-entorno.php
 ```
 
-Crea en pgAdmin una base **vacia** llamada `citas_medicas`. Copia los ejemplos solo si falta la configuracion:
+Crea en tu PostgreSQL **local** una base **vacia** llamada `citas_medicas_pruebas`. Esta entrega se verifica en una base de pruebas; no ejecutes estos pasos contra Neon. Copia los ejemplos solo si falta la configuracion:
 
 ```powershell
 if (!(Test-Path backend/.env)) { Copy-Item backend/.env.example backend/.env }
 if (!(Test-Path frontend/.env)) { Copy-Item frontend/.env.example frontend/.env }
 ```
 
-En `backend/.env` configura DB_HOST, DB_PORT, DB_NAME, DB_USER y DB_PASS para tu PostgreSQL. Conserva `CITA_DURACION_MINUTOS=30`, apertura `08:00`, cierre `17:00` y `FRONTEND_URL=http://127.0.0.1:8080`. Para cuentas de demostracion elige una clave local de 12 a 72 bytes en SEED_USERS_PASSWORD. No subas `.env` a Git.
+En `backend/.env` configura `APP_ENV=local`, `DB_HOST=127.0.0.1`, `DB_NAME=citas_medicas_pruebas`, DB_PORT, DB_USER y DB_PASS para tu PostgreSQL local. Conserva `CITA_DURACION_MINUTOS=30`, apertura `08:00`, cierre `17:00` y `FRONTEND_URL=http://127.0.0.1:8080`. Para cuentas de demostracion elige una clave local de 12 a 72 bytes en SEED_USERS_PASSWORD. No subas `.env` a Git.
 
 En `frontend/.env`: `API_URL=http://127.0.0.1:8000/api`, `FRONTEND_URL=http://127.0.0.1:8080` y el mismo SESSION_COOKIE_NAME del backend. No mezcles `localhost` y `127.0.0.1`.
 
@@ -82,11 +85,12 @@ php backend/scripts/actualizar-roles-citas.php
 php backend/scripts/actualizar-agenda-reportes.php
 php backend/scripts/actualizar-programacion-mensual.php
 php backend/scripts/actualizar-consultas-bitacora.php
+php backend/scripts/actualizar-seguridad-credenciales.php --aplicar
 php backend/scripts/cargar-datos-iniciales.php
 php backend/scripts/verificar-entorno.php --conexion
 ```
 
-El ultimo actualizador instala 006-008 en una transaccion. El seeder es solo para una base nueva/local: cuatro roles, tres especialidades y una cuenta por rol. Cuentas: `administrador@vidasalud.test`, `recepcionista@vidasalud.test`, `medico@vidasalud.test` y `paciente@vidasalud.test`. Usan la clave elegida en tu `.env`.
+El actualizador de consultas instala 006-008; el de seguridad agrega 009 en otra transaccion y solo admite una base local terminada en `_pruebas`. La autenticacion actual necesita 009. El seeder es solo para una base nueva/local: cuatro roles, tres especialidades y una cuenta por rol. Cuentas: `administrador@vidasalud.test`, `recepcionista@vidasalud.test`, `medico@vidasalud.test` y `paciente@vidasalud.test`. Usan la clave elegida en tu `.env`.
 
 Abre dos terminales en la raiz. Backend:
 
@@ -104,7 +108,7 @@ Abre <http://127.0.0.1:8080>. `php -S` es para desarrollo. No publiques la raiz 
 
 ## Actualizar una base existente
 
-Si ya tienes 001-005, conserva tus `.env`, respalda y ejecuta **solo** `php backend/scripts/actualizar-consultas-bitacora.php`. No repitas migracion inicial ni seeder. Sigue [la guia incremental](ACTUALIZAR-ESTA-VERSION.md) para probar en una copia y conservar tus cambios.
+Trabaja primero en una copia local terminada en `_pruebas`. Si ya tiene 001-005, el actualizador de consultas instala 006-008. Si ya tiene 001-008, aplica unicamente 009 con el procedimiento de [seguridad de credenciales](docs/uso/usuarios-autenticacion.md). No repitas migracion inicial ni seeder. Conserva tus `.env` y un respaldo. La migracion de Neon y el despliegue no forman parte de esta entrega.
 
 ## Reglas principales
 
@@ -123,11 +127,13 @@ Con 30 minutos, 08:00-09:00 genera dos turnos y 08:00-17:00 dieciocho. Cambiar l
 
 ## Verificacion y limites
 
-Sin BD: `php backend/tests/ejecutar-pruebas.php`. Para integracion usa una base desechable terminada en `_pruebas`, con 001-008 y seeder, segun la guia de pruebas.
+Sin BD: `php backend/tests/ejecutar-pruebas.php`. Para integracion usa una base local desechable terminada en `_pruebas`, con 001-009 y seeder. La suite `python backend/tests/test_autenticacion_http.py --php C:/php85/php.exe --pg-bin "C:/Program Files/PostgreSQL/18/bin" --regresion` crea su propio cluster local y ejecuta autenticacion, suites PHP y contrato HTTP anterior; no usa la conexion de Neon. Consulta [la guia de autenticacion](docs/uso/usuarios-autenticacion.md) para el alcance y los resultados de esta revision.
 
-Se verifico PHP 8.5 WebAssembly y PostgreSQL 18/PGlite con un adaptador PDO de pruebas, mas navegador Chromium. Pasaron 15 suites PHP, 54 comprobaciones clinicas/auditoria, 5 de migracion 006, 137 del contrato HTTP previo y 46 de nuevos recorridos. Las seis vistas nuevas se revisaron a 320, 390, 768 y 1440 px. Falta repetir en Windows nativo la concurrencia entre procesos, PowerShell, pg_dump y pg_restore. Los resultados historicos no sustituyen esa comprobacion.
+La revision de credenciales del 31/10/2026 verifico Windows nativo, PHP 8.5.11 y PostgreSQL 18.6: pasaron 18 suites PHP (incluida concurrencia), 330 comprobaciones HTTP de autenticacion, 137 del contrato HTTP anterior y 10 de configuracion. Edge comprobo los formularios con API simulada a 390 y 1440 px. El detalle y los limites estan en [la guia de autenticacion](docs/uso/usuarios-autenticacion.md).
 
-No incluye recuperacion por correo, cambio de clave desde pantalla, reasignacion de rol, consultorios, laboratorio, notificaciones o correccion de resultados finales. La bitacora se protege mediante permisos y triggers; el propietario/superusuario SQL conserva poder administrativo. No se afirma certificacion sanitaria.
+Como antecedente, se verificaron PHP 8.5 WebAssembly, PostgreSQL 18/PGlite y Chromium: 15 suites PHP, 54 comprobaciones clinicas/auditoria, 5 de migracion 006, 137 del contrato HTTP previo y 46 de nuevos recorridos, con seis vistas a 320, 390, 768 y 1440 px. Esta revision de credenciales no verifica los scripts operativos de PowerShell, pg_dump ni pg_restore.
+
+No incluye recuperacion por correo, reasignacion de rol, consultorios, laboratorio, notificaciones o correccion de resultados finales. La bitacora se protege mediante permisos y triggers; el propietario/superusuario SQL conserva poder administrativo. No se afirma certificacion sanitaria.
 
 ## Git y procedencia
 

@@ -10,6 +10,7 @@ final class BitacoraService {
  public function __construct(\PDO $conexionPostgresql){$this->bitacoraRepository=new BitacoraRepository($conexionPostgresql);}
  public function establecerUsuarioResponsable(?Usuario $usuario):void{$this->bitacoraRepository->establecerUsuarioResponsable($usuario?->idUsuario);}
  public function registrarEventoAutenticacion(?Usuario $usuario,string $accion,string $resultado):void{$this->bitacoraRepository->registrarEvento($usuario?->idUsuario,'autenticacion',$accion,$usuario?->idUsuario,$resultado,'Operacion de autenticacion.');}
+ public function registrarCambioCredenciales(Usuario $administrador,int $idUsuario,string $accion):void{$this->bitacoraRepository->registrarEvento($administrador->idUsuario,'usuarios',$accion,$idUsuario,'exito','Actualizacion de credenciales de acceso.');}
  public function registrarLecturaClinica(Usuario $usuario,int $idPaciente):void{$this->bitacoraRepository->registrarEvento($usuario->idUsuario,'historias_clinicas','consultar',$idPaciente,'exito','Acceso autorizado al historial clinico.');}
  public function listarBitacora(Usuario $usuario,array $datos):array {
   PermisosSistema::exigirPermiso($usuario,'bitacora.consultar');$f=BitacoraValidator::validarFiltrosBitacora($datos);$r=$this->bitacoraRepository->listarEventos($f);

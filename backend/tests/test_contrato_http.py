@@ -1,6 +1,6 @@
 """Prueba opcional: requiere Python 3.9+, PHP y una base NUEVA terminada en _pruebas.
 
-Inicia servidores propios. La base debe tener las migraciones 001-008 y solo
+Inicia servidores propios. La base debe tener las migraciones 001-009 y solo
 las cuatro cuentas del seeder. Deja datos sinteticos para inspeccion.
 """
 from pathlib import Path
@@ -56,7 +56,7 @@ def main():
         puerto_frontend = puerto_libre()
     api = f"http://127.0.0.1:{puerto_backend}/api"
     frontend = f"http://127.0.0.1:{puerto_frontend}"
-    entorno = dict(os.environ, API_URL=api, FRONTEND_URL=frontend)
+    entorno = dict(os.environ, API_URL=api, API_INTERNAL_URL=api, FRONTEND_URL=frontend)
     servidores = []
     with tempfile.TemporaryDirectory(prefix="vidasalud-http-") as temporal:
         salidas = []
@@ -67,6 +67,7 @@ def main():
                 servidores.append(subprocess.Popen(
                     [opciones.php, "-S", f"127.0.0.1:{puerto}", "-t", "public", "src/server.php"],
                     cwd=proyecto / carpeta, env=entorno, stdout=salida, stderr=salida,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
                 ))
                 for _ in range(50):
                     if servidores[-1].poll() is not None:

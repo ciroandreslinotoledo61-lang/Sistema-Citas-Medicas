@@ -15,3 +15,7 @@ export function actualizarDatosUsuario(idUsuario, datosUsuario) {
 export function cambiarEstadoUsuario(idUsuario, usuarioActivo) {
     return solicitarApi("/usuarios/" + idUsuario + "/estado", "PATCH", { usuarioActivo });
 }
+
+export function restablecerContrasena(idUsuario, datos) {
+    return solicitarApi("/usuarios/" + idUsuario + "/restablecer-contrasena", "POST", datos);
+}

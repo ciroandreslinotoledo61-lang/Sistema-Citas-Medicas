@@ -17,7 +17,7 @@ final class FabricaControladores
     public function obtenerAutenticacionService(): Services\AutenticacionService
     {
         return $this->autenticacionService ??= new Services\AutenticacionService(
-            new UsuarioRepository(ConexionPostgresql::obtenerConexionPostgresql()),$this->obtenerBitacoraService()
+            new UsuarioRepository($this->conexion()),$this->obtenerBitacoraService(),$this->conexion()
         );
     }
 
@@ -31,6 +31,7 @@ final class FabricaControladores
             Controllers\EstadoController::class => new Controllers\EstadoController(),
             Controllers\TokenCsrfController::class => new Controllers\TokenCsrfController(),
             Controllers\AutenticacionController::class => new Controllers\AutenticacionController($this->obtenerAutenticacionService()),
+            Controllers\CredencialController::class => new Controllers\CredencialController(new Services\CredencialService($this->conexion())),
             Controllers\UsuarioController::class => new Controllers\UsuarioController(new Services\UsuarioService($this->conexion())),
             Controllers\PacienteController::class => new Controllers\PacienteController(new Services\PacienteService($this->conexion())),
             Controllers\EspecialidadController::class => new Controllers\EspecialidadController(new Services\EspecialidadService($this->conexion())),

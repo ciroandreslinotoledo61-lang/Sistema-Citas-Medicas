@@ -1,9 +1,11 @@
 import { obtenerUsuarioPorId, registrarUsuarioAdministrativo, actualizarDatosUsuario } from "./usuarios-api.js";
 import { ejecutarEnvioFormulario, completarCamposFormulario, mostrarErrorSolicitud, mostrarMensaje } from "../../components/formularios.js";
+import { configurarValidacionContrasenas, marcarErroresContrasena } from "../../components/contrasenas.js";
 
 const formulario = document.querySelector("#formulario-usuario");
 const idUsuario = Number(document.body.dataset.idRegistro);
 const mensaje = document.querySelector("#mensaje-formulario");
+const validarContrasenas = idUsuario ? null : configurarValidacionContrasenas(formulario, "contrasenaUsuario");
 
 async function cargarDatosUsuario() {
     try {
@@ -19,13 +21,20 @@ if (idUsuario) cargarDatosUsuario();
 
 formulario.addEventListener("submit", (evento) => {
     evento.preventDefault();
+    if (validarContrasenas && !validarContrasenas()) return;
     ejecutarEnvioFormulario(formulario, async (datosUsuario) => {
-        if (idUsuario) {
-            const respuesta = await actualizarDatosUsuario(idUsuario, datosUsuario);
-            mostrarMensaje(mensaje, respuesta.mensaje);
-        } else {
-            const respuesta = await registrarUsuarioAdministrativo(datosUsuario);
-            window.location.assign("/usuarios/" + respuesta.datos.idUsuario + "/editar");
+        try {
+            if (idUsuario) {
+                const respuesta = await actualizarDatosUsuario(idUsuario, datosUsuario);
+                mostrarMensaje(mensaje, respuesta.mensaje);
+            } else {
+                const respuesta = await registrarUsuarioAdministrativo(datosUsuario);
+                formulario.reset();
+                window.location.assign("/usuarios/" + respuesta.datos.idUsuario + "/editar");
+            }
+        } catch (error) {
+            marcarErroresContrasena(formulario, error);
+            throw error;
         }
     });
 });

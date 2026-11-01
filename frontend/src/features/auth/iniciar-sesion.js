@@ -5,7 +5,8 @@ const formulario = document.querySelector("#formulario-iniciar-sesion");
 formulario.addEventListener("submit", (evento) => {
     evento.preventDefault();
     ejecutarEnvioFormulario(formulario, async (datosUsuario) => {
-        await iniciarSesionUsuario(datosUsuario);
-        window.location.assign("/panel");
+        const respuesta = await iniciarSesionUsuario(datosUsuario);
+        formulario.reset();
+        window.location.assign(respuesta.datos.requiereCambioContrasena ? "/cambiar-contrasena" : "/panel");
     });
 });

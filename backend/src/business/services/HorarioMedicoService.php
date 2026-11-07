@@ -109,7 +109,7 @@ final class HorarioMedicoService
         $medico = $this->medicoRepository->obtenerMedicoPorId($idMedico, true)
             ?? throw new ErrorAplicacion('El médico no existe.', 404);
         $especialidad = $this->especialidadRepository->obtenerEspecialidadPorId($medico->idEspecialidad, true);
-        if (!$medico->medicoActivo || !$especialidad?->especialidadActiva) {
+        if ($medico->codigoRol !== RolesSistema::MEDICO || !$medico->medicoActivo || !$especialidad?->especialidadActiva) {
             throw new ErrorAplicacion('El médico y su especialidad deben estar activos.', 409);
         }
     }

@@ -24,6 +24,9 @@ Desde la raiz del repositorio:
 
 # Solo configuracion de despliegue, sin base de datos
 & C:/php85/php.exe deploy/tests/test_configuracion.php
+
+# Filtros y paginación JavaScript sin red ni dependencias
+node --experimental-vm-modules backend/tests/test_filtros_listados.mjs
 ```
 
 Los comandos no necesitan paquetes Composer ni instalar Python. El modo
@@ -37,6 +40,56 @@ Al finalizar detiene los servidores PHP y su propio cluster PostgreSQL.
 El modo `--integracion` anterior se conserva para una base local de pruebas
 preparada explicitamente. El modo `--completo` evita esa preparacion manual y
 aisla ademas el contrato HTTP anterior en otra base del mismo cluster.
+
+La revisión de agenda agrega `test_demostracion_validacion.php` (sin conexión),
+`test_correcciones_agenda.php` y `test_demostracion_seed.php` (solo con el
+ejecutor aislado). El conjunto actual tiene 25 suites PHP. Las cifras de la
+sección histórica siguiente describen la ejecución del 05/11, no estos cambios.
+
+## Verificación de correcciones del 07/11/2026
+
+Entorno real: Windows, PHP 8.5.11 nativo y PostgreSQL 18 local; Node y Edge para
+JavaScript/navegador. No se utilizó PHP 8.0, Docker ni una conexión a Neon.
+
+Se ejecutó una vez `--completo --pg-bin "C:/Program Files/PostgreSQL/18/bin"
+--navegador`. Pasaron privacidad, recuperación, autenticación, Edge y las
+primeras 24 suites PHP. El último ensayo detectó un rechazo incorrecto del seed:
+`inet_server_addr()::text` incluía máscara de red. Se corrigió a
+`host(inet_server_addr())` y se repitió **solo** el ensayo del seed, seguido de
+su repetición CLI idempotente y de las comprobaciones HTTP/configuración que
+el ejecutor había omitido al detenerse. No se presenta la ejecución inicial
+como un conjunto completo aprobado de una sola pasada.
+
+| Comprobación final | Resultado real |
+| --- | --- |
+| Suites PHP existentes y nuevas | 25 aprobadas entre ejecución inicial y repetición focalizada |
+| Privacidad clínica HTTP | 111 comprobaciones aprobadas |
+| Recuperación HTTP, solo correo simulado | 214 aprobadas |
+| Autenticación HTTP, CSRF, expiración y sesiones | 330 aprobadas |
+| Contrato HTTP y vistas por rol | 137 aprobadas en continuación aislada |
+| Configuración de despliegue, sin modificar servicios | 10 casos aprobados |
+| Edge: citas y recuperación existentes | 35 + 31 comprobaciones aprobadas |
+| Regresión JS de listados, DOM/API controlados | 15 aprobadas, sin red |
+| Nuevas reglas de agenda | 27 comprobaciones de alcance, filtros, paginación, descansos, rol y duración |
+| Seed | Seis cuentas con perfiles/roles correctos, repetición sin duplicación ni cambios de claves/cuentas anteriores |
+| Protección previa a conexión del seed | 14 configuraciones inseguras rechazadas y destino local explícito admitido |
+
+También pasaron sintaxis de los 17 PHP y 3 JS/MJS modificados/nuevos,
+resolución de los 94 imports relativos del frontend y `git diff --check`.
+Las migraciones 001-010 se usaron exclusivamente para crear el clúster local;
+no cambiaron sus archivos ni se ejecutaron en producción. El clúster y los
+servidores iniciados por las pruebas quedaron detenidos.
+
+Evidencias excluidas de Git: `.tmp-auth/ejecucion-php-a82f11fde270/`,
+`.tmp-auth/suites-php-37016adc6946/`, capturas de Edge en
+`.tmp-auth/navegador-da8546bc-8242-4141-b483-d89df8e4b4c6/` y
+`.tmp-auth/navegador-recuperacion-61b57a8b-2ad0-4f47-b859-40d1d154d26d/`.
+La continuación focalizada consta además en la salida de la sesión de trabajo.
+
+Los recorridos Edge existentes no inspeccionan visualmente el nuevo selector
+de bloques: ese control se comprobó con DOM/API controlados. La revisión
+visual responsive, teclado/lector de pantalla y el smoke test autorizado del
+servicio publicado siguen pendientes; consultar [la lista manual](correcciones-agenda-demostracion.md).
 
 ## Archivos sustituidos
 

@@ -1,12 +1,32 @@
-# Estructura completa - 1.5
+# Estructura del proyecto
 
-Raiz del ZIP: clinica-vida-salud/. Sin .git, .env, respaldos ni dependencias del laboratorio. Cada ruta enlaza su archivo.
+La raíz de trabajo es `citas-medicas/`; se conserva la arquitectura existente:
+
+```text
+citas-medicas/
+├── backend/     # src/{business,data,presentation,shared}, scripts, tests, public
+├── frontend/    # src/features/<modulo>/{pages,services,components,utils}, public
+├── database/    # SQL didáctico, no migraciones productivas
+├── deploy/      # Configuración de publicación y pruebas de configuración
+├── docs/        # uso, rup, refactorizacion
+├── AGENTS.md
+├── README.md
+├── Dockerfile
+├── .gitignore
+└── .dockerignore
+```
+
+Las carpetas por módulo se crean solo cuando son necesarias; no todos tienen `components` o `utils`. Se conservan además las guías y archivos auxiliares existentes. Los secretos, respaldos y artefactos `.tmp-auth/` permanecen fuera de Git. Responsabilidades en [AGENTS.md](../../AGENTS.md), operación y pruebas en [README.md](../../README.md), y seed local en [la guía de correcciones](../uso/correcciones-agenda-demostracion.md).
+
+## Inventario histórico de la entrega 1.5
+
+La tabla siguiente conserva el inventario de aquella entrega; no es una lista exhaustiva de las incorporaciones posteriores (autenticación, recuperación y pruebas). La estructura vigente se resume arriba.
 
 | Ruta |
 | --- |
 | [.editorconfig](../../.editorconfig) |
 | [.gitignore](../../.gitignore) |
-| [ACTUALIZAR-ESTA-VERSION.md](../../ACTUALIZAR-ESTA-VERSION.md) |
+| [AGENTS.md](../../AGENTS.md) |
 | [GUIA-ARQUITECTURA-Y-DEFENSA.md](../../GUIA-ARQUITECTURA-Y-DEFENSA.md) |
 | [README.md](../../README.md) |
 | [backend/.env.example](../../backend/.env.example) |

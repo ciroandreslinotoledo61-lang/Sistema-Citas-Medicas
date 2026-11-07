@@ -234,7 +234,7 @@ final class CitaService
         $medico = $this->medicoRepository->obtenerMedicoPorId($idMedico, true)
             ?? throw new ErrorAplicacion('El médico no existe.', 404);
         $especialidad = $this->especialidadRepository->obtenerEspecialidadPorId($medico->idEspecialidad, true);
-        if (!$medico->medicoActivo || !$especialidad?->especialidadActiva) {
+        if ($medico->codigoRol !== RolesSistema::MEDICO || !$medico->medicoActivo || !$especialidad?->especialidadActiva) {
             throw new ErrorAplicacion('El médico o su especialidad no están disponibles.', 409);
         }
         return $medico;
@@ -263,7 +263,8 @@ final class CitaService
             !in_array($turno['turno_habilitado'], [true, 1, '1', 't', 'true'], true) || $inicio <= $this->obtenerAhora() ||
             $inicio < $inicioBloque || $fin > $finBloque ||
             $fin->getTimestamp() - $inicio->getTimestamp() !== (int) $turno['duracion_turno_minutos'] * 60 ||
-            (int) $turno['duracion_turno_minutos'] !== (int) $turno['duracion_cita_minutos']
+            (int) $turno['duracion_turno_minutos'] !== (int) $turno['duracion_cita_minutos'] ||
+            (int) $turno['duracion_turno_minutos'] !== \CitasMedicas\Shared\Config\ConfiguracionAgenda::obtenerDuracionCitaMinutos()
         ) {
             throw new ErrorAplicacion('Ese turno ya no está disponible. Elige otro horario.', 409);
         }

@@ -43,7 +43,7 @@ async function cargarMedicos() {
         configuracion = respuestaConfiguracion.datos;
         document.querySelector("#duracion-horario").textContent = `Atención de ${configuracion.horaApertura} a ${configuracion.horaCierre}. Citas de ${configuracion.duracionCitaMinutos} minutos. Minutos disponibles: 00 y 30.`;
         formulario.elements.idMedico.replaceChildren(new Option("Selecciona un médico", ""));
-        for (const medico of respuestaMedicos.datos) formulario.elements.idMedico.add(new Option(medico.nombreMedico + " / " + medico.nombreEspecialidad, medico.idMedico));
+        for (const medico of respuestaMedicos.datos) formulario.elements.idMedico.add(new Option(`${medico.nombreMedico} / ${medico.nombreEspecialidad} (#${medico.idMedico})`, medico.idMedico));
         for (const [nombre, horas] of [["horaInicio", configuracion.horasPermitidas.slice(0, -1)], ["horaFin", configuracion.horasPermitidas.slice(1)]]) {
             formulario.elements[nombre].replaceChildren(...horas.map(hora => new Option(hora, hora)));
         }

@@ -28,11 +28,15 @@ final class TurnoRepository
              JOIN horarios_medicos horarios ON horarios.id_horario_medico = turnos.id_horario_medico
              JOIN medicos ON medicos.id_medico = horarios.id_medico
              JOIN usuarios ON usuarios.id_usuario = medicos.id_usuario
+             JOIN roles ON roles.id_rol = usuarios.id_rol
              JOIN especialidades ON especialidades.id_especialidad = medicos.id_especialidad
              WHERE horarios.id_medico = :idMedico AND horarios.fecha_atencion = :fecha
              AND turnos.turno_habilitado AND usuarios.usuario_activo AND especialidades.especialidad_activa
+             AND roles.codigo_rol = 'medico'
              AND turnos.fecha_hora_inicio > :ahora
              AND turnos.duracion_turno_minutos = horarios.duracion_cita_minutos
+             AND turnos.duracion_turno_minutos = 30
+             AND turnos.fecha_hora_fin = turnos.fecha_hora_inicio + INTERVAL '30 minutes'
              AND turnos.fecha_hora_inicio >= horarios.fecha_atencion + horarios.hora_inicio AND turnos.fecha_hora_fin <= horarios.fecha_atencion + horarios.hora_fin
              AND NOT EXISTS (SELECT 1 FROM citas c JOIN turnos t ON t.id_turno=c.id_turno JOIN horarios_medicos h ON h.id_horario_medico=t.id_horario_medico
                  WHERE h.id_medico=horarios.id_medico AND c.estado_cita NOT IN ('cancelada','reprogramada')

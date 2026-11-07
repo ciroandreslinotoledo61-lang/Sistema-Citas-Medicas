@@ -18,13 +18,13 @@ async function enviarSolicitudHttp(rutaApi, opciones = {}) {
             headers: { Accept: "application/json", ...opciones.headers },
         });
     } catch {
-        throw new ErrorSolicitudApi("No se pudo conectar. Comprueba que el backend este iniciado.", 0);
+        throw new ErrorSolicitudApi("No se pudo conectar. Comprueba que el backend esté iniciado.", 0);
     }
     let contenido;
     try {
         contenido = await respuesta.json();
     } catch {
-        throw new ErrorSolicitudApi("El servidor devolvio una respuesta no valida.", respuesta.status);
+        throw new ErrorSolicitudApi("El servidor devolvió una respuesta no válida.", respuesta.status);
     }
     if (!respuesta.ok) {
         if (respuesta.status === 403 && contenido.erroresCampos?.cambioContrasenaRequerido && window.location.pathname !== "/cambiar-contrasena") {

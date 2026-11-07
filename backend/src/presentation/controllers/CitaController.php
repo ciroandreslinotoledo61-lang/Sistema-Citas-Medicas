@@ -40,7 +40,7 @@ final class CitaController
     public function reprogramarCita(Usuario $usuario, int $idCita): never
     {
         $resultado = $this->citaService->reprogramarCita($usuario, $idCita, SolicitudHttp::obtenerCuerpoJson());
-        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Cita reprogramada. Se conservo el registro anterior.', 'datos' => $resultado], 201);
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Cita reprogramada. Se conservó el registro anterior.', 'datos' => $resultado], 201);
     }
 
     public function registrarAsistencia(Usuario $usuario, int $idCita): never

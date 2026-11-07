@@ -8,7 +8,7 @@ function cargarVariablesEntornoFrontend(string $rutaArchivo): void
         $linea = trim($linea);
         if ($linea === '' || str_starts_with($linea, '#')) { continue; }
         if (!preg_match('/^([A-Z][A-Z0-9_]*)=(.*)$/', $linea, $coincidencia)) {
-            throw new RuntimeException('Formato .env no valido.');
+            throw new RuntimeException('Formato .env no válido.');
         }
         $valorVariable = trim($coincidencia[2]);
         if (strlen($valorVariable) > 1 &&

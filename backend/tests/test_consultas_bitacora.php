@@ -34,6 +34,16 @@ try{
  foreach([$otroMedico,$otroPaciente] as $actor)rechazarClinica(fn()=>$consultas->obtenerConsulta($actor,$id),404);
  verificarClinica(!$consultas->obtenerConsulta($paciente,$id)['puedeEditar'],'Paciente solo lectura.');
  verificarClinica($consultas->obtenerHistorial($paciente,null,[])['consultas']['elementos'][0]['idConsulta']===$id,'Historial propio.');rechazarClinica(fn()=>$consultas->obtenerHistorial($otroPaciente,$consulta['idPaciente'],[]),404);
+ rechazarClinica(fn()=>$consultas->obtenerHistorial($paciente,null,['idPaciente'=>$soporte->pacientes[1]['idPaciente']]),422);
+ rechazarClinica(fn()=>$consultas->obtenerHistorial($paciente,null,['busqueda'=>'Segundo']),422);
+ verificarClinica($consultas->obtenerHistorial($otroPaciente,null,[])['consultas']['elementos']===[],'Segundo paciente sin atenciones ajenas.');
+ rechazarClinica(fn()=>$consultas->obtenerHistorial($otroMedico,$consulta['idPaciente'],[]),404);
+ foreach([$admin,$recepcion] as $actor)rechazarClinica(fn()=>$consultas->obtenerHistorial($actor,$consulta['idPaciente'],[]),403);
+ $repositorioConsultas=new \CitasMedicas\Data\Repositories\ConsultaRepository($c);
+ verificarClinica($repositorioConsultas->obtenerConsultaPorId($id,false,$otroPaciente->idUsuario)===null,'SQL no carga la consulta de otro paciente.');
+ verificarClinica($repositorioConsultas->obtenerConsultaPorId($id,false,null,$otroMedico->idUsuario)===null,'SQL no carga la consulta sin relacion medica.');
+ $repositorioHistorias=new \CitasMedicas\Data\Repositories\HistoriaClinicaRepository($c);
+ verificarClinica($repositorioHistorias->obtenerHistoriaPorPaciente($consulta['idPaciente'],$otroPaciente->idUsuario)===null,'SQL no carga antecedentes ajenos.');
  $edicion=$datos;unset($edicion['idCita']);$edicion['versionConsulta']=1;$edicion['diagnostico']='CORRECCION_PRIVADA';$edicion['tratamientos']=[];
  rechazarClinica(fn()=>$consultas->actualizarConsulta($otroMedico,$id,$edicion),404);rechazarClinica(fn()=>$consultas->actualizarConsulta($paciente,$id,$edicion),403);
  $nueva=$consultas->actualizarConsulta($medico,$id,$edicion);verificarClinica($nueva['versionConsulta']===2,'Version actual.');

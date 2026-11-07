@@ -11,9 +11,9 @@ final class PacienteValidator
     public static function validarDatosActualizacionPaciente(array $datos): array
     {
         $datosValidados = UsuarioValidator::validarDatosActualizacionUsuario($datos);
-        $cedulaIdentidad = strtoupper(ValidarCamposFormulario::validarTexto($datos, 'cedulaIdentidad', 'La cedula de identidad', 25));
+        $cedulaIdentidad = strtoupper(ValidarCamposFormulario::validarTexto($datos, 'cedulaIdentidad', 'La cédula de identidad', 25));
         if (!preg_match('/^[A-Z0-9][A-Z0-9 -]{2,24}$/', $cedulaIdentidad)) {
-            throw new ErrorAplicacion('Revisa la cedula de identidad.', 422, ['cedulaIdentidad' => 'Usa de 3 a 25 letras, numeros, espacios o guiones.']);
+            throw new ErrorAplicacion('Revisa la cédula de identidad.', 422, ['cedulaIdentidad' => 'Usa de 3 a 25 letras, números, espacios o guiones.']);
         }
         $fechaNacimiento = ValidarCamposFormulario::validarTexto($datos, 'fechaNacimiento', 'La fecha de nacimiento', 10);
         $fechaInterpretada = \DateTimeImmutable::createFromFormat('!Y-m-d', $fechaNacimiento);
@@ -22,11 +22,11 @@ final class PacienteValidator
             !$fechaInterpretada || $fechaInterpretada->format('Y-m-d') !== $fechaNacimiento ||
             $fechaInterpretada > $fechaActual || $fechaInterpretada < $fechaActual->modify('-120 years')
         ) {
-            throw new ErrorAplicacion('Revisa la fecha de nacimiento.', 422, ['fechaNacimiento' => 'Selecciona una fecha real, no futura, de los ultimos 120 anos.']);
+            throw new ErrorAplicacion('Revisa la fecha de nacimiento.', 422, ['fechaNacimiento' => 'Selecciona una fecha real, no futura, de los últimos 120 años.']);
         }
         $sexo = $datos['sexoPaciente'] ?? 'no_especificado';
         if (!is_string($sexo) || !in_array($sexo, ['no_especificado','femenino','masculino','otro'], true)) {
-            throw new ErrorAplicacion('Selecciona una opcion valida para sexo.', 422);
+            throw new ErrorAplicacion('Selecciona una opción válida para sexo.', 422);
         }
         return $datosValidados + ['sexoPaciente' => $sexo,
             'cedulaIdentidad' => $cedulaIdentidad, 'fechaNacimiento' => $fechaNacimiento,
@@ -38,11 +38,11 @@ final class PacienteValidator
         $nombreContacto = ValidarCamposFormulario::validarTexto($datos, 'nombreContactoEmergencia', 'El contacto de emergencia', 120, false);
         $telefonoContacto = ValidarCamposFormulario::validarTelefono($datos, 'telefonoContactoEmergencia', false);
         if (($nombreContacto === '') !== ($telefonoContacto === '')) {
-            throw new ErrorAplicacion('Completa el nombre y el telefono del contacto de emergencia.', 422);
+            throw new ErrorAplicacion('Completa el nombre y el teléfono del contacto de emergencia.', 422);
         }
         return [
             'telefonoPaciente' => ValidarCamposFormulario::validarTelefono($datos, 'telefonoPaciente', true),
-            'direccionPaciente' => ValidarCamposFormulario::validarTexto($datos, 'direccionPaciente', 'La direccion', 200, false),
+            'direccionPaciente' => ValidarCamposFormulario::validarTexto($datos, 'direccionPaciente', 'La dirección', 200, false),
             'nombreContactoEmergencia' => $nombreContacto, 'telefonoContactoEmergencia' => $telefonoContacto,
         ];
     }
@@ -65,7 +65,7 @@ final class PacienteValidator
         $filtros = ValidarCamposFormulario::validarParametrosBusqueda($parametros);
         $estado = $parametros['estado'] ?? '';
         if (!is_string($estado) || !in_array($estado, ['', 'activo', 'inactivo'], true)) {
-            throw new ErrorAplicacion('El estado no es valido.', 422);
+            throw new ErrorAplicacion('El estado no es válido.', 422);
         }
         return $filtros + ['estado' => $estado];
     }

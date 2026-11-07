@@ -17,13 +17,13 @@ export function configurarValidacionContrasenas(formulario, nombreClave, exigirS
         const bytes = new TextEncoder().encode(clave.value).length;
         let error = "";
         if (bytes < 12 || bytes > 72 || clave.value.includes("\0")) {
-            error = "La contrasena debe ocupar entre 12 y 72 bytes. Los acentos pueden ocupar mas de un byte.";
+            error = "La contraseña debe ocupar entre 12 y 72 bytes. Los acentos pueden ocupar más de un byte.";
         } else if (exigirSeguridad && (!/\p{L}/u.test(clave.value) || !/[0-9]/.test(clave.value) || /^(.{1,6})\1+$/su.test(clave.value))) {
-            error = "Usa una frase larga con letras y numeros, sin patrones repetidos.";
+            error = "Usa una frase larga con letras y números, sin patrones repetidos.";
         }
         clave.setCustomValidity(error);
         if (clave.value !== confirmacion.value) {
-            confirmacion.setCustomValidity("La confirmacion debe coincidir con la nueva contrasena.");
+            confirmacion.setCustomValidity("La confirmación debe coincidir con la nueva contraseña.");
         }
         for (const campo of [clave, confirmacion]) {
             campo.setAttribute("aria-invalid", String(!campo.validity.valid));
@@ -52,6 +52,6 @@ export function limpiarContrasenas(formulario) {
     for (const boton of formulario.querySelectorAll("[data-alternar-clave]")) {
         boton.textContent = "Mostrar";
         boton.setAttribute("aria-pressed", "false");
-        boton.setAttribute("aria-label", "Mostrar contrasena");
+        boton.setAttribute("aria-label", "Mostrar contraseña");
     }
 }

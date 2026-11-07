@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace CitasMedicas\Data\Models;
 
+use CitasMedicas\Shared\Constants\RolesSistema;
+
 final class Usuario
 {
     public function __construct(
@@ -56,7 +58,8 @@ final class Usuario
             'correoUsuario' => $this->correoUsuario,
             'usuarioActivo' => $this->usuarioActivo,
             'requiereCambioContrasena' => $this->requiereCambioContrasena,
-            'idRol' => $this->idRol, 'codigoRol' => $this->codigoRol, 'nombreRol' => $this->nombreRol,
+            'idRol' => $this->idRol, 'codigoRol' => $this->codigoRol,
+            'nombreRol' => RolesSistema::NOMBRES_VISIBLES[$this->codigoRol] ?? $this->nombreRol,
         ];
     }
 }

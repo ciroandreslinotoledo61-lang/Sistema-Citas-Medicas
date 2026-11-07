@@ -20,7 +20,7 @@ coverage/
 *.dump
 backups/
 
-# Caches de pruebas Python
+# Caches heredadas: las pruebas actuales se ejecutan con PHP
 __pycache__/
 *.py[cod]
 

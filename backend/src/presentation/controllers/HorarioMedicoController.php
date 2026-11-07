@@ -29,6 +29,6 @@ final class HorarioMedicoController
     public function programarHorariosPorPeriodo(Usuario $usuario): never
     {
         $resultado = $this->horarioService->programarHorariosPorPeriodo($usuario, SolicitudHttp::obtenerCuerpoJson());
-        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Programacion procesada. Revisa el resumen de cada fecha.', 'datos' => $resultado]);
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Programación procesada. Revisa el resumen de cada fecha.', 'datos' => $resultado]);
     }
 }

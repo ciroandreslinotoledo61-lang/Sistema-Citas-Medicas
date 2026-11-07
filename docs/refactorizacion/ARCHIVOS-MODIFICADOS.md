@@ -4,6 +4,11 @@ Version 1.5. No se elimina ningun archivo original. 001-005 siguen identicas; se
 
 Cambios: 102, de ellos 48 nuevos.
 
+Este conteo corresponde a la refactorizacion historica. Las dos pruebas HTTP
+del listado se trasladaron posteriormente a PHP; sus rutas actuales se muestran
+abajo. Consulta [la sustitucion de pruebas](../uso/pruebas-php.md) para el
+inventario de ese cambio.
+
 | Estado | Archivo |
 | --- | --- |
 | Modificado | `.gitignore` |
@@ -46,10 +51,10 @@ Cambios: 102, de ellos 48 nuevos.
 | Modificado | `backend/src/shared/constants/PermisosSistema.php` |
 | Modificado | `backend/tests/SoportePruebasAgenda.php` |
 | Modificado | `backend/tests/ejecutar-pruebas.php` |
-| Modificado | `backend/tests/http/escenario_http.py` |
+| Sustituido posteriormente por PHP | `backend/tests/http/escenario_http.php` |
 | Modificado | `backend/tests/test_arquitectura.php` |
 | Nuevo | `backend/tests/test_consultas_bitacora.php` |
-| Modificado | `backend/tests/test_contrato_http.py` |
+| Sustituido posteriormente por PHP | `backend/tests/test_contrato_http.php` |
 | Modificado | `backend/tests/test_gestion_citas.php` |
 | Modificado | `backend/tests/test_gestion_especialidades_medicos.php` |
 | Nuevo | `backend/tests/test_migracion_006.php` |

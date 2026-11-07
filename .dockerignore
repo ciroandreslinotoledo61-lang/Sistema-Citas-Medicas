@@ -4,4 +4,9 @@
 **/tests
 docs
 *.zip
+/backups/
 *.log
+/.tmp-auth/
+**/__pycache__/
+**/*.pyc
+**/*.pyo

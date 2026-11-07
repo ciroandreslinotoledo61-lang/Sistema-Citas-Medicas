@@ -11,7 +11,7 @@ final class EstadoController
     public function obtenerEstado(): never
     {
         RespuestaJson::enviarRespuestaJson(['datos' => [
-            'aplicacion' => 'Citas Medicas', 'version' => '1.4.0', 'estado' => 'disponible',
+            'aplicacion' => 'Citas Médicas', 'version' => '1.4.0', 'estado' => 'disponible',
         ]]);
     }
 }

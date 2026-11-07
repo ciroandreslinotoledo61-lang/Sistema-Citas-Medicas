@@ -14,7 +14,7 @@ final class IntentoAutenticacionRepository
     public function consumirIntento(string $clave, int $limite, int $ventanaSegundos): bool
     {
         if (!preg_match('/^[a-f0-9]{64}$/D', $clave) || $limite < 1 || $ventanaSegundos < 1) {
-            throw new \InvalidArgumentException('Configuracion de limite no valida.');
+            throw new \InvalidArgumentException('Configuración de límite no válida.');
         }
         // El UPSERT bloquea la clave y decide el contador en una sola sentencia.
         $consulta = $this->conexionPostgresql->prepare(

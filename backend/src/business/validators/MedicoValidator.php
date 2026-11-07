@@ -16,13 +16,13 @@ final class MedicoValidator
             (!is_int($idEspecialidad) && !(is_string($idEspecialidad) && ctype_digit($idEspecialidad))) ||
             filter_var($idEspecialidad, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false
         ) {
-            throw new ErrorAplicacion('Selecciona una especialidad valida.', 422, ['idEspecialidad' => 'Selecciona una especialidad.']);
+            throw new ErrorAplicacion('Selecciona una especialidad válida.', 422, ['idEspecialidad' => 'Selecciona una especialidad.']);
         }
-        $matriculaProfesional = strtoupper(ValidarCamposFormulario::validarTexto($datos, 'matriculaProfesional', 'La matricula profesional', 40));
+        $matriculaProfesional = strtoupper(ValidarCamposFormulario::validarTexto($datos, 'matriculaProfesional', 'La matrícula profesional', 40));
         $matriculaProfesional = preg_replace('/\s+/', ' ', $matriculaProfesional);
         if (!preg_match('#^[A-Z0-9][A-Z0-9 ./-]{2,39}$#', $matriculaProfesional)) {
-            throw new ErrorAplicacion('Revisa la matricula profesional.', 422, [
-                'matriculaProfesional' => 'Usa de 3 a 40 letras, numeros, espacios, puntos, guiones o barras.',
+            throw new ErrorAplicacion('Revisa la matrícula profesional.', 422, [
+                'matriculaProfesional' => 'Usa de 3 a 40 letras, números, espacios, puntos, guiones o barras.',
             ]);
         }
         return $datosValidados + ['telefonoMedico' => ValidarCamposFormulario::validarTelefono($datos, 'telefonoMedico', true),
@@ -40,7 +40,7 @@ final class MedicoValidator
     public static function validarEstadoMedico(array $datos): bool
     {
         if (!array_key_exists('medicoActivo', $datos) || !is_bool($datos['medicoActivo'])) {
-            throw new ErrorAplicacion('El estado del medico debe ser true o false.', 422);
+            throw new ErrorAplicacion('El estado del médico debe ser true o false.', 422);
         }
         return $datos['medicoActivo'];
     }

@@ -8,6 +8,9 @@ Los nuevos turnos duran **30 minutos** con la configuracion entregada. La hora d
 
 ## Novedades
 
+- Recuperacion por correo con Resend configurable, token con hash, vencimiento y uso unico; requiere la migracion incremental 010. Pruebas locales con correo simulado, sin envio real. Consulta [el informe de actualizacion](docs/uso/actualizacion-privacidad-recuperacion.md).
+- Mis citas del paciente con tarjetas, Proximas citas e Historial, filtros y paginacion en servidor. El personal conserva sus tablas y herramientas.
+- Historial propio sin buscador administrativo, alcance SQL por identidad y relacion medica, textos visibles en UTF-8. El acceso clinico administrativo permanece denegado; [propuesta para revision](docs/uso/propuesta-permisos-clinicos.md).
 - Cambio de contrasena para los cuatro roles y restablecimiento administrativo con clave temporal, cambio obligatorio, revocacion de sesiones y limites persistentes. Requiere la nueva migracion 009; consulta [la guia de autenticacion](docs/uso/usuarios-autenticacion.md) antes de aplicarla. No se aplica automaticamente al desplegar.
 - Nuevas citas en `programada`; 006 normaliza `pendiente` y `confirmada` sin borrar eventos anteriores. La asistencia `pendiente` se conserva. El origen de una reprogramacion muestra tambien el resultado de su ultimo destino.
 - Bitacora administrativa automatica, con filtros y paginacion, sin secretos ni contenido clinico.
@@ -21,6 +24,7 @@ Los nuevos turnos duran **30 minutos** con la configuracion entregada. La hora d
 | --- | --- | --- | --- | --- |
 | Usuarios administrativos, medicos y especialidades | Gestiona | No | No | No |
 | Cambiar contrasena propia | Si | Si | Si | Si |
+| Recuperar por correo registrado | Si | Si | Si | Si |
 | Restablecer contrasena de otra cuenta activa | Si | No | No | No |
 | Pacientes y datos personales | Gestiona | Gestiona | Datos basicos de sus citas | Perfil propio |
 | Programar horarios por dia/periodo | Si | No | Consulta propios | No |
@@ -86,11 +90,12 @@ php backend/scripts/actualizar-agenda-reportes.php
 php backend/scripts/actualizar-programacion-mensual.php
 php backend/scripts/actualizar-consultas-bitacora.php
 php backend/scripts/actualizar-seguridad-credenciales.php --aplicar
+php backend/scripts/actualizar-recuperacion-contrasena.php --aplicar
 php backend/scripts/cargar-datos-iniciales.php
 php backend/scripts/verificar-entorno.php --conexion
 ```
 
-El actualizador de consultas instala 006-008; el de seguridad agrega 009 en otra transaccion y solo admite una base local terminada en `_pruebas`. La autenticacion actual necesita 009. El seeder es solo para una base nueva/local: cuatro roles, tres especialidades y una cuenta por rol. Cuentas: `administrador@vidasalud.test`, `recepcionista@vidasalud.test`, `medico@vidasalud.test` y `paciente@vidasalud.test`. Usan la clave elegida en tu `.env`.
+El actualizador de consultas instala 006-008; el de seguridad agrega 009 en otra transaccion y solo admite una base local terminada en `_pruebas`. La autenticacion actual necesita 009 y la recuperacion por correo necesita 010. El seeder es solo para una base nueva/local: cuatro roles, tres especialidades y una cuenta por rol. Cuentas: `administrador@vidasalud.test`, `recepcionista@vidasalud.test`, `medico@vidasalud.test` y `paciente@vidasalud.test`. Usan la clave elegida en tu `.env`.
 
 Abre dos terminales en la raiz. Backend:
 
@@ -108,7 +113,7 @@ Abre <http://127.0.0.1:8080>. `php -S` es para desarrollo. No publiques la raiz 
 
 ## Actualizar una base existente
 
-Trabaja primero en una copia local terminada en `_pruebas`. Si ya tiene 001-005, el actualizador de consultas instala 006-008. Si ya tiene 001-008, aplica unicamente 009 con el procedimiento de [seguridad de credenciales](docs/uso/usuarios-autenticacion.md). No repitas migracion inicial ni seeder. Conserva tus `.env` y un respaldo. La migracion de Neon y el despliegue no forman parte de esta entrega.
+Trabaja primero en una copia local terminada en `_pruebas`. Si ya tiene 001-005, el actualizador de consultas instala 006-008. Si ya tiene 001-008, aplica 009 con el procedimiento de [seguridad de credenciales](docs/uso/usuarios-autenticacion.md). Si ya tiene 001-009, aplica solo 010 segun [la guia de actualizacion](docs/uso/actualizacion-privacidad-recuperacion.md). No repitas migracion inicial ni seeder. Conserva tus `.env` y un respaldo. La migracion de Neon y el despliegue no forman parte de esta entrega.
 
 ## Reglas principales
 
@@ -127,13 +132,13 @@ Con 30 minutos, 08:00-09:00 genera dos turnos y 08:00-17:00 dieciocho. Cambiar l
 
 ## Verificacion y limites
 
-Sin BD: `php backend/tests/ejecutar-pruebas.php`. Para integracion usa una base local desechable terminada en `_pruebas`, con 001-009 y seeder. La suite `python backend/tests/test_autenticacion_http.py --php C:/php85/php.exe --pg-bin "C:/Program Files/PostgreSQL/18/bin" --regresion` crea su propio cluster local y ejecuta autenticacion, suites PHP y contrato HTTP anterior; no usa la conexion de Neon. Consulta [la guia de autenticacion](docs/uso/usuarios-autenticacion.md) para el alcance y los resultados de esta revision.
+Sin BD: `php backend/tests/ejecutar-pruebas.php`. La suite `php backend/tests/ejecutar-pruebas.php --completo --pg-bin "C:/Program Files/PostgreSQL/18/bin"` crea su propio cluster local desechable, aplica 001-010 y ejecuta privacidad, autenticacion, recuperacion con correo simulado, suites PHP, contrato HTTP anterior y configuracion de despliegue. Requiere PHP con cURL, pdo_pgsql y mbstring, y los binarios de PostgreSQL; no necesita Python ni usa la conexion de Neon. Agrega `--navegador` para los recorridos JavaScript en Edge (solo esta opcion requiere Node 22+ y Edge). Consulta [las instrucciones y equivalencias de pruebas PHP](docs/uso/pruebas-php.md) y [la guia de autenticacion](docs/uso/usuarios-autenticacion.md).
 
 La revision de credenciales del 31/10/2026 verifico Windows nativo, PHP 8.5.11 y PostgreSQL 18.6: pasaron 18 suites PHP (incluida concurrencia), 330 comprobaciones HTTP de autenticacion, 137 del contrato HTTP anterior y 10 de configuracion. Edge comprobo los formularios con API simulada a 390 y 1440 px. El detalle y los limites estan en [la guia de autenticacion](docs/uso/usuarios-autenticacion.md).
 
 Como antecedente, se verificaron PHP 8.5 WebAssembly, PostgreSQL 18/PGlite y Chromium: 15 suites PHP, 54 comprobaciones clinicas/auditoria, 5 de migracion 006, 137 del contrato HTTP previo y 46 de nuevos recorridos, con seis vistas a 320, 390, 768 y 1440 px. Esta revision de credenciales no verifica los scripts operativos de PowerShell, pg_dump ni pg_restore.
 
-No incluye recuperacion por correo, reasignacion de rol, consultorios, laboratorio, notificaciones o correccion de resultados finales. La bitacora se protege mediante permisos y triggers; el propietario/superusuario SQL conserva poder administrativo. No se afirma certificacion sanitaria.
+La recuperacion por correo requiere configurar Resend y verificar el remitente; no se enviaron mensajes reales en las pruebas. No incluye reasignacion de rol, consultorios, laboratorio, notificaciones de citas o correccion de resultados finales. La bitacora se protege mediante permisos y triggers; el propietario/superusuario SQL conserva poder administrativo. No se afirma certificacion sanitaria.
 
 ## Git y procedencia
 

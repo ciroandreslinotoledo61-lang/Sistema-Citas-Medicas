@@ -14,6 +14,10 @@ final class FabricaControladores
 {
     private ?Services\AutenticacionService $autenticacionService = null;
 
+    public function __construct(private readonly ?Services\CorreoTransaccionalService $correo = null)
+    {
+    }
+
     public function obtenerAutenticacionService(): Services\AutenticacionService
     {
         return $this->autenticacionService ??= new Services\AutenticacionService(
@@ -32,6 +36,7 @@ final class FabricaControladores
             Controllers\TokenCsrfController::class => new Controllers\TokenCsrfController(),
             Controllers\AutenticacionController::class => new Controllers\AutenticacionController($this->obtenerAutenticacionService()),
             Controllers\CredencialController::class => new Controllers\CredencialController(new Services\CredencialService($this->conexion())),
+            Controllers\RecuperacionContrasenaController::class => new Controllers\RecuperacionContrasenaController(new Services\RecuperacionContrasenaService($this->conexion(), $this->correo)),
             Controllers\UsuarioController::class => new Controllers\UsuarioController(new Services\UsuarioService($this->conexion())),
             Controllers\PacienteController::class => new Controllers\PacienteController(new Services\PacienteService($this->conexion())),
             Controllers\EspecialidadController::class => new Controllers\EspecialidadController(new Services\EspecialidadService($this->conexion())),

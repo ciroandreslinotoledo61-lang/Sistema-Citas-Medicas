@@ -20,7 +20,7 @@ Para una copia **local de pruebas**, configura explicitamente `DB_HOST=127.0.0.1
 
 - Cualquier rol puede abrir **Cambiar contrasena**. Se exige la actual, una nueva de 12 a 72 bytes con letras y numeros sin patrones repetidos, y su confirmacion. No se recortan espacios. La clave nueva debe ser diferente de la actual.
 - El usuario se obtiene exclusivamente de la sesion. El endpoint no acepta identificadores ni campos adicionales del formulario. Cambiar renueva el identificador de sesion y el token CSRF, conserva la sesion actual y revoca las otras mediante `version_credenciales`.
-- **Administrar cuentas → Restablecer contrasena** esta reservado al administrador. El permiso existente `usuarios.gestionar` abarca las cuentas de esta unica clinica; no existen tenants ni ambitos adicionales. Se rechaza restablecer la propia cuenta o una inactiva. La propia usa el formulario normal.
+- **Administrar cuentas -> Restablecer contrasena** esta reservado al administrador. El permiso existente `usuarios.gestionar` abarca las cuentas de esta unica clinica; no existen tenants ni ambitos adicionales. Se rechaza restablecer la propia cuenta o una inactiva. La propia usa el formulario normal.
 - El navegador genera 12 bytes criptograficos, representados como 24 caracteres hexadecimales. El administrador guarda la clave para entregarla privadamente y confirma la cuenta y el cierre de sesiones. La clave se envia solo en el cuerpo de la solicitud; el servidor devuelve exclusivamente el resultado y almacena solo su hash. No se usa almacenamiento del navegador, URL, correo automatico ni respuesta con contrasenas.
 - La clave temporal caduca a los 30 minutos del restablecimiento y admite un solo inicio de sesion. Ese acceso permite consultar la sesion, cambiar la contrasena y cerrar sesion. El bloqueo es del backend ademas de la interfaz. Al cambiar, la temporal se introduce como contrasena actual. Si caduca, se pierde esa sesion o se cierra antes de elegir una personal, hace falta otro restablecimiento administrativo.
 - Cambio, revocacion y bitacora se confirman en una transaccion. La bitacora registra actor, cuenta afectada, fecha y accion `cambiar_contrasena` o `restablecer_contrasena`, sin hashes, claves ni tokens. Los triggers anteriores siguen registrando sus metadatos habituales.
@@ -48,18 +48,36 @@ Pruebas PHP sin conexion a base de datos:
 & C:\php85\php.exe backend/tests/ejecutar-pruebas.php
 ```
 
-La suite HTTP aislada `backend/tests/test_autenticacion_http.py` crea su propio PostgreSQL local desechable dentro de `.tmp-auth/` con datos sinteticos, aplica las migraciones alli y detiene sus procesos al finalizar. Consulta `--help` para rutas de PHP y PostgreSQL. No toma las credenciales de Neon del proyecto. Los archivos temporales estan excluidos de Git.
+El ejecutor PHP con `--completo` crea su propio PostgreSQL local desechable dentro de `.tmp-auth/` con datos sinteticos, aplica las migraciones alli y detiene sus procesos al finalizar. Usa el mismo PHP que lo ejecuta y recibe la carpeta de binarios PostgreSQL mediante `--pg-bin`. No necesita Python ni toma las credenciales de Neon del proyecto. Los archivos temporales estan excluidos de Git.
 
 ```powershell
-python backend/tests/test_autenticacion_http.py --php C:/php85/php.exe --pg-bin "C:/Program Files/PostgreSQL/18/bin" --regresion
-python deploy/tests/test_configuracion.py --php C:/php85/php.exe
+& C:/php85/php.exe backend/tests/ejecutar-pruebas.php --completo --pg-bin "C:/Program Files/PostgreSQL/18/bin"
+& C:/php85/php.exe deploy/tests/test_configuracion.php
 ```
 
-`--regresion` agrega las suites PHP de integracion y el contrato HTTP anterior en otras dos bases nuevas del mismo cluster. Los servidores fijan tambien `API_INTERNAL_URL` a su API local para evitar heredar la URL de otra instancia. Las salidas de las suites quedan en el directorio de artefactos indicado al terminar, incluso cuando falla una comprobacion.
+`--completo` incluye las suites PHP de integracion y el contrato HTTP anterior en otras dos bases nuevas del mismo cluster, ademas de los diez casos de configuracion. Los servidores fijan tambien `API_INTERNAL_URL` a su API local para evitar heredar la URL de otra instancia. Las salidas de las suites quedan en el directorio de artefactos indicado al terminar, incluso cuando falla una comprobacion. Agrega `--navegador` para los recorridos JavaScript opcionales (Node 22+ y Edge). Requisitos y equivalencias: [pruebas PHP](pruebas-php.md).
 
 La suite de autenticacion comprueba cambio propio y restablecimiento de los cuatro roles, rechazo de permisos/CSRF/identidad manipulada, cambio obligatorio, expiracion y uso unico, revocacion, limites persistentes y ausencia de claves en respuestas y registros. `test_credenciales_transacciones.php` induce un fallo de auditoria para verificar que hash, version, estado temporal y bitacora se revierten juntos; tambien comprueba que dos procesos solo pueden consumir una vez la misma temporal y que el acceso se recupera al vencer la ventana de intentos.
 
-## Revision del 31 de octubre de 2026
+## Recuperacion por correo (actualizacion posterior a 009)
+
+La pantalla de inicio ofrece Olvidaste tu contrasena. Las rutas POST
+`/api/autenticacion/recuperar-contrasena` y
+`/api/autenticacion/confirmar-recuperacion` son publicas y conservan CSRF.
+El token aleatorio se almacena como SHA-256, vence a los 30 minutos y solo sirve
+una vez. Reemitir, cambiar la clave, modificar el correo o desactivar la cuenta
+invalida el enlace anterior. Confirmar revoca las sesiones anteriores.
+
+Aplicar 010 despues de 009, primero en una copia local de pruebas. Configurar
+`MAIL_PROVIDER=resend`, `RESEND_API_KEY`, `MAIL_FROM` verificado y
+`FRONTEND_URL` HTTPS en produccion. No guardar secretos en Git. El operador debe
+verificar entrega real con una cuenta controlada; las pruebas automaticas solo
+usan transporte simulado. El restablecimiento administrativo sigue siendo un
+mecanismo independiente.
+
+Detalles, pruebas actuales y limites: [informe de actualizacion](actualizacion-privacidad-recuperacion.md).
+
+## Revision historica del 31 de octubre de 2026
 
 La revision partio de los cambios locales existentes: servicios, migracion, rutas y formularios ya estaban implementados. Se conservaron. Se completo la cobertura de restablecimiento para los cuatro roles y se agregaron pruebas de transacciones, concurrencia y expiracion de limites. Se corrigio la URL interna heredada en el ejecutor del contrato HTTP, se conservaron diagnosticos de las suites y se alinearon la ayuda del formulario y el mensaje de validacion con el limite de 12-72 bytes. README ahora incluye la migracion 009 en la preparacion local.
 
@@ -69,12 +87,12 @@ Resultados en Windows nativo, PHP 8.5.11 y PostgreSQL 18.6, usando bases nuevas 
 - 18 suites PHP satisfactorias: siete sin BD y once de integracion. Incluyen 19 comprobaciones nuevas de credenciales, la reserva concurrente anterior y las regresiones de citas, consultas, reportes y bitacora.
 - 137 comprobaciones satisfactorias del contrato HTTP anterior y sus vistas por rol.
 - 10 casos satisfactorios de configuracion de despliegue, sin conexion a BD ni despliegue.
-- Sintaxis correcta en 173 archivos PHP, 38 JavaScript y cuatro Python; `git diff --check` sin errores.
+- Sintaxis correcta en 173 archivos PHP y 38 JavaScript; `git diff --check` sin errores. Estos conteos son historicos; la revision del ejecutor PHP actual se registra en [pruebas PHP](pruebas-php.md).
 - Edge headless con frontend real y API simulada local: formularios y navegacion de los cuatro roles, Mostrar/Ocultar, confirmacion, generacion temporal y limpieza de claves. Sin errores JavaScript ni desbordamiento horizontal a 390 y 1440 px. Las pruebas HTTP anteriores usaron backend y PostgreSQL reales; la comprobacion del JavaScript en navegador uso respuestas simuladas.
 
 La migracion 009 se ejecuto exclusivamente en los clusters de pruebas. No se modificaron los `.env`, Neon de produccion ni Render, y no se hizo `git push`. Los procesos de las suites se detuvieron al terminar; los artefactos locales quedan excluidos de Git en `.tmp-auth/`.
 
-No quedaron fallos detectados en estos flujos dentro del alcance probado. Quedan fuera de esta entrega aplicar 009 a produccion, desplegar y verificar proxy/TLS/cookies en Render. La recuperacion automatica por correo no forma parte de la implementacion; el restablecimiento es administrativo.
+No quedaron fallos detectados en esos flujos dentro del alcance historico probado. En aquella revision no se incluyo recuperacion por correo; la actualizacion posterior con 010 se describe arriba. Aplicar migraciones en produccion, desplegar y verificar proxy/TLS/cookies en Render son tareas operativas separadas.
 
 ## Archivos principales
 

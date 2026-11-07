@@ -18,7 +18,7 @@ final class ProteccionVista
         }
         if ($rolesPermitidos !== [] && !in_array($usuario['codigoRol'], $rolesPermitidos, true)) {
             http_response_code(403);
-            throw new DomainException('Tu cuenta no tiene acceso a esta pagina.');
+            throw new DomainException('Tu cuenta no tiene acceso a esta página.');
         }
         return $usuario;
     }

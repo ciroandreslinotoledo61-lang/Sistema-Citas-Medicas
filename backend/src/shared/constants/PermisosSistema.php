@@ -39,7 +39,7 @@ final class PermisosSistema
     public static function exigirPermiso(Usuario $usuario, string $operacion): void
     {
         if (!$usuario->usuarioActivo || !self::tienePermiso($usuario->codigoRol, $operacion)) {
-            throw new ErrorAplicacion('Tu cuenta no tiene permiso para realizar esta operacion.', 403);
+            throw new ErrorAplicacion('Tu cuenta no tiene permiso para realizar esta operación.', 403);
         }
     }
 }

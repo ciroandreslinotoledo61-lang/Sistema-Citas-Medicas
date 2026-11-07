@@ -17,7 +17,7 @@ export function configurarListaPaginada(obtenerListado, mostrarElementos, cuerpo
         cuerpoTabla.setAttribute("aria-busy", "true");
         try {
             const parametros = new URLSearchParams({
-                busqueda: formularioBusqueda.elements.busqueda.value.trim(),
+                busqueda: formularioBusqueda.elements.busqueda?.value.trim() || "",
                 pagina: String(paginaActual),
                 ...obtenerFiltrosAdicionales(formularioBusqueda),
             });
@@ -30,11 +30,11 @@ export function configurarListaPaginada(obtenerListado, mostrarElementos, cuerpo
                 const celda = document.createElement("td");
                 celda.colSpan = cuerpoTabla.closest("table").querySelectorAll("thead th").length;
                 celda.className = "sin-resultados";
-                celda.textContent = "No se encontraron registros para esta busqueda.";
+                celda.textContent = "No se encontraron registros para estos filtros.";
                 fila.append(celda);
                 cuerpoTabla.append(fila);
             }
-            estadoPaginacion.textContent = "Pagina " + paginaActual;
+            estadoPaginacion.textContent = "Página " + paginaActual;
             botonAnterior.disabled = paginaActual <= 1;
             botonSiguiente.disabled = !respuesta.datos.hayPaginaSiguiente;
         } catch (error) {

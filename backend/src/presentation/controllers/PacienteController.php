@@ -18,7 +18,7 @@ final class PacienteController
     public function registrarPacienteConHistoriaClinica(): never
     {
         $paciente = $this->pacienteService->registrarPacienteConHistoriaClinica(SolicitudHttp::obtenerCuerpoJson());
-        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Paciente registrado. Ya puede iniciar sesion.', 'datos' => $paciente->obtenerDatosPublicosPaciente()], 201);
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Paciente registrado. Ya puede iniciar sesión.', 'datos' => $paciente->obtenerDatosPublicosPaciente()], 201);
     }
 
     public function listarPacientes(): never

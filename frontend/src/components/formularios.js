@@ -6,11 +6,11 @@ export function mostrarMensaje(elemento, mensaje, esError = false) {
 
 export function mostrarErrorSolicitud(elemento, error) {
     const primerErrorCampo = Object.values(error.erroresCampos || {})[0];
-    mostrarMensaje(elemento, primerErrorCampo || error.message || "Ocurrio un error.", true);
+    mostrarMensaje(elemento, primerErrorCampo || error.message || "Ocurrió un error.", true);
     if (error.codigoHttp === 401 && document.body.dataset.usuario !== "null") {
         const enlace = document.createElement("a");
         enlace.href = "/iniciar-sesion";
-        enlace.textContent = " Iniciar sesion";
+        enlace.textContent = " Iniciar sesión";
         elemento.append(enlace);
     }
 }

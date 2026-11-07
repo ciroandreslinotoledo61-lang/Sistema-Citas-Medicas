@@ -47,7 +47,7 @@ final class UsuarioService
     {
         $datosValidados = UsuarioValidator::validarDatosRegistroUsuario($datos);
         $rol = $this->rolRepository->obtenerRolPorCodigo($datosValidados['codigoRol'])
-            ?? throw new ErrorAplicacion('El rol no esta configurado.', 409);
+            ?? throw new ErrorAplicacion('El rol no está configurado.', 409);
         $idUsuario = $this->usuarioRepository->registrarUsuario(
             $datosValidados,
             $rol->idRol,
@@ -76,7 +76,7 @@ final class UsuarioService
             $usuario = $this->usuarioRepository->obtenerUsuarioPorId($idUsuario, true)
             ?? throw new ErrorAplicacion('El usuario no existe.', 404);
             if ($usuario->codigoRol === RolesSistema::MEDICO) {
-                throw new ErrorAplicacion('Cambia el estado de esta cuenta desde Medicos para validar su especialidad.', 409);
+                throw new ErrorAplicacion('Cambia el estado de esta cuenta desde Médicos para validar su especialidad.', 409);
             }
             if (
                 !$usuarioActivo && $usuario->usuarioActivo && $usuario->codigoRol === RolesSistema::ADMINISTRADOR &&

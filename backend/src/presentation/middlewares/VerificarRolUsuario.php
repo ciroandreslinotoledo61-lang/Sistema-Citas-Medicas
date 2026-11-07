@@ -12,7 +12,7 @@ final class VerificarRolUsuario
     public static function exigirRolPermitido(Usuario $usuario, array $rolesPermitidos): void
     {
         if (!in_array($usuario->codigoRol, $rolesPermitidos, true)) {
-            throw new ErrorAplicacion('No tienes permiso para realizar esta accion.', 403);
+            throw new ErrorAplicacion('No tienes permiso para realizar esta acción.', 403);
         }
     }
 }

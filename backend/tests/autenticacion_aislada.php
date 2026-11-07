@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// Soporte exclusivo para el cluster efimero creado por test_autenticacion_http.py.
+// Soporte exclusivo para el cluster efimero creado por test_autenticacion_http.php.
 // No usa la conexion del proyecto ni permite hosts o nombres de produccion.
 if (PHP_SAPI !== 'cli' || getenv('VIDASALUD_TEST_LOCAL') !== '1'
     || getenv('DB_HOST') !== '127.0.0.1'
@@ -27,8 +27,8 @@ if ($opcion === 'preparar') {
     $conexion = $conectar($base);
     $archivos = glob(dirname(__DIR__) . '/src/data/migrations/*.sql');
     sort($archivos);
-    if (count($archivos) !== 9) {
-        throw new RuntimeException('Se requieren exactamente las migraciones 001-009.');
+    if (count($archivos) !== 10) {
+        throw new RuntimeException('Se requieren exactamente las migraciones 001-010.');
     }
     foreach ($archivos as $archivo) {
         $conexion->beginTransaction();

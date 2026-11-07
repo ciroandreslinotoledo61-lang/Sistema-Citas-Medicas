@@ -15,7 +15,7 @@ final class CredencialController
     {
         $usuario = $this->credenciales->cambiarContrasena(SolicitudHttp::obtenerCuerpoJson());
         RespuestaJson::enviarRespuestaJson([
-            'mensaje' => 'Contrasena actualizada. Se cerraron las demas sesiones de tu cuenta.',
+            'mensaje' => 'Contraseña actualizada. Se cerraron las demás sesiones de tu cuenta.',
             'datos' => $usuario->obtenerDatosPublicosUsuario(),
         ]);
     }
@@ -24,7 +24,7 @@ final class CredencialController
     {
         $this->credenciales->restablecerContrasena($idUsuario, SolicitudHttp::obtenerCuerpoJson());
         RespuestaJson::enviarRespuestaJson([
-            'mensaje' => 'Contrasena restablecida. Las sesiones anteriores se cerraron. La clave temporal permite un inicio de sesion durante 30 minutos; el usuario debera elegir su contrasena personal.',
+            'mensaje' => 'Contraseña restablecida. Las sesiones anteriores se cerraron. La clave temporal permite un inicio de sesión durante 30 minutos; el usuario deberá elegir su contraseña personal.',
         ]);
     }
 }

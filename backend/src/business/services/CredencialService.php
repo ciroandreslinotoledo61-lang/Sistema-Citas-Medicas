@@ -37,12 +37,12 @@ final class CredencialService
         $usuario = $this->transaccion->ejecutar(function () use ($actor, $validados): Usuario {
             $actual = $this->exigirActorVigente($actor);
             if (!$actual->verificarContrasenaUsuario($validados['contrasenaActual'])) {
-                throw new ErrorAplicacion('La contrasena actual es incorrecta.', 422,
-                    ['contrasenaActual' => 'Introduce tu contrasena actual.']);
+                throw new ErrorAplicacion('La contraseña actual es incorrecta.', 422,
+                    ['contrasenaActual' => 'Introduce tu contraseña actual.']);
             }
             if ($actual->verificarContrasenaUsuario($validados['nuevaContrasena'])) {
-                throw new ErrorAplicacion('Elige una contrasena diferente de la actual.', 422,
-                    ['nuevaContrasena' => 'La nueva contrasena debe ser diferente.']);
+                throw new ErrorAplicacion('Elige una contraseña diferente de la actual.', 422,
+                    ['nuevaContrasena' => 'La nueva contraseña debe ser diferente.']);
             }
             $this->bitacora->establecerUsuarioResponsable($actual);
             $this->usuarios->actualizarContrasena($actual->idUsuario,
@@ -62,7 +62,7 @@ final class CredencialService
         $this->intentos->exigirIntentoDisponible('restablecer-contrasena', (string) $actor->idUsuario);
         $temporal = UsuarioValidator::validarRestablecimientoContrasena($datos);
         if ($idUsuario === $actor->idUsuario) {
-            throw new ErrorAplicacion('Utiliza Cambiar contrasena para tu propia cuenta.', 409);
+            throw new ErrorAplicacion('Utiliza Cambiar contraseña para tu propia cuenta.', 409);
         }
         $this->transaccion->ejecutar(function () use ($actor, $idUsuario, $temporal): void {
             // Orden fijo para evitar interbloqueos entre administradores.
@@ -89,7 +89,7 @@ final class CredencialService
     {
         PermisosSistema::exigirPermiso($usuario, 'usuarios.gestionar');
         if ($usuario->requiereCambioContrasena) {
-            throw new ErrorAplicacion('Establece tu contrasena personal antes de administrar cuentas.', 403);
+            throw new ErrorAplicacion('Establece tu contraseña personal antes de administrar cuentas.', 403);
         }
     }
 
@@ -99,7 +99,7 @@ final class CredencialService
         if (!$actual || !$actual->usuarioActivo || $actual->versionCredenciales !== $actor->versionCredenciales ||
             ($actual->requiereCambioContrasena &&
                 (!$actual->contrasenaTemporalExpira || strtotime($actual->contrasenaTemporalExpira) <= time()))) {
-            throw new ErrorAplicacion('Tu sesion ya no esta disponible. Inicia sesion otra vez.', 401);
+            throw new ErrorAplicacion('Tu sesión ya no está disponible. Inicia sesión otra vez.', 401);
         }
         return $actual;
     }

@@ -93,7 +93,7 @@ final class CitaService
     public function cancelarCita(Usuario $usuario, int $idCita, array $datos): array
     {
         PermisosSistema::exigirPermiso($usuario, 'citas.cancelar');
-        $motivo = ValidarCamposFormulario::validarTexto($datos, 'motivoCancelacion', 'El motivo de cancelacion', 300, $usuario->codigoRol === RolesSistema::MEDICO);
+        $motivo = ValidarCamposFormulario::validarTexto($datos, 'motivoCancelacion', 'El motivo de cancelación', 300, $usuario->codigoRol === RolesSistema::MEDICO);
         return $this->ejecutarTransaccion(function () use ($usuario, $idCita, $motivo): array {
             $cita = $this->exigirCitaAutorizada($usuario, $idCita, true);
             $this->exigirCitaModificable($cita);
@@ -177,7 +177,7 @@ final class CitaService
         return $this->ejecutarTransaccion(function () use ($usuario, $idCita, $asistencia): array {
             $cita = $this->exigirCitaAutorizada($usuario, $idCita, true)->obtenerDatosPublicosCita();
             if (!in_array($cita['estadoCita'], ['programada'], true) || $cita['asistenciaRegistrada'] !== 'pendiente') {
-                throw new ErrorAplicacion('La asistencia ya fue registrada o la cita ya no esta vigente.', 409);
+                throw new ErrorAplicacion('La asistencia ya fue registrada o la cita ya no está vigente.', 409);
             }
             $limite = new \DateTimeImmutable($asistencia === 'asistio' ? $cita['fechaHoraInicio'] : $cita['fechaHoraFin']);
             if ($this->obtenerAhora() < $limite) {
@@ -192,13 +192,15 @@ final class CitaService
     private function exigirCitaAutorizada(Usuario $usuario, int $idCita, bool $bloquear = false): Cita
     {
         PermisosSistema::exigirPermiso($usuario, 'citas.consultar');
-        $cita = $this->citaRepository->obtenerCitaPorId($idCita, $bloquear)
-            ?? throw new ErrorAplicacion('La cita no existe o no esta disponible para tu cuenta.', 404);
+        $cita = $this->citaRepository->obtenerCitaPorId($idCita, $bloquear,
+            $usuario->codigoRol === RolesSistema::PACIENTE ? $usuario->idUsuario : null,
+            $usuario->codigoRol === RolesSistema::MEDICO ? $usuario->idUsuario : null)
+            ?? throw new ErrorAplicacion('La cita no existe o no está disponible para tu cuenta.', 404);
         if (
             ($usuario->codigoRol === RolesSistema::PACIENTE && !$cita->perteneceAlPaciente($usuario->idUsuario)) ||
             ($usuario->codigoRol === RolesSistema::MEDICO && !$cita->perteneceAlMedico($usuario->idUsuario))
         ) {
-            throw new ErrorAplicacion('La cita no existe o no esta disponible para tu cuenta.', 404);
+            throw new ErrorAplicacion('La cita no existe o no está disponible para tu cuenta.', 404);
         }
         return $cita;
     }
@@ -230,10 +232,10 @@ final class CitaService
     private function bloquearMedicoDisponible(int $idMedico): Medico
     {
         $medico = $this->medicoRepository->obtenerMedicoPorId($idMedico, true)
-            ?? throw new ErrorAplicacion('El medico no existe.', 404);
+            ?? throw new ErrorAplicacion('El médico no existe.', 404);
         $especialidad = $this->especialidadRepository->obtenerEspecialidadPorId($medico->idEspecialidad, true);
         if (!$medico->medicoActivo || !$especialidad?->especialidadActiva) {
-            throw new ErrorAplicacion('El medico o su especialidad no estan disponibles.', 409);
+            throw new ErrorAplicacion('El médico o su especialidad no están disponibles.', 409);
         }
         return $medico;
     }
@@ -244,7 +246,7 @@ final class CitaService
         $paciente = $this->pacienteRepository->bloquearPaciente($idPaciente)
             ?? throw new ErrorAplicacion('El paciente no existe.', 404);
         if (!in_array($paciente['usuario_activo'], [true, 1, '1', 't', 'true'], true)) {
-            throw new ErrorAplicacion('La cuenta del paciente esta inactiva.', 409);
+            throw new ErrorAplicacion('La cuenta del paciente está inactiva.', 409);
         }
         if ($this->citaRepository->pacienteTieneCitaActiva($idPaciente, $idCitaExcluida)) {
             throw new ErrorAplicacion(self::MENSAJE_CITA_ACTIVA, 409);
@@ -263,17 +265,17 @@ final class CitaService
             $fin->getTimestamp() - $inicio->getTimestamp() !== (int) $turno['duracion_turno_minutos'] * 60 ||
             (int) $turno['duracion_turno_minutos'] !== (int) $turno['duracion_cita_minutos']
         ) {
-            throw new ErrorAplicacion('Ese turno ya no esta disponible. Elige otro horario.', 409);
+            throw new ErrorAplicacion('Ese turno ya no está disponible. Elige otro horario.', 409);
         }
     }
 
     private function exigirReservaSinCruces(int $idPaciente, int $idMedico, int $idTurno, array $turno, int $idCitaExcluida): void
     {
         if ($this->citaRepository->medicoTieneCruce($idMedico, $turno['fecha_hora_inicio'], $turno['fecha_hora_fin'], $idCitaExcluida)) {
-            throw new ErrorAplicacion('El medico ya tiene una cita que se cruza.', 409);
+            throw new ErrorAplicacion('El médico ya tiene una cita que se cruza.', 409);
         }
         if ($this->citaRepository->turnoEstaOcupado($idTurno)) {
-            throw new ErrorAplicacion('Otra persona ya reservo ese turno. Elige otro horario.', 409);
+            throw new ErrorAplicacion('Otra persona ya reservó ese turno. Elige otro horario.', 409);
         }
         if ($this->citaRepository->pacienteTieneCruce($idPaciente, $turno['fecha_hora_inicio'], $turno['fecha_hora_fin'], $idCitaExcluida)) {
             throw new ErrorAplicacion('El paciente ya tiene una cita que se cruza con ese horario.', 409);
@@ -294,9 +296,9 @@ final class CitaService
         $datos['puedeRegistrarInasistencia'] = $vigente && $fin <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.inasistencia');
         $datos['requiereMotivoCancelacion'] = $usuario->codigoRol === RolesSistema::MEDICO;
         $datos['explicacionAcciones'] = !$vigente ? 'Esta cita es final y conserva su historial.'
-            : ($inicio > $ahora ? 'Puedes cancelar antes del inicio. La atencion se registra desde el inicio del turno y la inasistencia desde su final.'
-                : ($fin > $ahora ? 'El turno ya comenzo. La inasistencia se habilita al terminar; ya no se puede cancelar.'
-                    : 'El turno termino. Un usuario autorizado debe registrar el resultado; no se cambia automaticamente.'));
+            : ($inicio > $ahora ? 'Puedes cancelar antes del inicio. La atención se registra desde el inicio del turno y la inasistencia desde su final.'
+                : ($fin > $ahora ? 'El turno ya comenzó. La inasistencia se habilita al terminar; ya no se puede cancelar.'
+                    : 'El turno terminó. Un usuario autorizado debe registrar el resultado; no se cambia automáticamente.'));
         return $datos;
     }
 
@@ -309,10 +311,10 @@ final class CitaService
                 throw new ErrorAplicacion(self::MENSAJE_CITA_ACTIVA, 409);
             }
             if ((string) $error->getCode() === 'P2002') {
-                throw new ErrorAplicacion('La transicion de estado no esta permitida.', 409);
+                throw new ErrorAplicacion('La transición de estado no está permitida.', 409);
             }
             if (in_array((string) $error->getCode(), ['23505', '23P01', '40P01', '40001'], true)) {
-                throw new ErrorAplicacion('La disponibilidad cambio durante la operacion. Actualiza los turnos e intenta otra vez.', 409);
+                throw new ErrorAplicacion('La disponibilidad cambió durante la operación. Actualiza los turnos e intenta otra vez.', 409);
             }
             throw $error;
         }

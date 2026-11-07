@@ -48,10 +48,33 @@ final class UsuarioValidator
         self::exigirCamposPermitidos($datos, ['contrasenaActual', 'nuevaContrasena', 'confirmacionContrasena']);
         $actual = $datos['contrasenaActual'] ?? null;
         if (!is_string($actual) || $actual === '' || strlen($actual) > 72 || str_contains($actual, "\0")) {
-            throw new ErrorAplicacion('Revisa la contrasena actual.', 422, [
-                'contrasenaActual' => 'Escribe tu contrasena actual.',
+            throw new ErrorAplicacion('Revisa la contraseña actual.', 422, [
+                'contrasenaActual' => 'Escribe tu contraseña actual.',
             ]);
         }
+        $nueva = self::validarNuevaContrasena($datos);
+        return ['contrasenaActual' => $actual, 'nuevaContrasena' => $nueva,
+            'confirmacionContrasena' => $datos['confirmacionContrasena']];
+    }
+
+    public static function validarSolicitudRecuperacion(array $datos): string
+    {
+        self::exigirCamposPermitidos($datos, ['correoUsuario']);
+        return ValidarCamposFormulario::validarCorreoUsuario($datos);
+    }
+
+    public static function validarRecuperacionContrasena(array $datos): array
+    {
+        self::exigirCamposPermitidos($datos, ['token', 'nuevaContrasena', 'confirmacionContrasena']);
+        $token = $datos['token'] ?? null;
+        if (!is_string($token) || !preg_match('/^[a-f0-9]{64}$/D', $token)) {
+            throw new ErrorAplicacion('El enlace es inválido o ha vencido. Solicita uno nuevo.', 422);
+        }
+        return ['token' => $token, 'nuevaContrasena' => self::validarNuevaContrasena($datos)];
+    }
+
+    private static function validarNuevaContrasena(array $datos): string
+    {
         // Reutiliza los limites compatibles con password_hash sin recortar espacios.
         try {
             $nueva = ValidarCamposFormulario::validarContrasenaRegistro([
@@ -67,12 +90,11 @@ final class UsuarioValidator
             throw new ErrorAplicacion($error->getMessage(), $error->codigoHttp, $campos);
         }
         if (!preg_match('/\p{L}/u', $nueva) || !preg_match('/[0-9]/', $nueva) || preg_match('/^(.{1,6})\1+$/usD', $nueva)) {
-            throw new ErrorAplicacion('La nueva contrasena es demasiado predecible.', 422, [
-                'nuevaContrasena' => 'Usa letras y numeros, sin patrones repetidos; entre 12 y 72 bytes.',
+            throw new ErrorAplicacion('La nueva contraseña es demasiado predecible.', 422, [
+                'nuevaContrasena' => 'Usa letras y números, sin patrones repetidos; entre 12 y 72 bytes.',
             ]);
         }
-        return ['contrasenaActual' => $actual, 'nuevaContrasena' => $nueva,
-            'confirmacionContrasena' => $datos['confirmacionContrasena']];
+        return $nueva;
     }
 
     public static function validarRestablecimientoContrasena(array $datos): string
@@ -86,7 +108,7 @@ final class UsuarioValidator
         $temporal = $datos['contrasenaTemporal'] ?? null;
         if (!is_string($temporal) || !preg_match('/^[a-f0-9]{24}$/D', $temporal)
             || count(array_unique(str_split($temporal))) < 6 || preg_match('/^(.{1,12})\1+$/D', $temporal)) {
-            throw new ErrorAplicacion('Genera una nueva contrasena temporal.', 422, [
+            throw new ErrorAplicacion('Genera una nueva contraseña temporal.', 422, [
                 'contrasenaTemporal' => 'Usa el generador seguro del formulario.',
             ]);
         }

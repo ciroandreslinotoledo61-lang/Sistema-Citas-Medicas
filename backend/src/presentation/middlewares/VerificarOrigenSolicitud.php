@@ -14,7 +14,7 @@ final class VerificarOrigenSolicitud
         $origenPermitido = rtrim(CargarVariablesEntorno::obtenerVariableEntorno('FRONTEND_URL', 'http://127.0.0.1:8080'), '/');
         $origenSolicitud = $_SERVER['HTTP_ORIGIN'] ?? '';
         if ($origenSolicitud !== '' && $origenSolicitud !== $origenPermitido) {
-            throw new ErrorAplicacion('El origen de la solicitud no esta permitido.', 403);
+            throw new ErrorAplicacion('El origen de la solicitud no está permitido.', 403);
         }
         if ($origenSolicitud !== '') {
             header('Access-Control-Allow-Origin: ' . $origenPermitido);

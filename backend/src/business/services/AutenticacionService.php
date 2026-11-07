@@ -64,7 +64,7 @@ final class AutenticacionService
     {
         $idUsuario = SesionUsuario::obtenerIdUsuario();
         if ($idUsuario < 1) {
-            throw new ErrorAplicacion('Inicia sesion para continuar.', 401);
+            throw new ErrorAplicacion('Inicia sesión para continuar.', 401);
         }
         $usuario = $this->usuarioRepository->obtenerUsuarioPorId($idUsuario);
         if (
@@ -74,7 +74,7 @@ final class AutenticacionService
                 strtotime($usuario->contrasenaTemporalExpira) <= time()))
         ) {
             SesionUsuario::limpiarSesionUsuario();
-            throw new ErrorAplicacion('Tu sesion ya no esta disponible. Inicia sesion otra vez.', 401);
+            throw new ErrorAplicacion('Tu sesión ya no está disponible. Inicia sesión otra vez.', 401);
         }
         return $usuario;
     }

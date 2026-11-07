@@ -17,7 +17,7 @@ final class AutenticacionController
     public function iniciarSesionUsuario(): never
     {
         $usuario = $this->autenticacionService->iniciarSesionUsuario(SolicitudHttp::obtenerCuerpoJson(), SolicitudHttp::obtenerDireccionCliente());
-        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Sesion iniciada.', 'datos' => $usuario->obtenerDatosPublicosUsuario()]);
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Sesión iniciada.', 'datos' => $usuario->obtenerDatosPublicosUsuario()]);
     }
 
     public function obtenerSesionUsuario(): never
@@ -28,6 +28,6 @@ final class AutenticacionController
     public function cerrarSesionUsuario(): never
     {
         $this->autenticacionService->cerrarSesionUsuario();
-        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Sesion cerrada.']);
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Sesión cerrada.']);
     }
 }

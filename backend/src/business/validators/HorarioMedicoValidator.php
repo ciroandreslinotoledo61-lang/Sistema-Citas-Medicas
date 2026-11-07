@@ -20,7 +20,7 @@ final class HorarioMedicoValidator
         }
         $horarioClinica = \CitasMedicas\Shared\Config\ConfiguracionAgenda::obtenerHorarioClinica();
         if ($datos['horaInicio'] < $horarioClinica['horaApertura'] || $datos['horaFin'] > $horarioClinica['horaCierre']) {
-            throw new ErrorAplicacion('Programa dentro del horario de la clinica: ' . $horarioClinica['horaApertura'] . ' a ' . $horarioClinica['horaCierre'] . '.', 422);
+            throw new ErrorAplicacion('Programa dentro del horario de la clínica: ' . $horarioClinica['horaApertura'] . ' a ' . $horarioClinica['horaCierre'] . '.', 422);
         }
         $inicio = new \DateTimeImmutable($fecha . ' ' . $datos['horaInicio']);
         $fin = new \DateTimeImmutable($fecha . ' ' . $datos['horaFin']);
@@ -34,7 +34,7 @@ final class HorarioMedicoValidator
             throw new ErrorAplicacion('El horario debe comenzar en el futuro.', 422);
         }
         if ($inicio > $ahora->modify('+1 year')) {
-            throw new ErrorAplicacion('Configura horarios dentro de los proximos 12 meses.', 422);
+            throw new ErrorAplicacion('Configura horarios dentro de los próximos 12 meses.', 422);
         }
         return ['idMedico' => $idMedico, 'fechaAtencion' => $fecha,
             'horaInicio' => $datos['horaInicio'], 'horaFin' => $datos['horaFin'], 'duracionCitaMinutos' => $duracion];
@@ -47,10 +47,10 @@ final class HorarioMedicoValidator
         $inicio = new \DateTimeImmutable($fechaInicial);
         $fin = new \DateTimeImmutable($fechaFinal);
         if ($fin < $inicio || $inicio->diff($fin)->days > 365) {
-            throw new ErrorAplicacion('El periodo debe estar ordenado y abarcar como maximo 366 dias.', 422);
+            throw new ErrorAplicacion('El periodo debe estar ordenado y abarcar como máximo 366 días.', 422);
         }
         if ($fechaFinal > $ahora->modify('+1 year')->format('Y-m-d')) {
-            throw new ErrorAplicacion('Configura horarios dentro de los proximos 12 meses.', 422);
+            throw new ErrorAplicacion('Configura horarios dentro de los próximos 12 meses.', 422);
         }
         $dias = $datos['diasSemana'] ?? null;
         if (!is_array($dias) || $dias === [] || count($dias) > 7) {
@@ -58,7 +58,7 @@ final class HorarioMedicoValidator
         }
         foreach ($dias as $dia) {
             if (!is_int($dia) || $dia < 1 || $dia > 7) {
-                throw new ErrorAplicacion('Los dias deben ser numeros del 1 (lunes) al 7 (domingo).', 422);
+                throw new ErrorAplicacion('Los días deben ser números del 1 (lunes) al 7 (domingo).', 422);
             }
         }
         // Validar el intervalo sin crear fechas pasadas. El servicio las omite y las informa.

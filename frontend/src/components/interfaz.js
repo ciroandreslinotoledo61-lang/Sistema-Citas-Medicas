@@ -59,7 +59,7 @@ function configurarVisibilidadClave() {
     for (const boton of document.querySelectorAll("#alternar-clave, [data-alternar-clave]")) {
         const campo = document.getElementById(boton.getAttribute("aria-controls"));
         if (!(campo instanceof HTMLInputElement)) continue;
-        const nombre = campo.labels?.[0]?.textContent.trim() || "contrasena";
+        const nombre = campo.labels?.[0]?.textContent.trim() || "contraseña";
         boton.hidden = false;
         boton.addEventListener("click", () => {
             const mostrarClave = campo.type === "password";

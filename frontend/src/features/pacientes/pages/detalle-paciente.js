@@ -1,0 +1,70 @@
+import { obtenerPacientePorId, obtenerPerfilPacienteAutenticado, actualizarDatosPaciente, cambiarEstadoPaciente } from "../services/pacientes-api.js";
+import { ejecutarEnvioFormulario, completarCamposFormulario, mostrarErrorSolicitud, mostrarMensaje } from "../../../components/formularios.js";
+
+const esPerfilPropio = document.body.dataset.pagina === "mi-perfil";
+const idPaciente = Number(document.body.dataset.idRegistro);
+const formularioContacto = document.querySelector("#formulario-contacto-paciente");
+
+let pacienteActual = null;
+const botonEstado = document.querySelector("#cambiar-estado-paciente");
+function mostrarDatosPaciente(paciente) {
+    pacienteActual = paciente;
+    const estado = document.querySelector("#estado-paciente");
+    estado.className = "insignia " + (paciente.pacienteActivo ? "activa" : "inactiva");
+    estado.textContent = paciente.pacienteActivo ? "Activo" : "Inactivo";
+    if (botonEstado) { botonEstado.disabled = false; botonEstado.textContent = paciente.pacienteActivo ? "Desactivar paciente" : "Activar paciente"; }
+    document.querySelector("#nombre-paciente").textContent = paciente.nombresUsuario + " " + paciente.apellidosUsuario;
+    const datosPaciente = document.querySelector("#datos-paciente");
+    datosPaciente.replaceChildren();
+    const campos = [
+        ["Cédula de identidad", paciente.cedulaIdentidad], ["Correo electrónico", paciente.correoUsuario],
+        ["Fecha de nacimiento", paciente.fechaNacimiento], ["Historia clínica", "HC-" + paciente.idHistoriaClinica],
+        ["Sexo", {no_especificado:"No especificado",femenino:"Femenino",masculino:"Masculino",otro:"Otro"}[paciente.sexoPaciente]], ["Teléfono", paciente.telefonoPaciente], ["Dirección", paciente.direccionPaciente],
+        ["Contacto de emergencia", paciente.nombreContactoEmergencia], ["Teléfono de emergencia", paciente.telefonoContactoEmergencia],
+    ];
+    for (const [etiqueta, valor] of campos) {
+        const contenedor = document.createElement("div");
+        const titulo = document.createElement("dt");
+        const contenido = document.createElement("dd");
+        titulo.textContent = etiqueta;
+        contenido.textContent = valor || "Sin registrar";
+        contenedor.append(titulo, contenido);
+        datosPaciente.append(contenedor);
+    }
+    if (formularioContacto) {
+        completarCamposFormulario(formularioContacto, paciente);
+        document.querySelector("#campos-contacto").disabled = false;
+        document.querySelector("#guardar-contacto").disabled = false;
+    }
+}
+
+async function cargarDatosPaciente() {
+    try {
+        const respuesta = esPerfilPropio ? await obtenerPerfilPacienteAutenticado() : await obtenerPacientePorId(idPaciente);
+        mostrarDatosPaciente(respuesta.datos);
+    } catch (error) {
+        document.querySelector("#nombre-paciente").textContent = "No se pudo cargar el perfil";
+        mostrarErrorSolicitud(document.querySelector("#mensaje-detalle"), error);
+    }
+}
+cargarDatosPaciente();
+
+formularioContacto?.addEventListener("submit", (evento) => {
+    evento.preventDefault();
+    ejecutarEnvioFormulario(formularioContacto, async (datosContacto) => {
+        const respuesta = await actualizarDatosPaciente(idPaciente, datosContacto);
+        mostrarDatosPaciente(respuesta.datos);
+        mostrarMensaje(document.querySelector("#mensaje-formulario"), respuesta.mensaje);
+    });
+});
+
+botonEstado?.addEventListener("click", async () => {
+    if (!pacienteActual || !window.confirm(pacienteActual.pacienteActivo ? "¿Desactivar al paciente? Se conservan sus citas e historia. No podrá ingresar ni recibir nuevas reservas." : "¿Activar nuevamente al paciente?")) return;
+    botonEstado.disabled = true;
+    try {
+        const respuesta = await cambiarEstadoPaciente(idPaciente, !pacienteActual.pacienteActivo);
+        mostrarDatosPaciente(respuesta.datos);
+        mostrarMensaje(document.querySelector("#mensaje-detalle"), respuesta.mensaje);
+    } catch (error) { mostrarErrorSolicitud(document.querySelector("#mensaje-detalle"), error); }
+    finally { botonEstado.disabled = false; }
+});

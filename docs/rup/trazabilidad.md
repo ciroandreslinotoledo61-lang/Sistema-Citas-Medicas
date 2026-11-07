@@ -1,6 +1,6 @@
 # Trazabilidad
 
-Clases en backend/src; pruebas en backend/tests. La [API](../ai/api.md) y [catalogo](../ai/catalogo-metodos.md) enlazan archivos exactos.
+Clases en `backend/src`; pruebas en `backend/tests`. El [contrato de API](../refactorizacion/ENDPOINTS.md) conserva las rutas actuales; el [catálogo histórico](../arquitectura/catalogo-metodos.md) y la [guía de defensa](../arquitectura/GUIA-ARQUITECTURA-Y-DEFENSA.md) explican las responsabilidades. Para las firmas vigentes, consultar el código.
 
 | RF | CU | Servicio/control | Tablas | Pantalla | Evidencia |
 | --- | --- | --- | --- | --- | --- |
@@ -23,4 +23,4 @@ Clases en backend/src; pruebas en backend/tests. La [API](../ai/api.md) y [catal
 
 Aceptacion sensible: 006 preserva eventos y no duplica al repetir; endpoint Confirmar devuelve 404; segunda consulta 409; fallo de tratamiento revierte todo; historia falsificada 422/P2003; version vieja 409; roles/propietarios ajenos 403/404; bitacora sin contenido/secretos y sin UPDATE/DELETE/TRUNCATE; SQL de estudio rechaza destinos no `_pruebas`.
 
-La evidencia se ejecuta en el entorno de [pruebas](../ai/pruebas.md); esta matriz no implica que las utilidades nativas Windows ya se hayan probado.
+El entorno y las evidencias están descritos en la [guía de pruebas](../uso/pruebas-php.md) y el [informe final](../entrega-final.md); esta matriz histórica no certifica por sí sola las utilidades operativas de Windows.

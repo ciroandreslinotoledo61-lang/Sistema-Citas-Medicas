@@ -33,7 +33,7 @@ La tabla organiza entregables, sin inventar fechas o ceremonias no documentadas.
 
 ## Pruebas y conclusiones
 
-[Pruebas](../ai/pruebas.md) separa PHP WebAssembly/PGlite/Chromium de lo pendiente en Windows. El sistema sigue una cita hasta su resultado, conserva cambios y permite consulta/tratamientos atomicos. Administrar no concede automaticamente acceso a diagnosticos. No se inventan resultados de carga ni certificaciones.
+La [guía de pruebas](../uso/pruebas-php.md) distingue resultados históricos de las verificaciones nativas y el [informe final](../entrega-final.md) registra esta revisión. El sistema sigue una cita hasta su resultado, conserva cambios y permite consulta/tratamientos atómicos. Administrar no concede automáticamente acceso a diagnósticos. No se inventan resultados de carga ni certificaciones.
 
 ## Recomendaciones
 

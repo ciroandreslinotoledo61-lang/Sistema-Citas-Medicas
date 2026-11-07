@@ -47,7 +47,7 @@ classDiagram
  ConsultaService --> HistoriaClinicaService
 ```
 
-Figura focalizada en el caso clinico; el [catalogo completo](../ai/catalogo-metodos.md) contiene los metodos reales por clase.
+Figura focalizada en el caso clínico; el [catálogo histórico](../arquitectura/catalogo-metodos.md) sirve como antecedente y la [guía de defensa](../arquitectura/GUIA-ARQUITECTURA-Y-DEFENSA.md) describe la arquitectura actual. Las firmas vigentes se consultan en el código.
 
 ## Modelo logico
 
@@ -76,7 +76,7 @@ Varias citas historicas pueden referirse al mismo turno; un indice parcial prote
 
 ## Diseno fisico
 
-Tras 001-008: doce tablas, 93 columnas. Claves bigint con identidad; tipos timestamp/timestamptz segun el esquema existente; JSONB para historiales/versiones. La conexion establece hora de Bolivia. El [diccionario](../ai/diccionario-datos.md) se extrae del esquema migrado, con nulabilidad, defaults, restricciones e indices. El SQL educativo crea el estado final en una BD vacia; las migraciones actualizan instalaciones existentes.
+El inventario de la etapa 001–008 registraba doce tablas y 93 columnas; no describe las ampliaciones posteriores. Claves bigint con identidad; tipos timestamp/timestamptz según el esquema existente; JSONB para historiales/versiones. La conexión establece hora de Bolivia. El esquema físico vigente, con nulabilidad, defaults, restricciones e índices, está en las [migraciones 001–013](../../backend/src/data/migrations/). El [SQL educativo](../../database/sql-estudio/README.md) se utiliza solo en una base didáctica independiente, no para instalar la aplicación.
 
 ## Secuencia: registro completo
 

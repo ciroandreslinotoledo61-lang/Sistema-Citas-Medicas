@@ -1,12 +1,12 @@
 # Clinica Vida Salud: arquitectura y guia para la defensa
 
-**Version 1.5.0.** Base: Sistema-Citas-Medicas-main(2).zip. PHP/PDO/PostgreSQL y frontend existentes.
+Guía académica de la entrega integrada en `main`. PHP/PDO/PostgreSQL y frontend modular existentes. Los fragmentos explican casos de uso; las firmas vigentes se consultan en el código y el contrato de rutas.
 
 La logica principal esta en **Services**. Las peticiones llegan primero a Routes y Controllers; despues el servicio coordina validaciones, reglas, consultas y transacciones. Los cambios se aplicaron al codigo, no solamente a la documentacion.
 
 ## 1. Que cambio
 
-- Las 56 rutas estan declaradas por modulos. Las rutas ya no construyen servicios, abren PostgreSQL ni envian respuestas.
+- Las 74 rutas están declaradas por módulos. Las rutas no construyen servicios, abren PostgreSQL ni envían respuestas.
 - `EnrutadorApi` interpreta HTTP, ejecuta los middlewares y llama al controlador. `FabricaControladores` construye sus dependencias y abre la conexion unicamente cuando hace falta.
 - `HorarioMedicoService` decide como generar intervalos. `HorarioMedicoRepository` guarda el bloque y `TurnoRepository` guarda o consulta los turnos.
 - `DisponibilidadService` y `DisponibilidadController` separan la consulta de oferta de la administracion de horarios.
@@ -16,9 +16,9 @@ La logica principal esta en **Services**. Las peticiones llegan primero a Routes
 - `SesionUsuario` encapsula `$_SESSION`; el servicio de autenticacion mantiene las reglas de intentos, credenciales, estado y version de sesion.
 - Los nombres de clases y metodos se conservan por responsabilidad; el catalogo enlaza las firmas reales.
 
-Las migraciones 001-005 se conservan. Esta entrega agrega 006-008 y los modulos de consultas, historia y bitacora.
+Se conservan las migraciones 001–013: esquema base y agenda; consultas, historial y bitácora; credenciales y recuperación; recetas, sala de espera y pagos de prueba. No se repiten migraciones productivas desde esta guía.
 
-La comparacion detallada esta en [COMPARACION-CADEFAR.md](docs/refactorizacion/COMPARACION-CADEFAR.md). El inventario exacto esta en [ARCHIVOS-MODIFICADOS.md](docs/refactorizacion/ARCHIVOS-MODIFICADOS.md).
+La comparación está en [COMPARACION-CADEFAR.md](../refactorizacion/COMPARACION-CADEFAR.md). El inventario de cambios de entregas anteriores se conserva como [antecedente histórico](../refactorizacion/ARCHIVOS-MODIFICADOS.md).
 
 ## 2. Estructura definitiva
 
@@ -34,16 +34,16 @@ La comparacion detallada esta en [COMPARACION-CADEFAR.md](docs/refactorizacion/C
 | `backend/src/data/repositories/` | SQL de Usuario, Rol, Paciente, HistoriaClinica, Especialidad, Medico, HorarioMedico, Turno, Cita Reporte, Consulta, HistoriaClinica y Bitacora |
 | `backend/src/data/models/` | Entidades y representacion publica de sus datos |
 | `backend/src/data/config/` | `ConexionPostgresql` y `Transaccion` |
-| `backend/src/data/migrations/` | Migraciones 001-008 |
+| `backend/src/data/migrations/` | Migraciones 001–013, todas conservadas |
 | `backend/src/data/seeders/` | Datos iniciales para una base vacia |
 | `backend/src/shared/` | Configuracion, roles, permisos, errores, sesion y utilidades HTTP |
 | `backend/scripts/` | Verificacion del entorno y scripts de migracion/carga |
 | `backend/tests/` | Pruebas originales, arquitectura, atomicidad y ejecutor de pruebas |
 | `frontend/src/` | `api`, `app`, `components`, `features`, `layouts`, `routes`, `styles` |
-| `docs/ai/` | Documentacion previa, contratos y reglas del sistema |
+| `docs/arquitectura/` | Guía de defensa y catálogo histórico de métodos |
 | `docs/refactorizacion/` | Comparacion, cambios, estructura, endpoints y verificacion de esta entrega |
 
-El listado completo de carpetas y archivos esta en [ESTRUCTURA-CARPETAS.md](docs/refactorizacion/ESTRUCTURA-CARPETAS.md).
+El árbol real de carpetas está en [ESTRUCTURA-CARPETAS.md](../refactorizacion/ESTRUCTURA-CARPETAS.md).
 
 ## 3. Como trabajan las capas
 
@@ -98,26 +98,26 @@ La version 1.5 completa consultas, tratamientos, historia y bitacora. Marcar Ate
 
 ### Paso 1. Pantalla y envio
 
-La vista es `frontend/src/features/pacientes/formulario-registro.php`. Incluye los campos compartidos de usuario, datos personales y contacto. El evento `submit` esta en `frontend/src/features/pacientes/registrar-paciente.js`.
+La vista es `frontend/src/features/pacientes/pages/formulario-registro.php`. Incluye los campos compartidos de usuario, datos personales y contacto. El evento `submit` está en `frontend/src/features/pacientes/pages/registrar-paciente.js`.
 
 Ese JavaScript determina el contexto:
 
 | Contexto | Funcion JavaScript | Archivo | Endpoint |
 | --- | --- | --- | --- |
-| Registro publico | `registrarCuentaPaciente(datosPaciente)` | `frontend/src/features/auth/autenticacion-api.js` | `POST /api/autenticacion/registro-paciente` |
-| Administracion / Recepcion | `registrarPacienteDesdeRecepcion(datosPaciente)` | `frontend/src/features/pacientes/pacientes-api.js` | `POST /api/pacientes` |
+| Registro publico | `registrarCuentaPaciente(datosPaciente)` | `frontend/src/features/auth/services/autenticacion-api.js` | `POST /api/autenticacion/registro-paciente` |
+| Administracion / Recepcion | `registrarPacienteDesdeRecepcion(datosPaciente)` | `frontend/src/features/pacientes/services/pacientes-api.js` | `POST /api/pacientes` |
 
 Ambas funciones usan `solicitarApi()` de `frontend/src/api/cliente-api.js`. Obtiene el token de `/api/autenticacion/token` y envia JSON con cookies y `X-CSRF-Token`.
 
-Ejemplo de datos de prueba -la contrasena es ilustrativa-:
+Ejemplo de datos ficticios. Las claves son marcadores, no credenciales para utilizar:
 
 ```json
 {
   "nombresUsuario": "Ana",
   "apellidosUsuario": "Perez",
   "correoUsuario": "ana.ejemplo@example.test",
-  "contrasenaUsuario": "EjemploSoloPrueba2026!",
-  "confirmacionContrasena": "EjemploSoloPrueba2026!",
+  "contrasenaUsuario": "<clave configurada fuera del repositorio>",
+  "confirmacionContrasena": "<repetir la clave local>",
   "cedulaIdentidad": "1234567",
   "fechaNacimiento": "2000-01-15",
   "sexoPaciente": "femenino",
@@ -256,7 +256,7 @@ Por ejemplo, si una CI esta duplicada, no queda una cuenta huerfana aunque el `I
 
 Es un ejemplo abreviado con IDs ilustrativos: la respuesta real tambien incluye nombres, correo, CI, nacimiento, sexo, contacto y estado. No incluye contrasena ni hash.
 
-En recepcion, el JavaScript abre `/pacientes/{idPaciente}`. En registro publico, muestra la confirmacion y el enlace para iniciar sesion; no inicia sesion automaticamente.
+En recepción, el formulario se limpia tras el éxito y muestra confirmación; el listado vuelve a consultarse desde el backend al abrirlo. En registro público, se muestra el enlace para iniciar sesión; no se inicia sesión automáticamente. Los errores no limpian valores y las ediciones conservan sus datos.
 
 ### Como explicarlo oralmente
 
@@ -264,7 +264,7 @@ En recepcion, el JavaScript abre `/pacientes/{idPaciente}`. En registro publico,
 
 ## 6. Reservas y programacion: reglas conservadas
 
-La configuracion entregada usa citas de 30 minutos. Un bloque 08:00-09:00 produce dos turnos, 08:00-12:00 produce ocho y 08:00-17:00 produce dieciocho. Se conserva la compatibilidad anterior con duraciones almacenadas y con la variable de configuracion; no se convierten silenciosamente reservas historicas.
+Toda cita nueva dura exactamente 30 minutos: 08:00-09:00 produce dos turnos, 08:00-12:00 ocho y 08:00-17:00 dieciocho. La variable antigua de duración no cambia esta regla. Los registros históricos no se convierten; turnos de otra duración no se ofrecen para nuevas reservas.
 
 `HorarioMedicoService::registrarHorario()` valida la entrada, bloquea al medico y su especialidad, comprueba cruces, vuelve a comprobar la hora despues del bloqueo y crea bloque y turnos en una transaccion. `programarHorariosPorPeriodo()` conserva el resumen de dias creados, existentes, pasados, no seleccionados y conflictivos.
 
@@ -272,12 +272,12 @@ La configuracion entregada usa citas de 30 minutos. Un bloque 08:00-09:00 produc
 
 `cancelarCita()` conserva la cita y libera la oferta del turno. `reprogramarCita()` marca la anterior como reprogramada y crea una nueva ligada con `idCitaOrigen`, dentro de la misma transaccion. Un fallo no hace perder la reserva anterior.
 
-Se mantienen los permisos: paciente solo sus citas; medico solo las asignadas; reprogramacion por Administracion o Recepcion. Cancelar exige inicio futuro y asistencia pendiente; al medico se le exige motivo. Asistencia desde el inicio e inasistencia desde el final. No se agrego una ventana de cancelacion de 24 horas.
+Se mantienen los permisos: paciente solo sus citas; médico solo las asignadas; reprogramación por Administración o Recepción. La cancelación ordinaria exige inicio futuro, asistencia pendiente y consulta no iniciada; al médico se le exige motivo. Administración/Recepción pueden cancelar por ausencia del médico, con motivo obligatorio, si la cita sigue programada y no hubo consulta. La llegada registrada impide atribuir inasistencia al paciente. Ver [reglas y cierre programado](../uso/citas-vencidas-pagos.md).
 
 
 ## 7. Registrar consulta y tratamientos
 
-Desde una cita asignada iniciada, `frontend/src/features/consultas/formulario-consulta.js` recoge motivo, diagnostico, observaciones y tratamientos. `consultas-api.js` envia POST /api/consultas; `RutasConsultas` exige Medico y `ConsultaController::registrarConsulta` delega en `ConsultaService::registrarConsulta`.
+Desde una cita asignada iniciada, `frontend/src/features/consultas/pages/formulario-consulta.js` recoge motivo, diagnóstico, observaciones y tratamientos. `services/consultas-api.js` envía POST /api/consultas; el servicio exige Médico y `ConsultaController::registrarConsulta` delega en `ConsultaService::registrarConsulta`.
 
 `ConsultaValidator::validarConsulta` valida campos y hasta 20 tratamientos. Rechaza IDs de paciente, medico o historia enviados para imponer otra relacion: el servicio los obtiene de la cita almacenada.
 
@@ -321,13 +321,21 @@ Versiones clinicas preservan contenido para usuarios clinicamente autorizados. L
 | Por que Service y Repository | Service coordina reglas; Repository concentra SQL preparado |
 | Que pasa si falla un tratamiento | La transaccion revierte consulta, cita y auditoria; test_consultas_bitacora |
 | Por que no confiar en turno libre en pantalla | Puede cambiar antes de guardar; se revalida y bloquea dentro de transaccion |
-| Por que 30 minutos | Es la configuracion solicitada; se conserva duracion historica |
+| Por que 30 minutos | Es una regla fija para nuevas citas; se conservan registros históricos |
 | Atendida implica diagnostico | No; puede ser asistencia administrativa y completar consulta despues |
 | Como evitar sobrescribir otra correccion | Numero de version y 409; contenido anterior conservado |
 | Por que aparece Confirmada en un evento antiguo | Es evidencia historica; el estado operativo nuevo es Programada |
 | Por que Admin no ve diagnosticos | Sus permisos son administrativos, no asistenciales |
-| Que falta comprobar | PHP/PDO y concurrencia nativos, respaldo/restauracion en Windows y despliegue |
+| Qué falta comprobar | Revisión humana, restauración operativa y servicios productivos; las pruebas nativas aisladas tienen evidencia en su guía |
 
 Orden de demostracion: roles; registro de paciente hasta SQL; generar dos turnos; reservar y provocar conflicto; con cita ficticia ya iniciada registrar/corregir consulta; abrir historial propio y bitacora. No alteres fechas de datos reales para demostrar atencion.
 
-Consulta [catalogo de metodos](docs/ai/catalogo-metodos.md), [API](docs/ai/api.md), [diccionario](docs/ai/diccionario-datos.md) y [trazabilidad](docs/rup/trazabilidad.md). Instalacion: README; base existente: ACTUALIZAR-ESTA-VERSION. Las pruebas se ejecutaron en PHP 8.5 WebAssembly/PGlite 18 y Chromium, no en tu Windows ni tu BD real. Evidencia exacta: [pruebas](docs/ai/pruebas.md).
+## 11. Ampliaciones de la entrega final
+
+- Credenciales y recuperación: claves temporales, revocación de sesiones, CSRF y correo configurable; no hay claves de proveedor en Git. [Autenticación](../uso/usuarios-autenticacion.md).
+- Recetas: contenido emitido inmutable, PDF privado, anulación motivada y corrección enlazada. Paciente solo propio; Administración/Recepción sin acceso clínico.
+- Sala: llegada por Recepción, atención por médico asignado, versiones y eventos, sin exponer diagnósticos en recepción.
+- Pagos: QR/PayPal exclusivamente de prueba, importes configurados externamente, estados finales protegidos y reportes separados de ingresos reales. [Guía de módulos](../uso/recetas-sala-pagos.md).
+- Vencidas: CLI para Cron Job independiente; solo cierra ausentes sin llegada/consulta tras tolerancia. Los presentes esperan revisión; no cambia citas finales. [Automatización](../uso/citas-vencidas-pagos.md).
+
+Consulta el [catálogo histórico de métodos](catalogo-metodos.md), [contrato de API](../refactorizacion/ENDPOINTS.md), [esquema SQL](../../backend/src/data/migrations/) y [trazabilidad académica](../rup/trazabilidad.md). Instalación en [README](../../README.md), pruebas y límites en [su guía](../uso/pruebas-php.md) y revisión de esta entrega en [el informe final](../entrega-final.md). Las verificaciones locales no certifican la base o el servicio productivo.

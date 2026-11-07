@@ -1,284 +1,122 @@
-# Estructura del proyecto
+# Árbol real de carpetas de la entrega
 
-La raíz de trabajo es `citas-medicas/`; se conserva la arquitectura existente:
+Este árbol enumera todos los directorios internos del proyecto, no una arquitectura simplificada. Los archivos de configuración y migraciones se destacan; cada carpeta conserva sus demás archivos fuente, pruebas o documentos. Se excluyen deliberadamente `.git/`, los `.env` privados y artefactos temporales generados por pruebas. No se eliminó ninguna carpeta funcional.
 
 ```text
 citas-medicas/
-├── backend/     # src/{business,data,presentation,shared}, scripts, tests, public
-├── frontend/    # src/features/<modulo>/{pages,services,components,utils}, public
-├── database/    # SQL didáctico, no migraciones productivas
-├── deploy/      # Configuración de publicación y pruebas de configuración
-├── docs/        # uso, rup, refactorizacion
-├── AGENTS.md
-├── README.md
-├── Dockerfile
+├── backend/
+│   ├── public/
+│   ├── scripts/
+│   ├── src/
+│   │   ├── business/
+│   │   │   ├── services/
+│   │   │   └── validators/
+│   │   ├── data/
+│   │   │   ├── config/
+│   │   │   ├── migrations/
+│   │   │   │   ├── 001_crear_tablas_sistema.sql
+│   │   │   │   ├── 002_unicidad_especialidades_medicos.sql
+│   │   │   │   ├── 003_responsabilidades_citas.sql
+│   │   │   │   ├── 004_agenda_30_minutos_y_perfiles.sql
+│   │   │   │   ├── 005_programacion_y_cita_activa.sql
+│   │   │   │   ├── 006_estado_programada.sql
+│   │   │   │   ├── 007_bitacora_sistema.sql
+│   │   │   │   ├── 008_consultas_historial_clinico.sql
+│   │   │   │   ├── 009_seguridad_credenciales.sql
+│   │   │   │   ├── 010_recuperacion_contrasena.sql
+│   │   │   │   ├── 011_recetas_medicas.sql
+│   │   │   │   ├── 012_sala_espera.sql
+│   │   │   │   └── 013_pagos_demostracion.sql
+│   │   │   ├── models/
+│   │   │   ├── repositories/
+│   │   │   └── seeders/
+│   │   ├── presentation/
+│   │   │   ├── controllers/
+│   │   │   ├── http/
+│   │   │   ├── middlewares/
+│   │   │   └── routes/
+│   │   └── shared/
+│   │       ├── config/
+│   │       ├── constants/
+│   │       ├── errors/
+│   │       └── utils/
+│   ├── tests/
+│   │   ├── contratos/
+│   │   └── http/
+│   └── .env.example
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── api/
+│   │   ├── app/
+│   │   ├── components/
+│   │   ├── features/
+│   │   │   ├── auth/
+│   │   │   │   ├── pages/
+│   │   │   │   └── services/
+│   │   │   ├── bitacora/
+│   │   │   │   ├── pages/
+│   │   │   │   └── services/
+│   │   │   ├── citas/
+│   │   │   │   ├── pages/
+│   │   │   │   ├── services/
+│   │   │   │   └── utils/
+│   │   │   ├── consultas/
+│   │   │   │   ├── pages/
+│   │   │   │   └── services/
+│   │   │   ├── especialidades/
+│   │   │   │   ├── pages/
+│   │   │   │   └── services/
+│   │   │   ├── horarios/
+│   │   │   │   ├── pages/
+│   │   │   │   └── services/
+│   │   │   ├── inicio/
+│   │   │   ├── medicos/
+│   │   │   │   ├── pages/
+│   │   │   │   └── services/
+│   │   │   ├── pacientes/
+│   │   │   │   ├── components/
+│   │   │   │   ├── pages/
+│   │   │   │   └── services/
+│   │   │   ├── pagos/
+│   │   │   │   ├── pages/
+│   │   │   │   └── services/
+│   │   │   ├── panel/
+│   │   │   ├── recetas/
+│   │   │   │   ├── pages/
+│   │   │   │   └── services/
+│   │   │   ├── reportes/
+│   │   │   │   ├── pages/
+│   │   │   │   └── services/
+│   │   │   ├── sala-espera/
+│   │   │   │   ├── pages/
+│   │   │   │   └── services/
+│   │   │   └── usuarios/
+│   │   │       ├── pages/
+│   │   │       └── services/
+│   │   ├── layouts/
+│   │   ├── routes/
+│   │   └── styles/
+│   └── .env.example
+├── database/
+│   └── sql-estudio/
+├── deploy/
+│   ├── public/
+│   └── tests/
+├── docs/
+│   ├── arquitectura/
+│   ├── historico/
+│   ├── refactorizacion/
+│   ├── rup/
+│   ├── uso/
+│   ├── entrega-final.md
+│   └── README.md
+├── .dockerignore
+├── .editorconfig
 ├── .gitignore
-└── .dockerignore
+├── AGENTS.md
+├── Dockerfile
+└── README.md
 ```
 
-Las carpetas por módulo se crean solo cuando son necesarias; no todos tienen `components` o `utils`. Se conservan además las guías y archivos auxiliares existentes. Los secretos, respaldos y artefactos `.tmp-auth/` permanecen fuera de Git. Responsabilidades en [AGENTS.md](../../AGENTS.md), operación y pruebas en [README.md](../../README.md), y seed local en [la guía de correcciones](../uso/correcciones-agenda-demostracion.md).
-
-## Inventario histórico de la entrega 1.5
-
-La tabla siguiente conserva el inventario de aquella entrega; no es una lista exhaustiva de las incorporaciones posteriores (autenticación, recuperación y pruebas). La estructura vigente se resume arriba.
-
-| Ruta |
-| --- |
-| [.editorconfig](../../.editorconfig) |
-| [.gitignore](../../.gitignore) |
-| [AGENTS.md](../../AGENTS.md) |
-| [GUIA-ARQUITECTURA-Y-DEFENSA.md](../../GUIA-ARQUITECTURA-Y-DEFENSA.md) |
-| [README.md](../../README.md) |
-| [backend/.env.example](../../backend/.env.example) |
-| [backend/public/index.php](../../backend/public/index.php) |
-| [backend/scripts/actualizar-agenda-reportes.php](../../backend/scripts/actualizar-agenda-reportes.php) |
-| [backend/scripts/actualizar-consultas-bitacora.php](../../backend/scripts/actualizar-consultas-bitacora.php) |
-| [backend/scripts/actualizar-especialidades-medicos.php](../../backend/scripts/actualizar-especialidades-medicos.php) |
-| [backend/scripts/actualizar-programacion-mensual.php](../../backend/scripts/actualizar-programacion-mensual.php) |
-| [backend/scripts/actualizar-roles-citas.php](../../backend/scripts/actualizar-roles-citas.php) |
-| [backend/scripts/cargar-datos-iniciales.php](../../backend/scripts/cargar-datos-iniciales.php) |
-| [backend/scripts/migrar-base-datos.php](../../backend/scripts/migrar-base-datos.php) |
-| [backend/scripts/respaldar-base.ps1](../../backend/scripts/respaldar-base.ps1) |
-| [backend/scripts/restaurar-en-pruebas.ps1](../../backend/scripts/restaurar-en-pruebas.ps1) |
-| [backend/scripts/verificar-entorno.php](../../backend/scripts/verificar-entorno.php) |
-| [backend/src/app.php](../../backend/src/app.php) |
-| [backend/src/bootstrap.php](../../backend/src/bootstrap.php) |
-| [backend/src/business/services/AutenticacionService.php](../../backend/src/business/services/AutenticacionService.php) |
-| [backend/src/business/services/BitacoraService.php](../../backend/src/business/services/BitacoraService.php) |
-| [backend/src/business/services/CitaService.php](../../backend/src/business/services/CitaService.php) |
-| [backend/src/business/services/ConsultaService.php](../../backend/src/business/services/ConsultaService.php) |
-| [backend/src/business/services/DisponibilidadService.php](../../backend/src/business/services/DisponibilidadService.php) |
-| [backend/src/business/services/EspecialidadService.php](../../backend/src/business/services/EspecialidadService.php) |
-| [backend/src/business/services/HistoriaClinicaService.php](../../backend/src/business/services/HistoriaClinicaService.php) |
-| [backend/src/business/services/HorarioMedicoService.php](../../backend/src/business/services/HorarioMedicoService.php) |
-| [backend/src/business/services/MedicoService.php](../../backend/src/business/services/MedicoService.php) |
-| [backend/src/business/services/PacienteService.php](../../backend/src/business/services/PacienteService.php) |
-| [backend/src/business/services/ReporteService.php](../../backend/src/business/services/ReporteService.php) |
-| [backend/src/business/services/UsuarioService.php](../../backend/src/business/services/UsuarioService.php) |
-| [backend/src/business/validators/AgendaValidator.php](../../backend/src/business/validators/AgendaValidator.php) |
-| [backend/src/business/validators/BitacoraValidator.php](../../backend/src/business/validators/BitacoraValidator.php) |
-| [backend/src/business/validators/CitaValidator.php](../../backend/src/business/validators/CitaValidator.php) |
-| [backend/src/business/validators/ConsultaValidator.php](../../backend/src/business/validators/ConsultaValidator.php) |
-| [backend/src/business/validators/EspecialidadValidator.php](../../backend/src/business/validators/EspecialidadValidator.php) |
-| [backend/src/business/validators/HorarioMedicoValidator.php](../../backend/src/business/validators/HorarioMedicoValidator.php) |
-| [backend/src/business/validators/MedicoValidator.php](../../backend/src/business/validators/MedicoValidator.php) |
-| [backend/src/business/validators/PacienteValidator.php](../../backend/src/business/validators/PacienteValidator.php) |
-| [backend/src/business/validators/ReporteValidator.php](../../backend/src/business/validators/ReporteValidator.php) |
-| [backend/src/business/validators/UsuarioValidator.php](../../backend/src/business/validators/UsuarioValidator.php) |
-| [backend/src/business/validators/ValidarCamposFormulario.php](../../backend/src/business/validators/ValidarCamposFormulario.php) |
-| [backend/src/data/config/ConexionPostgresql.php](../../backend/src/data/config/ConexionPostgresql.php) |
-| [backend/src/data/config/Transaccion.php](../../backend/src/data/config/Transaccion.php) |
-| [backend/src/data/migrations/001_crear_tablas_sistema.sql](../../backend/src/data/migrations/001_crear_tablas_sistema.sql) |
-| [backend/src/data/migrations/002_unicidad_especialidades_medicos.sql](../../backend/src/data/migrations/002_unicidad_especialidades_medicos.sql) |
-| [backend/src/data/migrations/003_responsabilidades_citas.sql](../../backend/src/data/migrations/003_responsabilidades_citas.sql) |
-| [backend/src/data/migrations/004_agenda_30_minutos_y_perfiles.sql](../../backend/src/data/migrations/004_agenda_30_minutos_y_perfiles.sql) |
-| [backend/src/data/migrations/005_programacion_y_cita_activa.sql](../../backend/src/data/migrations/005_programacion_y_cita_activa.sql) |
-| [backend/src/data/migrations/006_estado_programada.sql](../../backend/src/data/migrations/006_estado_programada.sql) |
-| [backend/src/data/migrations/007_bitacora_sistema.sql](../../backend/src/data/migrations/007_bitacora_sistema.sql) |
-| [backend/src/data/migrations/008_consultas_historial_clinico.sql](../../backend/src/data/migrations/008_consultas_historial_clinico.sql) |
-| [backend/src/data/models/Cita.php](../../backend/src/data/models/Cita.php) |
-| [backend/src/data/models/Consulta.php](../../backend/src/data/models/Consulta.php) |
-| [backend/src/data/models/Especialidad.php](../../backend/src/data/models/Especialidad.php) |
-| [backend/src/data/models/EventoBitacora.php](../../backend/src/data/models/EventoBitacora.php) |
-| [backend/src/data/models/HistoriaClinica.php](../../backend/src/data/models/HistoriaClinica.php) |
-| [backend/src/data/models/HorarioMedico.php](../../backend/src/data/models/HorarioMedico.php) |
-| [backend/src/data/models/Medico.php](../../backend/src/data/models/Medico.php) |
-| [backend/src/data/models/Paciente.php](../../backend/src/data/models/Paciente.php) |
-| [backend/src/data/models/Rol.php](../../backend/src/data/models/Rol.php) |
-| [backend/src/data/models/Tratamiento.php](../../backend/src/data/models/Tratamiento.php) |
-| [backend/src/data/models/Usuario.php](../../backend/src/data/models/Usuario.php) |
-| [backend/src/data/repositories/BitacoraRepository.php](../../backend/src/data/repositories/BitacoraRepository.php) |
-| [backend/src/data/repositories/CitaRepository.php](../../backend/src/data/repositories/CitaRepository.php) |
-| [backend/src/data/repositories/ConsultaRepository.php](../../backend/src/data/repositories/ConsultaRepository.php) |
-| [backend/src/data/repositories/EspecialidadRepository.php](../../backend/src/data/repositories/EspecialidadRepository.php) |
-| [backend/src/data/repositories/HistoriaClinicaRepository.php](../../backend/src/data/repositories/HistoriaClinicaRepository.php) |
-| [backend/src/data/repositories/HorarioMedicoRepository.php](../../backend/src/data/repositories/HorarioMedicoRepository.php) |
-| [backend/src/data/repositories/MedicoRepository.php](../../backend/src/data/repositories/MedicoRepository.php) |
-| [backend/src/data/repositories/PacienteRepository.php](../../backend/src/data/repositories/PacienteRepository.php) |
-| [backend/src/data/repositories/ReporteRepository.php](../../backend/src/data/repositories/ReporteRepository.php) |
-| [backend/src/data/repositories/RolRepository.php](../../backend/src/data/repositories/RolRepository.php) |
-| [backend/src/data/repositories/TratamientoRepository.php](../../backend/src/data/repositories/TratamientoRepository.php) |
-| [backend/src/data/repositories/TurnoRepository.php](../../backend/src/data/repositories/TurnoRepository.php) |
-| [backend/src/data/repositories/UsuarioRepository.php](../../backend/src/data/repositories/UsuarioRepository.php) |
-| [backend/src/data/seeders/DatosInicialesSeeder.php](../../backend/src/data/seeders/DatosInicialesSeeder.php) |
-| [backend/src/presentation/controllers/AutenticacionController.php](../../backend/src/presentation/controllers/AutenticacionController.php) |
-| [backend/src/presentation/controllers/BitacoraController.php](../../backend/src/presentation/controllers/BitacoraController.php) |
-| [backend/src/presentation/controllers/CitaController.php](../../backend/src/presentation/controllers/CitaController.php) |
-| [backend/src/presentation/controllers/ConsultaController.php](../../backend/src/presentation/controllers/ConsultaController.php) |
-| [backend/src/presentation/controllers/DisponibilidadController.php](../../backend/src/presentation/controllers/DisponibilidadController.php) |
-| [backend/src/presentation/controllers/EspecialidadController.php](../../backend/src/presentation/controllers/EspecialidadController.php) |
-| [backend/src/presentation/controllers/EstadoController.php](../../backend/src/presentation/controllers/EstadoController.php) |
-| [backend/src/presentation/controllers/HorarioMedicoController.php](../../backend/src/presentation/controllers/HorarioMedicoController.php) |
-| [backend/src/presentation/controllers/MedicoController.php](../../backend/src/presentation/controllers/MedicoController.php) |
-| [backend/src/presentation/controllers/PacienteController.php](../../backend/src/presentation/controllers/PacienteController.php) |
-| [backend/src/presentation/controllers/ReporteController.php](../../backend/src/presentation/controllers/ReporteController.php) |
-| [backend/src/presentation/controllers/TokenCsrfController.php](../../backend/src/presentation/controllers/TokenCsrfController.php) |
-| [backend/src/presentation/controllers/UsuarioController.php](../../backend/src/presentation/controllers/UsuarioController.php) |
-| [backend/src/presentation/http/EnrutadorApi.php](../../backend/src/presentation/http/EnrutadorApi.php) |
-| [backend/src/presentation/http/FabricaControladores.php](../../backend/src/presentation/http/FabricaControladores.php) |
-| [backend/src/presentation/http/RutaHttp.php](../../backend/src/presentation/http/RutaHttp.php) |
-| [backend/src/presentation/middlewares/VerificarOrigenSolicitud.php](../../backend/src/presentation/middlewares/VerificarOrigenSolicitud.php) |
-| [backend/src/presentation/middlewares/VerificarRolUsuario.php](../../backend/src/presentation/middlewares/VerificarRolUsuario.php) |
-| [backend/src/presentation/middlewares/VerificarSesionUsuario.php](../../backend/src/presentation/middlewares/VerificarSesionUsuario.php) |
-| [backend/src/presentation/middlewares/VerificarTokenCsrf.php](../../backend/src/presentation/middlewares/VerificarTokenCsrf.php) |
-| [backend/src/presentation/routes/RutasAgenda.php](../../backend/src/presentation/routes/RutasAgenda.php) |
-| [backend/src/presentation/routes/RutasApi.php](../../backend/src/presentation/routes/RutasApi.php) |
-| [backend/src/presentation/routes/RutasAutenticacion.php](../../backend/src/presentation/routes/RutasAutenticacion.php) |
-| [backend/src/presentation/routes/RutasBitacora.php](../../backend/src/presentation/routes/RutasBitacora.php) |
-| [backend/src/presentation/routes/RutasCitas.php](../../backend/src/presentation/routes/RutasCitas.php) |
-| [backend/src/presentation/routes/RutasConsultas.php](../../backend/src/presentation/routes/RutasConsultas.php) |
-| [backend/src/presentation/routes/RutasDisponibilidad.php](../../backend/src/presentation/routes/RutasDisponibilidad.php) |
-| [backend/src/presentation/routes/RutasEspecialidades.php](../../backend/src/presentation/routes/RutasEspecialidades.php) |
-| [backend/src/presentation/routes/RutasHorarios.php](../../backend/src/presentation/routes/RutasHorarios.php) |
-| [backend/src/presentation/routes/RutasMedicos.php](../../backend/src/presentation/routes/RutasMedicos.php) |
-| [backend/src/presentation/routes/RutasPacientes.php](../../backend/src/presentation/routes/RutasPacientes.php) |
-| [backend/src/presentation/routes/RutasReportes.php](../../backend/src/presentation/routes/RutasReportes.php) |
-| [backend/src/presentation/routes/RutasSistema.php](../../backend/src/presentation/routes/RutasSistema.php) |
-| [backend/src/presentation/routes/RutasUsuarios.php](../../backend/src/presentation/routes/RutasUsuarios.php) |
-| [backend/src/server.php](../../backend/src/server.php) |
-| [backend/src/shared/config/CargarVariablesEntorno.php](../../backend/src/shared/config/CargarVariablesEntorno.php) |
-| [backend/src/shared/config/ConfiguracionAgenda.php](../../backend/src/shared/config/ConfiguracionAgenda.php) |
-| [backend/src/shared/constants/PermisosSistema.php](../../backend/src/shared/constants/PermisosSistema.php) |
-| [backend/src/shared/constants/RolesSistema.php](../../backend/src/shared/constants/RolesSistema.php) |
-| [backend/src/shared/errors/ErrorAplicacion.php](../../backend/src/shared/errors/ErrorAplicacion.php) |
-| [backend/src/shared/utils/RespuestaJson.php](../../backend/src/shared/utils/RespuestaJson.php) |
-| [backend/src/shared/utils/SesionUsuario.php](../../backend/src/shared/utils/SesionUsuario.php) |
-| [backend/src/shared/utils/SolicitudHttp.php](../../backend/src/shared/utils/SolicitudHttp.php) |
-| [backend/tests/SoportePruebasAgenda.php](../../backend/tests/SoportePruebasAgenda.php) |
-| [backend/tests/ejecutar-pruebas.php](../../backend/tests/ejecutar-pruebas.php) |
-| [backend/tests/http/escenario_http.php](../../backend/tests/http/escenario_http.php) |
-| [backend/tests/test_arquitectura.php](../../backend/tests/test_arquitectura.php) |
-| [backend/tests/test_consultas_bitacora.php](../../backend/tests/test_consultas_bitacora.php) |
-| [backend/tests/test_contrato_http.php](../../backend/tests/test_contrato_http.php) |
-| [backend/tests/test_gestion_citas.php](../../backend/tests/test_gestion_citas.php) |
-| [backend/tests/test_gestion_especialidades_medicos.php](../../backend/tests/test_gestion_especialidades_medicos.php) |
-| [backend/tests/test_migracion_005.php](../../backend/tests/test_migracion_005.php) |
-| [backend/tests/test_migracion_006.php](../../backend/tests/test_migracion_006.php) |
-| [backend/tests/test_permisos.php](../../backend/tests/test_permisos.php) |
-| [backend/tests/test_programacion_periodos.php](../../backend/tests/test_programacion_periodos.php) |
-| [backend/tests/test_registro_paciente.php](../../backend/tests/test_registro_paciente.php) |
-| [backend/tests/test_reportes_perfiles.php](../../backend/tests/test_reportes_perfiles.php) |
-| [backend/tests/test_reserva_concurrente.php](../../backend/tests/test_reserva_concurrente.php) |
-| [backend/tests/test_transacciones_capas.php](../../backend/tests/test_transacciones_capas.php) |
-| [backend/tests/test_validaciones.php](../../backend/tests/test_validaciones.php) |
-| [backend/tests/test_validaciones_actualizacion.php](../../backend/tests/test_validaciones_actualizacion.php) |
-| [backend/tests/test_validaciones_agenda.php](../../backend/tests/test_validaciones_agenda.php) |
-| [backend/tests/test_validaciones_especialidades_medicos.php](../../backend/tests/test_validaciones_especialidades_medicos.php) |
-| [database/sql-estudio/Consultas.sql](../../database/sql-estudio/Consultas.sql) |
-| `database/sql-estudio/Procedimientos y triggers.sql` |
-| [database/sql-estudio/README.md](../../database/sql-estudio/README.md) |
-| `database/sql-estudio/Tablas, relaciones y poblacion de datos.sql` |
-| [database/sql-estudio/Transacciones.sql](../../database/sql-estudio/Transacciones.sql) |
-| [docs/ai/actualizacion-agenda-reportes.md](../../docs/ai/actualizacion-agenda-reportes.md) |
-| [docs/ai/actualizacion-especialidades-medicos.md](../../docs/ai/actualizacion-especialidades-medicos.md) |
-| [docs/ai/api.md](../../docs/ai/api.md) |
-| [docs/ai/arquitectura-y-nombres.md](../../docs/ai/arquitectura-y-nombres.md) |
-| [docs/ai/casos-uso-especialidades-medicos.md](../../docs/ai/casos-uso-especialidades-medicos.md) |
-| [docs/ai/catalogo-metodos.md](../../docs/ai/catalogo-metodos.md) |
-| [docs/ai/contexto-proyecto.md](../../docs/ai/contexto-proyecto.md) |
-| [docs/ai/diccionario-datos.md](../../docs/ai/diccionario-datos.md) |
-| [docs/ai/frontend-diseno.md](../../docs/ai/frontend-diseno.md) |
-| [docs/ai/plan-avances-git.md](../../docs/ai/plan-avances-git.md) |
-| [docs/ai/programacion-mensual.md](../../docs/ai/programacion-mensual.md) |
-| [docs/ai/pruebas.md](../../docs/ai/pruebas.md) |
-| [docs/ai/requisitos-y-reglas.md](../../docs/ai/requisitos-y-reglas.md) |
-| [docs/refactorizacion/ACTUALIZACION-1.4-HISTORICA.md](../../docs/refactorizacion/ACTUALIZACION-1.4-HISTORICA.md) |
-| [docs/refactorizacion/ARCHIVOS-MODIFICADOS.md](../../docs/refactorizacion/ARCHIVOS-MODIFICADOS.md) |
-| [docs/refactorizacion/COMPARACION-CADEFAR.md](../../docs/refactorizacion/COMPARACION-CADEFAR.md) |
-| [docs/refactorizacion/ENDPOINTS.md](../../docs/refactorizacion/ENDPOINTS.md) |
-| [docs/refactorizacion/ESTRUCTURA-CARPETAS.md](../../docs/refactorizacion/ESTRUCTURA-CARPETAS.md) |
-| [docs/refactorizacion/VERIFICACION.md](../../docs/refactorizacion/VERIFICACION.md) |
-| [docs/rup/analisis-diseno.md](../../docs/rup/analisis-diseno.md) |
-| [docs/rup/casos-uso.md](../../docs/rup/casos-uso.md) |
-| [docs/rup/informe-proyecto.md](../../docs/rup/informe-proyecto.md) |
-| [docs/rup/requisitos.md](../../docs/rup/requisitos.md) |
-| [docs/rup/trazabilidad.md](../../docs/rup/trazabilidad.md) |
-| [docs/uso/despliegue.md](../../docs/uso/despliegue.md) |
-| [docs/uso/instalacion-windows.md](../../docs/uso/instalacion-windows.md) |
-| [docs/uso/manual-roles.md](../../docs/uso/manual-roles.md) |
-| [docs/uso/respaldo-recuperacion.md](../../docs/uso/respaldo-recuperacion.md) |
-| [frontend/.env.example](../../frontend/.env.example) |
-| [frontend/public/index.php](../../frontend/public/index.php) |
-| [frontend/src/api/ClienteApiServidor.php](../../frontend/src/api/ClienteApiServidor.php) |
-| [frontend/src/api/cliente-api.js](../../frontend/src/api/cliente-api.js) |
-| [frontend/src/app/aplicacion.js](../../frontend/src/app/aplicacion.js) |
-| [frontend/src/app/configuracion.php](../../frontend/src/app/configuracion.php) |
-| [frontend/src/app/rutas.php](../../frontend/src/app/rutas.php) |
-| [frontend/src/features/pacientes/components/campos-contacto.php](../../frontend/src/features/pacientes/components/campos-contacto.php) |
-| [frontend/src/features/pacientes/components/campos-personales-paciente.php](../../frontend/src/features/pacientes/components/campos-personales-paciente.php) |
-| [frontend/src/components/campos-usuario.php](../../frontend/src/components/campos-usuario.php) |
-| [frontend/src/components/formularios.js](../../frontend/src/components/formularios.js) |
-| [frontend/src/components/iconos.php](../../frontend/src/components/iconos.php) |
-| [frontend/src/components/interfaz.js](../../frontend/src/components/interfaz.js) |
-| [frontend/src/components/lista-paginada.js](../../frontend/src/components/lista-paginada.js) |
-| [frontend/src/components/modulos-disponibles.php](../../frontend/src/components/modulos-disponibles.php) |
-| [frontend/src/components/navegacion.php](../../frontend/src/components/navegacion.php) |
-| [frontend/src/components/paginacion.php](../../frontend/src/components/paginacion.php) |
-| [frontend/src/features/auth/services/autenticacion-api.js](../../frontend/src/features/auth/services/autenticacion-api.js) |
-| [frontend/src/features/auth/pages/cambiar-contrasena.js](../../frontend/src/features/auth/pages/cambiar-contrasena.js) |
-| [frontend/src/features/auth/pages/cambiar-contrasena.php](../../frontend/src/features/auth/pages/cambiar-contrasena.php) |
-| [frontend/src/features/auth/pages/confirmar-recuperacion.js](../../frontend/src/features/auth/pages/confirmar-recuperacion.js) |
-| [frontend/src/features/auth/pages/confirmar-recuperacion.php](../../frontend/src/features/auth/pages/confirmar-recuperacion.php) |
-| [frontend/src/features/auth/pages/iniciar-sesion.js](../../frontend/src/features/auth/pages/iniciar-sesion.js) |
-| [frontend/src/features/auth/pages/iniciar-sesion.php](../../frontend/src/features/auth/pages/iniciar-sesion.php) |
-| [frontend/src/features/auth/pages/recuperar-contrasena.js](../../frontend/src/features/auth/pages/recuperar-contrasena.js) |
-| [frontend/src/features/auth/pages/recuperar-contrasena.php](../../frontend/src/features/auth/pages/recuperar-contrasena.php) |
-| [frontend/src/features/bitacora/bitacora.js](../../frontend/src/features/bitacora/bitacora.js) |
-| [frontend/src/features/bitacora/bitacora.php](../../frontend/src/features/bitacora/bitacora.php) |
-| [frontend/src/features/citas/services/citas-api.js](../../frontend/src/features/citas/services/citas-api.js) |
-| [frontend/src/features/citas/pages/citas-paciente.js](../../frontend/src/features/citas/pages/citas-paciente.js) |
-| [frontend/src/features/citas/pages/citas-paciente.php](../../frontend/src/features/citas/pages/citas-paciente.php) |
-| [frontend/src/features/citas/pages/detalle-cita.js](../../frontend/src/features/citas/pages/detalle-cita.js) |
-| [frontend/src/features/citas/pages/detalle-cita.php](../../frontend/src/features/citas/pages/detalle-cita.php) |
-| [frontend/src/features/citas/pages/formulario-cita.js](../../frontend/src/features/citas/pages/formulario-cita.js) |
-| [frontend/src/features/citas/pages/formulario-cita.php](../../frontend/src/features/citas/pages/formulario-cita.php) |
-| [frontend/src/features/citas/pages/lista-citas.php](../../frontend/src/features/citas/pages/lista-citas.php) |
-| [frontend/src/features/citas/pages/listar-citas.js](../../frontend/src/features/citas/pages/listar-citas.js) |
-| [frontend/src/features/citas/utils/presentacion-citas.js](../../frontend/src/features/citas/utils/presentacion-citas.js) |
-| [frontend/src/features/consultas/consultas-api.js](../../frontend/src/features/consultas/consultas-api.js) |
-| [frontend/src/features/consultas/detalle-consulta.js](../../frontend/src/features/consultas/detalle-consulta.js) |
-| [frontend/src/features/consultas/detalle-consulta.php](../../frontend/src/features/consultas/detalle-consulta.php) |
-| [frontend/src/features/consultas/formulario-consulta.js](../../frontend/src/features/consultas/formulario-consulta.js) |
-| [frontend/src/features/consultas/formulario-consulta.php](../../frontend/src/features/consultas/formulario-consulta.php) |
-| [frontend/src/features/consultas/historial-clinico.php](../../frontend/src/features/consultas/historial-clinico.php) |
-| [frontend/src/features/consultas/lista-consultas.php](../../frontend/src/features/consultas/lista-consultas.php) |
-| [frontend/src/features/consultas/listar-consultas.js](../../frontend/src/features/consultas/listar-consultas.js) |
-| [frontend/src/features/especialidades/services/especialidades-api.js](../../frontend/src/features/especialidades/services/especialidades-api.js) |
-| [frontend/src/features/especialidades/pages/formulario-especialidad.js](../../frontend/src/features/especialidades/pages/formulario-especialidad.js) |
-| [frontend/src/features/especialidades/pages/formulario-especialidad.php](../../frontend/src/features/especialidades/pages/formulario-especialidad.php) |
-| [frontend/src/features/especialidades/pages/lista-especialidades.php](../../frontend/src/features/especialidades/pages/lista-especialidades.php) |
-| [frontend/src/features/especialidades/pages/listar-especialidades.js](../../frontend/src/features/especialidades/pages/listar-especialidades.js) |
-| [frontend/src/features/horarios/pages/formulario-horario.js](../../frontend/src/features/horarios/pages/formulario-horario.js) |
-| [frontend/src/features/horarios/pages/formulario-horario.php](../../frontend/src/features/horarios/pages/formulario-horario.php) |
-| [frontend/src/features/horarios/services/horarios-api.js](../../frontend/src/features/horarios/services/horarios-api.js) |
-| [frontend/src/features/horarios/pages/lista-horarios.php](../../frontend/src/features/horarios/pages/lista-horarios.php) |
-| [frontend/src/features/horarios/pages/listar-horarios.js](../../frontend/src/features/horarios/pages/listar-horarios.js) |
-| [frontend/src/features/inicio/error.php](../../frontend/src/features/inicio/error.php) |
-| [frontend/src/features/inicio/inicio.php](../../frontend/src/features/inicio/inicio.php) |
-| [frontend/src/features/medicos/pages/formulario-medico.js](../../frontend/src/features/medicos/pages/formulario-medico.js) |
-| [frontend/src/features/medicos/pages/formulario-medico.php](../../frontend/src/features/medicos/pages/formulario-medico.php) |
-| [frontend/src/features/medicos/pages/lista-medicos.php](../../frontend/src/features/medicos/pages/lista-medicos.php) |
-| [frontend/src/features/medicos/pages/listar-medicos.js](../../frontend/src/features/medicos/pages/listar-medicos.js) |
-| [frontend/src/features/medicos/services/medicos-api.js](../../frontend/src/features/medicos/services/medicos-api.js) |
-| [frontend/src/features/pacientes/pages/detalle-paciente.js](../../frontend/src/features/pacientes/pages/detalle-paciente.js) |
-| [frontend/src/features/pacientes/pages/detalle-paciente.php](../../frontend/src/features/pacientes/pages/detalle-paciente.php) |
-| [frontend/src/features/pacientes/pages/formulario-registro.php](../../frontend/src/features/pacientes/pages/formulario-registro.php) |
-| [frontend/src/features/pacientes/pages/lista-pacientes.php](../../frontend/src/features/pacientes/pages/lista-pacientes.php) |
-| [frontend/src/features/pacientes/pages/listar-pacientes.js](../../frontend/src/features/pacientes/pages/listar-pacientes.js) |
-| [frontend/src/features/pacientes/services/pacientes-api.js](../../frontend/src/features/pacientes/services/pacientes-api.js) |
-| [frontend/src/features/pacientes/pages/registrar-paciente.js](../../frontend/src/features/pacientes/pages/registrar-paciente.js) |
-| [frontend/src/features/panel/panel.php](../../frontend/src/features/panel/panel.php) |
-| [frontend/src/features/reportes/services/reportes-api.js](../../frontend/src/features/reportes/services/reportes-api.js) |
-| [frontend/src/features/reportes/pages/reportes.js](../../frontend/src/features/reportes/pages/reportes.js) |
-| [frontend/src/features/reportes/pages/reportes.php](../../frontend/src/features/reportes/pages/reportes.php) |
-| [frontend/src/features/usuarios/pages/formulario-usuario.js](../../frontend/src/features/usuarios/pages/formulario-usuario.js) |
-| [frontend/src/features/usuarios/pages/formulario-usuario.php](../../frontend/src/features/usuarios/pages/formulario-usuario.php) |
-| [frontend/src/features/usuarios/pages/lista-usuarios.php](../../frontend/src/features/usuarios/pages/lista-usuarios.php) |
-| [frontend/src/features/usuarios/pages/listar-usuarios.js](../../frontend/src/features/usuarios/pages/listar-usuarios.js) |
-| [frontend/src/features/usuarios/pages/restablecer-contrasena.js](../../frontend/src/features/usuarios/pages/restablecer-contrasena.js) |
-| [frontend/src/features/usuarios/pages/restablecer-contrasena.php](../../frontend/src/features/usuarios/pages/restablecer-contrasena.php) |
-| [frontend/src/features/usuarios/services/usuarios-api.js](../../frontend/src/features/usuarios/services/usuarios-api.js) |
-| [frontend/src/layouts/principal.php](../../frontend/src/layouts/principal.php) |
-| [frontend/src/routes/ProteccionVista.php](../../frontend/src/routes/ProteccionVista.php) |
-| [frontend/src/server.php](../../frontend/src/server.php) |
-| [frontend/src/styles/estilos.css](../../frontend/src/styles/estilos.css) |
+No todos los módulos necesitan `components/` o `utils/`; se muestran únicamente los que existen. No se agregaron carpetas vacías para hacer coincidir un dibujo. [Índice documental](../README.md), [arquitectura](../arquitectura/GUIA-ARQUITECTURA-Y-DEFENSA.md) e [informe de conservación y limpieza](../entrega-final.md).

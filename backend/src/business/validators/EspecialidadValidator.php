@@ -19,7 +19,7 @@ final class EspecialidadValidator
         }
         return [
             'nombreEspecialidad' => $nombreEspecialidad,
-            'descripcionEspecialidad' => ValidarCamposFormulario::validarTexto($datos, 'descripcionEspecialidad', 'La descripcion', 300, false),
+            'descripcionEspecialidad' => ValidarCamposFormulario::validarTexto($datos, 'descripcionEspecialidad', 'La descripción', 300, false),
         ];
     }
 

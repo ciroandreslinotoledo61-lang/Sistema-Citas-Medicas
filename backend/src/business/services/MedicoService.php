@@ -49,7 +49,7 @@ final class MedicoService
     public function obtenerMedicoPorId(int $idMedico): Medico
     {
         return $this->medicoRepository->obtenerMedicoPorId($idMedico)
-            ?? throw new ErrorAplicacion('El medico no existe.', 404);
+            ?? throw new ErrorAplicacion('El médico no existe.', 404);
     }
 
     public function registrarMedicoConUsuario(array $datos): Medico
@@ -61,7 +61,7 @@ final class MedicoService
                 $this->exigirEspecialidadActiva($datosValidados['idEspecialidad']);
                 $this->exigirDatosUnicosMedico($datosValidados);
                 $rolMedico = $this->rolRepository->obtenerRolPorCodigo(RolesSistema::MEDICO)
-                ?? throw new ErrorAplicacion('El rol Medico no esta configurado.', 409);
+                ?? throw new ErrorAplicacion('El rol Médico no está configurado.', 409);
                 $idUsuario = $this->usuarioRepository->registrarUsuario($datosValidados, $rolMedico->idRol, $contrasenaHash);
                 $idMedico = $this->medicoRepository->registrarPerfilMedico($idUsuario, $datosValidados);
                 $medico = $this->obtenerMedicoPorId($idMedico);
@@ -70,7 +70,7 @@ final class MedicoService
             });
         } catch (\Throwable $error) {
             if ($error instanceof \PDOException && (string) $error->getCode() === '23505') {
-                throw new ErrorAplicacion('El correo o la matricula profesional ya estan registrados.', 409);
+                throw new ErrorAplicacion('El correo o la matrícula profesional ya están registrados.', 409);
             }
             throw $error;
         }
@@ -82,7 +82,7 @@ final class MedicoService
         try {
             return $this->transaccion->ejecutar(function () use ($idMedico, $datosValidados): Medico {
                 $medico = $this->medicoRepository->obtenerMedicoPorId($idMedico, true)
-                ?? throw new ErrorAplicacion('El medico no existe.', 404);
+                ?? throw new ErrorAplicacion('El médico no existe.', 404);
                 if ($medico->idEspecialidad !== $datosValidados['idEspecialidad']) {
                     $this->exigirMedicoSinCitasVigentes($idMedico);
                 }
@@ -99,7 +99,7 @@ final class MedicoService
             });
         } catch (\Throwable $error) {
             if ($error instanceof \PDOException && (string) $error->getCode() === '23505') {
-                throw new ErrorAplicacion('El correo o la matricula profesional ya estan registrados.', 409);
+                throw new ErrorAplicacion('El correo o la matrícula profesional ya están registrados.', 409);
             }
             throw $error;
         }
@@ -110,7 +110,7 @@ final class MedicoService
         $medicoActivo = MedicoValidator::validarEstadoMedico($datos);
         return $this->transaccion->ejecutar(function () use ($idMedico, $medicoActivo): Medico {
             $medico = $this->medicoRepository->obtenerMedicoPorId($idMedico, true)
-            ?? throw new ErrorAplicacion('El medico no existe.', 404);
+            ?? throw new ErrorAplicacion('El médico no existe.', 404);
             if (!$medicoActivo && $medico->medicoActivo) {
                 $this->exigirMedicoSinCitasVigentes($idMedico);
             }
@@ -130,7 +130,7 @@ final class MedicoService
     private function exigirMedicoSinCitasVigentes(int $idMedico): void
     {
         if ($this->citaRepository->medicoTieneCitasVigentes($idMedico, date('Y-m-d H:i:s'))) {
-            throw new ErrorAplicacion('Primero anula o reprograma las citas vigentes del medico antes de desactivarlo o cambiar su especialidad.', 409);
+            throw new ErrorAplicacion('Primero anula o reprograma las citas vigentes del médico antes de desactivarlo o cambiar su especialidad.', 409);
         }
     }
 
@@ -146,13 +146,13 @@ final class MedicoService
     private function exigirDatosUnicosMedico(array $datosMedico, int $idMedicoExcluido = 0, int $idUsuarioExcluido = 0): void
     {
         if ($this->medicoRepository->existeMedicoConMatricula($datosMedico['matriculaProfesional'], $idMedicoExcluido)) {
-            throw new ErrorAplicacion('La matricula profesional ya esta registrada.', 409, [
-                'matriculaProfesional' => 'Esa matricula pertenece a otro medico.',
+            throw new ErrorAplicacion('La matrícula profesional ya está registrada.', 409, [
+                'matriculaProfesional' => 'Esa matrícula pertenece a otro médico.',
             ]);
         }
         $usuarioConCorreo = $this->usuarioRepository->obtenerUsuarioPorCorreo($datosMedico['correoUsuario']);
         if ($usuarioConCorreo !== null && $usuarioConCorreo->idUsuario !== $idUsuarioExcluido) {
-            throw new ErrorAplicacion('El correo ya esta registrado.', 409, ['correoUsuario' => 'Usa un correo diferente.']);
+            throw new ErrorAplicacion('El correo ya está registrado.', 409, ['correoUsuario' => 'Usa un correo diferente.']);
         }
     }
 }

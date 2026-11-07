@@ -8,6 +8,7 @@ use CitasMedicas\Data\Models\Cita;
 
 final class CitaRepository
 {
+    private ?bool $salaDisponible = null;
     private const CONSULTA_CITA = "SELECT citas.*, turnos.fecha_hora_inicio, turnos.fecha_hora_fin,
         medicos.id_medico, pacientes.id_usuario AS id_usuario_paciente, medicos.id_usuario AS id_usuario_medico,
         concat_ws(' ', usuario_paciente.nombres_usuario, usuario_paciente.apellidos_usuario) AS nombre_paciente,
@@ -25,19 +26,45 @@ final class CitaRepository
     {
     }
 
-    public function obtenerCitaPorId(int $idCita, bool $bloquear = false): ?Cita
+    public function obtenerCitaPorId(int $idCita, bool $bloquear = false, ?int $idUsuarioPaciente = null, ?int $idUsuarioMedico = null): ?Cita
     {
+        $alcance = '';
+        $parametros = ['idCita' => $idCita];
+        if ($idUsuarioPaciente !== null) {
+            $alcance .= ' AND pacientes.id_usuario = :idUsuarioPaciente';
+            $parametros['idUsuarioPaciente'] = $idUsuarioPaciente;
+        }
+        if ($idUsuarioMedico !== null) {
+            $alcance .= ' AND medicos.id_usuario = :idUsuarioMedico';
+            $parametros['idUsuarioMedico'] = $idUsuarioMedico;
+        }
         $consulta = $this->conexionPostgresql->prepare(self::CONSULTA_CITA .
-            ' WHERE citas.id_cita = :idCita' . ($bloquear ? ' FOR UPDATE OF citas' : ''));
-        $consulta->execute(['idCita' => $idCita]);
+            ' WHERE citas.id_cita = :idCita' . $alcance . ($bloquear ? ' FOR UPDATE OF citas' : ''));
+        $consulta->execute($parametros);
         $registro = $consulta->fetch();
         return $registro ? new Cita($registro) : null;
+    }
+
+    /** Solo metadatos operativos; nunca devuelve contenido de consultas. */
+    public function obtenerContextoAtencion(int $idCita): array
+    {
+        $this->salaDisponible ??= (bool) $this->conexionPostgresql->query("SELECT to_regclass('public.sala_espera')")->fetchColumn();
+        $sqlSala = $this->salaDisponible ? '(SELECT estado FROM sala_espera WHERE id_cita=:sala)' : 'NULL::text';
+        $q = $this->conexionPostgresql->prepare('SELECT EXISTS(SELECT 1 FROM consultas WHERE id_cita=:consulta) AS consulta_iniciada, ' . $sqlSala . ' AS estado_sala');
+        $q->execute($this->salaDisponible ? ['consulta'=>$idCita,'sala'=>$idCita] : ['consulta'=>$idCita]);
+        $r = $q->fetch();
+        return ['consultaIniciada'=>in_array($r['consulta_iniciada'],[true,1,'1','t','true'],true), 'estadoSala'=>$r['estado_sala']];
     }
 
     public function listarCitas(array $filtros, string $ahora, ?int $idUsuarioPaciente = null, ?int $idUsuarioMedico = null): array
     {
         $condiciones = [];
         $parametros = ['ahora' => $ahora];
+        $proxima = "turnos.fecha_hora_inicio > :ahora AND citas.estado_cita = 'programada'";
+        $vista = $filtros['vista'] ?? '';
+        if ($vista !== '') {
+            $condiciones[] = ($vista === 'historial' ? 'NOT ' : '') . '(' . $proxima . ')';
+        }
         if ($idUsuarioPaciente !== null) {
             $condiciones[] = 'pacientes.id_usuario = :idUsuarioPaciente';
             $parametros['idUsuarioPaciente'] = $idUsuarioPaciente;
@@ -60,13 +87,17 @@ final class CitaRepository
                 $parametros[$campo] = $filtros[$campo];
             }
         }
-        $condiciones[] = "concat_ws(' ', usuario_paciente.nombres_usuario, usuario_paciente.apellidos_usuario,
-            pacientes.cedula_identidad, usuario_medico.nombres_usuario, usuario_medico.apellidos_usuario,
-            especialidades.nombre_especialidad) ILIKE :busqueda";
+        $camposBusqueda = $idUsuarioPaciente !== null
+            ? "usuario_medico.nombres_usuario, usuario_medico.apellidos_usuario, especialidades.nombre_especialidad"
+            : "usuario_paciente.nombres_usuario, usuario_paciente.apellidos_usuario, pacientes.cedula_identidad,
+               usuario_medico.nombres_usuario, usuario_medico.apellidos_usuario, especialidades.nombre_especialidad";
+        $condiciones[] = "concat_ws(' ', " . $camposBusqueda . ") ILIKE :busqueda";
         $parametros['busqueda'] = '%' . $filtros['busqueda'] . '%';
+        $orden = $vista === 'historial' ? 'turnos.fecha_hora_inicio DESC, citas.id_cita DESC'
+            : ($vista === 'proximas' ? 'turnos.fecha_hora_inicio, citas.id_cita'
+                : "CASE WHEN $proxima THEN 0 ELSE 1 END, turnos.fecha_hora_inicio, citas.id_cita");
         $consulta = $this->conexionPostgresql->prepare(self::CONSULTA_CITA . ' WHERE ' . implode(' AND ', $condiciones) .
-            " ORDER BY CASE WHEN turnos.fecha_hora_inicio > :ahora AND citas.estado_cita IN ('programada') THEN 0 ELSE 1 END,
-              turnos.fecha_hora_inicio, citas.id_cita LIMIT 21 OFFSET :desplazamiento");
+            ' ORDER BY ' . $orden . ' LIMIT 21 OFFSET :desplazamiento');
         foreach ($parametros as $nombre => $valor) {
             $consulta->bindValue(':' . $nombre, $valor);
         }

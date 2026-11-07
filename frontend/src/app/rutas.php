@@ -14,91 +14,110 @@ if (!preg_match('#^https?://[a-zA-Z0-9.:-]+$#', $origenConexion)) {
 }
 header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' {$origenConexion}; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
 header('X-Content-Type-Options: nosniff');
+header('Content-Type: text/html; charset=utf-8');
 header('Referrer-Policy: same-origin');
 header('Cache-Control: no-store');
 
 $rutaActual = rtrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/', '/') ?: '/';
+if (str_starts_with($rutaActual, '/recuperar-contrasena')) {
+    header('Referrer-Policy: no-referrer');
+}
 $usuarioAutenticado = null;
 $idRegistro = 0;
 $paginaActual = '';
-$tituloPagina = 'Citas Medicas';
+$tituloPagina = 'Citas Médicas';
 $moduloJavascript = '';
 $vista = '';
 
 $rutasVistas = [
+    '/recetas' => ['recetas','Recetas médicas','recetas/pages/lista-recetas.php','recetas/pages/listar-recetas.js',['medico','paciente']],
+    '/recetas/nueva' => ['receta-nueva','Emitir receta','recetas/pages/formulario-receta.php','recetas/pages/formulario-receta.js',['medico']],
+    '/sala-espera' => ['sala-espera','Sala de espera','sala-espera/pages/sala-espera.php','sala-espera/pages/sala-espera.js',['administrador','recepcionista','medico']],
+    '/pagos-demo' => ['pagos-demo','Pagos','pagos/pages/pagos.php','pagos/pages/pagos.js',['administrador','recepcionista','paciente']],
+    '/pagos-demo/nuevo' => ['pago-demo-nuevo','Pagar ahora','pagos/pages/formulario-pago.php','pagos/pages/formulario-pago.js',['paciente']],
+    '/recuperar-contrasena' => ['recuperar-contrasena', 'Recuperación de contraseña', 'auth/pages/recuperar-contrasena.php', 'auth/pages/recuperar-contrasena.js', null],
+    '/recuperar-contrasena/confirmar' => ['confirmar-recuperacion', 'Nueva contraseña', 'auth/pages/confirmar-recuperacion.php', 'auth/pages/confirmar-recuperacion.js', null],
     '/' => ['inicio', 'Portal de pacientes', 'inicio/inicio.php', '', null],
-    '/iniciar-sesion' => ['iniciar-sesion', 'Iniciar sesion', 'auth/iniciar-sesion.php', 'auth/iniciar-sesion.js', null],
-    '/registro-paciente' => ['registro-paciente', 'Crear cuenta de paciente', 'pacientes/formulario-registro.php', 'pacientes/registrar-paciente.js', null],
-    '/bitacora'=>['bitacora','Bitacora del sistema','bitacora/bitacora.php','bitacora/bitacora.js',['administrador']],
-    '/consultas'=>['consultas','Mis consultas','consultas/lista-consultas.php','consultas/listar-consultas.js',['medico']],
-    '/consultas/nueva'=>['consulta-nueva','Registrar consulta','consultas/formulario-consulta.php','consultas/formulario-consulta.js',['medico']],
-    '/historial-clinico'=>['historial-clinico','Mi historial clinico','consultas/historial-clinico.php','consultas/listar-consultas.js',['paciente']],
-    '/reportes' => ['reportes', 'Reportes administrativos', 'reportes/reportes.php', 'reportes/reportes.js', ['administrador']],
+    '/iniciar-sesion' => ['iniciar-sesion', 'Iniciar sesión', 'auth/pages/iniciar-sesion.php', 'auth/pages/iniciar-sesion.js', null],
+    '/registro-paciente' => ['registro-paciente', 'Crear cuenta de paciente', 'pacientes/pages/formulario-registro.php', 'pacientes/pages/registrar-paciente.js', null],
+    '/bitacora'=>['bitacora','Bitácora del sistema','bitacora/pages/bitacora.php','bitacora/pages/bitacora.js',['administrador']],
+    '/consultas'=>['consultas','Mis consultas','consultas/pages/lista-consultas.php','consultas/pages/listar-consultas.js',['medico']],
+    '/consultas/nueva'=>['consulta-nueva','Registrar consulta','consultas/pages/formulario-consulta.php','consultas/pages/formulario-consulta.js',['medico']],
+    '/historial-clinico'=>['historial-clinico','Mi historial clínico','consultas/pages/historial-clinico.php','consultas/pages/listar-consultas.js',['paciente']],
+    '/reportes' => ['reportes', 'Reportes administrativos', 'reportes/pages/reportes.php', 'reportes/pages/reportes.js', ['administrador']],
     '/panel' => ['panel', 'Panel principal', 'panel/panel.php', '', []],
-    '/usuarios' => ['usuarios', 'Usuarios', 'usuarios/lista-usuarios.php', 'usuarios/listar-usuarios.js', ['administrador']],
-    '/usuarios/nuevo' => ['usuario-nuevo', 'Nuevo usuario', 'usuarios/formulario-usuario.php', 'usuarios/formulario-usuario.js', ['administrador']],
-    '/pacientes' => ['pacientes', 'Pacientes', 'pacientes/lista-pacientes.php', 'pacientes/listar-pacientes.js', ['administrador', 'recepcionista']],
-    '/pacientes/nuevo' => ['paciente-nuevo', 'Registrar paciente', 'pacientes/formulario-registro.php', 'pacientes/registrar-paciente.js', ['administrador', 'recepcionista']],
-    '/especialidades' => ['especialidades', 'Especialidades', 'especialidades/lista-especialidades.php', 'especialidades/listar-especialidades.js', ['administrador']],
-    '/especialidades/nueva' => ['especialidad-nueva', 'Nueva especialidad', 'especialidades/formulario-especialidad.php', 'especialidades/formulario-especialidad.js', ['administrador']],
-    '/medicos' => ['medicos', 'Medicos', 'medicos/lista-medicos.php', 'medicos/listar-medicos.js', ['administrador']],
-    '/medicos/nuevo' => ['medico-nuevo', 'Registrar medico', 'medicos/formulario-medico.php', 'medicos/formulario-medico.js', ['administrador']],
-    '/citas' => ['citas', 'Citas medicas', 'citas/lista-citas.php', 'citas/listar-citas.js', ['administrador', 'recepcionista', 'medico', 'paciente']],
-    '/citas/nueva' => ['cita-nueva', 'Reservar cita', 'citas/formulario-cita.php', 'citas/formulario-cita.js', ['administrador', 'recepcionista', 'paciente']],
-    '/horarios' => ['horarios', 'Horarios de atencion', 'horarios/lista-horarios.php', 'horarios/listar-horarios.js', ['administrador', 'medico']],
-    '/horarios/nuevo' => ['horario-nuevo', 'Programar horarios', 'horarios/formulario-horario.php', 'horarios/formulario-horario.js', ['administrador']],
-    '/mi-perfil' => ['mi-perfil', 'Mi perfil', 'pacientes/detalle-paciente.php', 'pacientes/detalle-paciente.js', ['paciente']],
+    '/cambiar-contrasena' => ['cambiar-contrasena', 'Cambiar contraseña', 'auth/pages/cambiar-contrasena.php', 'auth/pages/cambiar-contrasena.js', []],
+    '/usuarios' => ['usuarios', 'Usuarios', 'usuarios/pages/lista-usuarios.php', 'usuarios/pages/listar-usuarios.js', ['administrador']],
+    '/usuarios/nuevo' => ['usuario-nuevo', 'Nuevo usuario', 'usuarios/pages/formulario-usuario.php', 'usuarios/pages/formulario-usuario.js', ['administrador']],
+    '/pacientes' => ['pacientes', 'Pacientes', 'pacientes/pages/lista-pacientes.php', 'pacientes/pages/listar-pacientes.js', ['administrador', 'recepcionista']],
+    '/pacientes/nuevo' => ['paciente-nuevo', 'Registrar paciente', 'pacientes/pages/formulario-registro.php', 'pacientes/pages/registrar-paciente.js', ['administrador', 'recepcionista']],
+    '/especialidades' => ['especialidades', 'Especialidades', 'especialidades/pages/lista-especialidades.php', 'especialidades/pages/listar-especialidades.js', ['administrador']],
+    '/especialidades/nueva' => ['especialidad-nueva', 'Nueva especialidad', 'especialidades/pages/formulario-especialidad.php', 'especialidades/pages/formulario-especialidad.js', ['administrador']],
+    '/medicos' => ['medicos', 'Médicos', 'medicos/pages/lista-medicos.php', 'medicos/pages/listar-medicos.js', ['administrador']],
+    '/medicos/nuevo' => ['medico-nuevo', 'Registrar médico', 'medicos/pages/formulario-medico.php', 'medicos/pages/formulario-medico.js', ['administrador']],
+    '/citas' => ['citas', 'Citas médicas', 'citas/pages/lista-citas.php', 'citas/pages/listar-citas.js', ['administrador', 'recepcionista', 'medico', 'paciente']],
+    '/citas/nueva' => ['cita-nueva', 'Reservar cita', 'citas/pages/formulario-cita.php', 'citas/pages/formulario-cita.js', ['administrador', 'recepcionista', 'paciente']],
+    '/horarios' => ['horarios', 'Horarios de atención', 'horarios/pages/lista-horarios.php', 'horarios/pages/listar-horarios.js', ['administrador', 'medico']],
+    '/horarios/nuevo' => ['horario-nuevo', 'Programar horarios', 'horarios/pages/formulario-horario.php', 'horarios/pages/formulario-horario.js', ['administrador']],
+    '/mi-perfil' => ['mi-perfil', 'Mi perfil', 'pacientes/pages/detalle-paciente.php', 'pacientes/pages/detalle-paciente.js', ['paciente']],
 ];
 
 try {
     if (isset($rutasVistas[$rutaActual])) {
         [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] = $rutasVistas[$rutaActual];
+    } elseif(preg_match('#^/recetas/([1-9][0-9]*)$#',$rutaActual,$coincidencia)){
+        $idRegistro=(int)$coincidencia[1];
+        [$paginaActual,$tituloPagina,$vista,$moduloJavascript,$rolesPermitidos]=['receta-detalle','Receta médica','recetas/pages/detalle-receta.php','recetas/pages/detalle-receta.js',['medico','paciente']];
     } elseif(preg_match('#^/consultas/([1-9][0-9]*)(/editar)?$#',$rutaActual,$coincidencia)){
         $idRegistro=(int)$coincidencia[1];
         [$paginaActual,$tituloPagina,$vista,$moduloJavascript,$rolesPermitidos]=isset($coincidencia[2])
-            ?['consulta-editar','Editar consulta','consultas/formulario-consulta.php','consultas/formulario-consulta.js',['medico']]
-            :['consulta-detalle','Detalle de consulta','consultas/detalle-consulta.php','consultas/detalle-consulta.js',['medico','paciente']];
+            ?['consulta-editar','Editar consulta','consultas/pages/formulario-consulta.php','consultas/pages/formulario-consulta.js',['medico']]
+            :['consulta-detalle','Detalle de consulta','consultas/pages/detalle-consulta.php','consultas/pages/detalle-consulta.js',['medico','paciente']];
     } elseif(preg_match('#^/historial-clinico/([1-9][0-9]*)$#',$rutaActual,$coincidencia)){
         $idRegistro=(int)$coincidencia[1];
-        [$paginaActual,$tituloPagina,$vista,$moduloJavascript,$rolesPermitidos]=['historial-clinico','Historial clinico','consultas/historial-clinico.php','consultas/listar-consultas.js',['medico','paciente']];
+        [$paginaActual,$tituloPagina,$vista,$moduloJavascript,$rolesPermitidos]=['historial-clinico','Historial clínico','consultas/pages/historial-clinico.php','consultas/pages/listar-consultas.js',['medico','paciente']];
     } elseif (preg_match('#^/citas/([1-9][0-9]*)(/reprogramar)?$#', $rutaActual, $coincidencia)) {
         $idRegistro = (int) $coincidencia[1];
         $esReprogramacion = isset($coincidencia[2]);
         [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] = $esReprogramacion
-            ? ['cita-reprogramar', 'Reprogramar cita', 'citas/formulario-cita.php', 'citas/formulario-cita.js', ['administrador', 'recepcionista']]
-            : ['cita-detalle', 'Detalle de cita', 'citas/detalle-cita.php', 'citas/detalle-cita.js', ['administrador', 'recepcionista', 'medico', 'paciente']];
+            ? ['cita-reprogramar', 'Reprogramar cita', 'citas/pages/formulario-cita.php', 'citas/pages/formulario-cita.js', ['administrador', 'recepcionista']]
+            : ['cita-detalle', 'Detalle de cita', 'citas/pages/detalle-cita.php', 'citas/pages/detalle-cita.js', ['administrador', 'recepcionista', 'medico', 'paciente']];
+    } elseif (preg_match('#^/usuarios/([1-9][0-9]*)/restablecer-contrasena$#', $rutaActual, $coincidencia)) {
+        $idRegistro = (int) $coincidencia[1];
+        [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] =
+            ['usuario-restablecer-contrasena', 'Restablecer contraseña', 'usuarios/pages/restablecer-contrasena.php', 'usuarios/pages/restablecer-contrasena.js', ['administrador']];
     } elseif (preg_match('#^/usuarios/([1-9][0-9]*)/editar$#', $rutaActual, $coincidencia)) {
         $idRegistro = (int) $coincidencia[1];
         [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] =
-            ['usuario-editar', 'Editar usuario', 'usuarios/formulario-usuario.php', 'usuarios/formulario-usuario.js', ['administrador']];
+            ['usuario-editar', 'Editar usuario', 'usuarios/pages/formulario-usuario.php', 'usuarios/pages/formulario-usuario.js', ['administrador']];
     } elseif (preg_match('#^/especialidades/([1-9][0-9]*)/editar$#', $rutaActual, $coincidencia)) {
         $idRegistro = (int) $coincidencia[1];
         [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] =
-            ['especialidad-editar', 'Editar especialidad', 'especialidades/formulario-especialidad.php', 'especialidades/formulario-especialidad.js', ['administrador']];
+            ['especialidad-editar', 'Editar especialidad', 'especialidades/pages/formulario-especialidad.php', 'especialidades/pages/formulario-especialidad.js', ['administrador']];
     } elseif (preg_match('#^/medicos/([1-9][0-9]*)/editar$#', $rutaActual, $coincidencia)) {
         $idRegistro = (int) $coincidencia[1];
         [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] =
-            ['medico-editar', 'Editar medico', 'medicos/formulario-medico.php', 'medicos/formulario-medico.js', ['administrador']];
+            ['medico-editar', 'Editar médico', 'medicos/pages/formulario-medico.php', 'medicos/pages/formulario-medico.js', ['administrador']];
     } elseif (preg_match('#^/pacientes/([1-9][0-9]*)$#', $rutaActual, $coincidencia)) {
         $idRegistro = (int) $coincidencia[1];
         [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] =
-            ['paciente-detalle', 'Datos del paciente', 'pacientes/detalle-paciente.php', 'pacientes/detalle-paciente.js', ['administrador', 'recepcionista']];
+            ['paciente-detalle', 'Datos del paciente', 'pacientes/pages/detalle-paciente.php', 'pacientes/pages/detalle-paciente.js', ['administrador', 'recepcionista']];
     } else {
         http_response_code(404);
-        throw new DomainException('La pagina que buscas no existe.');
+        throw new DomainException('La página que buscas no existe.');
     }
     if ($rolesPermitidos !== null) {
         $usuarioAutenticado = ProteccionVista::exigirSesionParaVista($rolesPermitidos);
     }
 } catch (DomainException $error) {
-    $tituloPagina = http_response_code() === 403 ? 'Acceso restringido' : 'Pagina no encontrada';
+    $tituloPagina = http_response_code() === 403 ? 'Acceso restringido' : 'Página no encontrada';
     $mensajeErrorPagina = $error->getMessage();
     $vista = 'inicio/error.php';
     $moduloJavascript = '';
 } catch (Throwable) {
     http_response_code(503);
     $tituloPagina = 'Servicio no disponible';
-    $mensajeErrorPagina = 'No podemos conectar con el servidor. Comprueba que el backend este iniciado y vuelve a intentar.';
+    $mensajeErrorPagina = 'No podemos conectar con el servidor. Comprueba que el backend esté iniciado y vuelve a intentar.';
     $vista = 'inicio/error.php';
     $moduloJavascript = '';
 }

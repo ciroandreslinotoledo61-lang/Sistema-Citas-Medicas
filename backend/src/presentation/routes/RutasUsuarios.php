@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CitasMedicas\Presentation\Routes;
 
 use CitasMedicas\Presentation\Controllers\UsuarioController;
+use CitasMedicas\Presentation\Controllers\CredencialController;
 use CitasMedicas\Presentation\Http\RutaHttp;
 use CitasMedicas\Shared\Constants\RolesSistema;
 
@@ -14,6 +15,8 @@ final class RutasUsuarios
     public static function definir(): array
     {
         return [
+            new RutaHttp('POST', '/api/usuarios/{idUsuario}/restablecer-contrasena', CredencialController::class,
+                'restablecerContrasena', [RolesSistema::ADMINISTRADOR], ['idUsuario']),
             new RutaHttp(
                 'GET',
                 '/api/roles',

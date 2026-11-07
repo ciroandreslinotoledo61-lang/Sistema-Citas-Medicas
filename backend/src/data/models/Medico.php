@@ -17,7 +17,8 @@ final class Medico
         public readonly string $nombreEspecialidad,
         public readonly bool $especialidadActiva,
         public readonly bool $medicoActivo,
-        public readonly string $telefonoMedico = ''
+        public readonly string $telefonoMedico = '',
+        public readonly string $codigoRol = ''
     ) {
     }
 
@@ -34,7 +35,8 @@ final class Medico
             $registroMedico['nombre_especialidad'],
             in_array($registroMedico['especialidad_activa'], [true, 1, '1', 't', 'true'], true),
             in_array($registroMedico['usuario_activo'], [true, 1, '1', 't', 'true'], true),
-            $registroMedico['telefono_medico'] ?? ''
+            $registroMedico['telefono_medico'] ?? '',
+            $registroMedico['codigo_rol'] ?? ''
         );
     }
 

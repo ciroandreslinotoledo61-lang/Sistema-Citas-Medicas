@@ -34,6 +34,16 @@ try{
  foreach([$otroMedico,$otroPaciente] as $actor)rechazarClinica(fn()=>$consultas->obtenerConsulta($actor,$id),404);
  verificarClinica(!$consultas->obtenerConsulta($paciente,$id)['puedeEditar'],'Paciente solo lectura.');
  verificarClinica($consultas->obtenerHistorial($paciente,null,[])['consultas']['elementos'][0]['idConsulta']===$id,'Historial propio.');rechazarClinica(fn()=>$consultas->obtenerHistorial($otroPaciente,$consulta['idPaciente'],[]),404);
+ rechazarClinica(fn()=>$consultas->obtenerHistorial($paciente,null,['idPaciente'=>$soporte->pacientes[1]['idPaciente']]),422);
+ rechazarClinica(fn()=>$consultas->obtenerHistorial($paciente,null,['busqueda'=>'Segundo']),422);
+ verificarClinica($consultas->obtenerHistorial($otroPaciente,null,[])['consultas']['elementos']===[],'Segundo paciente sin atenciones ajenas.');
+ rechazarClinica(fn()=>$consultas->obtenerHistorial($otroMedico,$consulta['idPaciente'],[]),404);
+ foreach([$admin,$recepcion] as $actor)rechazarClinica(fn()=>$consultas->obtenerHistorial($actor,$consulta['idPaciente'],[]),403);
+ $repositorioConsultas=new \CitasMedicas\Data\Repositories\ConsultaRepository($c);
+ verificarClinica($repositorioConsultas->obtenerConsultaPorId($id,false,$otroPaciente->idUsuario)===null,'SQL no carga la consulta de otro paciente.');
+ verificarClinica($repositorioConsultas->obtenerConsultaPorId($id,false,null,$otroMedico->idUsuario)===null,'SQL no carga la consulta sin relacion medica.');
+ $repositorioHistorias=new \CitasMedicas\Data\Repositories\HistoriaClinicaRepository($c);
+ verificarClinica($repositorioHistorias->obtenerHistoriaPorPaciente($consulta['idPaciente'],$otroPaciente->idUsuario)===null,'SQL no carga antecedentes ajenos.');
  $edicion=$datos;unset($edicion['idCita']);$edicion['versionConsulta']=1;$edicion['diagnostico']='CORRECCION_PRIVADA';$edicion['tratamientos']=[];
  rechazarClinica(fn()=>$consultas->actualizarConsulta($otroMedico,$id,$edicion),404);rechazarClinica(fn()=>$consultas->actualizarConsulta($paciente,$id,$edicion),403);
  $nueva=$consultas->actualizarConsulta($medico,$id,$edicion);verificarClinica($nueva['versionConsulta']===2,'Version actual.');
@@ -51,7 +61,7 @@ try{
  $texto=json_encode($c->query('SELECT * FROM bitacora_sistema')->fetchAll());foreach(['DIAGNOSTICO_PRIVADO','CORRECCION_PRIVADA','TRATAMIENTO_PRIVADO','OBSERVACION_PRIVADA','ALERGIA_PRIVADA','ANTECEDENTE_PRIVADO','ClaveDePruebaAgenda123'] as $secreto)verificarClinica(!str_contains($texto,$secreto),'Auditoria sin '.$secreto);
  foreach(['UPDATE bitacora_sistema SET descripcion=descripcion','DELETE FROM bitacora_sistema','TRUNCATE bitacora_sistema'] as $sql){try{$c->exec($sql);throw new RuntimeException('Bitacora modificable');}catch(PDOException $e){verificarClinica((string)$e->getCode()==='42501','Bitacora inmutable.');}}
  $pagina=$bitacora->listarBitacora($admin,[]);verificarClinica(count($pagina['elementos'])===20&&$pagina['hayPaginaSiguiente'],'Paginacion.');
- SesionUsuario::iniciarSesionSegura();$auth=new AutenticacionService($usuarios,$bitacora);rechazarClinica(fn()=>$auth->iniciarSesionUsuario(['correoUsuario'=>$medico->correoUsuario,'contrasenaUsuario'=>'ClaveErronea123']),401);$auth->iniciarSesionUsuario(['correoUsuario'=>$medico->correoUsuario,'contrasenaUsuario'=>'ClaveDePruebaAgenda123']);$auth->cerrarSesionUsuario();
+ SesionUsuario::iniciarSesionSegura();$auth=new AutenticacionService($usuarios,$bitacora,$c);rechazarClinica(fn()=>$auth->iniciarSesionUsuario(['correoUsuario'=>$medico->correoUsuario,'contrasenaUsuario'=>'ClaveErronea123']),401);$auth->iniciarSesionUsuario(['correoUsuario'=>$medico->correoUsuario,'contrasenaUsuario'=>'ClaveDePruebaAgenda123']);$auth->cerrarSesionUsuario();
  verificarClinica(count($bitacora->listarBitacora($admin,['idUsuario'=>$medico->idUsuario,'modulo'=>'autenticacion'])['elementos'])===2,'Login y logout auditados.');
  echo "OK: $total comprobaciones clinicas y de auditoria.\n";
 }finally{$soporte->eliminarDatos();}

@@ -27,18 +27,18 @@ final class MedicoController
     public function registrarMedicoConUsuario(): never
     {
         $medico = $this->medicoService->registrarMedicoConUsuario(SolicitudHttp::obtenerCuerpoJson());
-        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Medico registrado. Su cuenta ya puede iniciar sesion.', 'datos' => $medico->obtenerDatosPublicosMedico()], 201);
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Médico registrado. Su cuenta ya puede iniciar sesión.', 'datos' => $medico->obtenerDatosPublicosMedico()], 201);
     }
 
     public function actualizarDatosMedico(int $idMedico): never
     {
         $medico = $this->medicoService->actualizarDatosMedico($idMedico, SolicitudHttp::obtenerCuerpoJson());
-        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Datos del medico actualizados.', 'datos' => $medico->obtenerDatosPublicosMedico()]);
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Datos del médico actualizados.', 'datos' => $medico->obtenerDatosPublicosMedico()]);
     }
 
     public function cambiarEstadoMedico(int $idMedico): never
     {
         $medico = $this->medicoService->cambiarEstadoMedico($idMedico, SolicitudHttp::obtenerCuerpoJson());
-        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Estado del medico actualizado.', 'datos' => $medico->obtenerDatosPublicosMedico()]);
+        RespuestaJson::enviarRespuestaJson(['mensaje' => 'Estado del médico actualizado.', 'datos' => $medico->obtenerDatosPublicosMedico()]);
     }
 }

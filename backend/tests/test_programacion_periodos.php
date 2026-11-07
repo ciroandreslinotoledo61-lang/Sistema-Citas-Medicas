@@ -132,6 +132,7 @@ try {
         putenv('CITA_DURACION_MINUTOS=30'); $horarios->registrarHorario($administrador,array_replace($datosLargos,['idMedico'=>$segundo['idMedico']]));
     } finally { putenv($duracionAnterior===false?'CITA_DURACION_MINUTOS':'CITA_DURACION_MINUTOS='.$duracionAnterior); }
     $turnosLargos=$horarios->listarTurnosDisponibles($paciente,['idMedico'=>$periodo['idMedico'],'fecha'=>$fechaLarga]);
+    comprobarPeriodo(count($turnosLargos) === 4, 'Incluso con CITA_DURACION_MINUTOS=60 se crean cuatro turnos de 30 minutos.');
     $turnosCortos=$horarios->listarTurnosDisponibles($paciente,['idMedico'=>$segundo['idMedico'],'fecha'=>$fechaLarga]);
     $larga=$citas->reservarCita($paciente,['idTurno'=>$turnosLargos[0]['idTurno']]);
     $temprano=new CitaService($conexion,new DateTimeImmutable($fechaLarga.' 08:01'));

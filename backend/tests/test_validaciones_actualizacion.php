@@ -20,8 +20,8 @@ try {
     if (ConfiguracionAgenda::obtenerDuracionCitaMinutos()!==30) { throw new RuntimeException('El valor predeterminado debe ser 30.'); }
     foreach (['0','31','abc','125'] as $valor) {
         putenv('CITA_DURACION_MINUTOS='.$valor);
-        try { ConfiguracionAgenda::obtenerDuracionCitaMinutos(); } catch (RuntimeException) { $cantidad++; continue; }
-        throw new RuntimeException('Se acepto configuracion invalida.');
+        if (ConfiguracionAgenda::obtenerDuracionCitaMinutos() !== 30) { throw new RuntimeException('Una variable externa alteró la duración fija.'); }
+        $cantidad++;
     }
 } finally { putenv($original===false ? 'CITA_DURACION_MINUTOS' : 'CITA_DURACION_MINUTOS='.$original); }
-echo "OK: $cantidad rechazos de entradas invalidas, estado booleano y duracion predeterminada.\n";
+echo "OK: $cantidad comprobaciones de entradas, estado booleano y duración fija.\n";

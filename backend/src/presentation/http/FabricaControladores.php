@@ -14,10 +14,14 @@ final class FabricaControladores
 {
     private ?Services\AutenticacionService $autenticacionService = null;
 
+    public function __construct(private readonly ?Services\CorreoTransaccionalService $correo = null)
+    {
+    }
+
     public function obtenerAutenticacionService(): Services\AutenticacionService
     {
         return $this->autenticacionService ??= new Services\AutenticacionService(
-            new UsuarioRepository(ConexionPostgresql::obtenerConexionPostgresql()),$this->obtenerBitacoraService()
+            new UsuarioRepository($this->conexion()),$this->obtenerBitacoraService(),$this->conexion()
         );
     }
 
@@ -26,11 +30,16 @@ final class FabricaControladores
     public function obtener(string $clase): object
     {
         return match ($clase) {
+            Controllers\RecetaController::class => new Controllers\RecetaController(new Services\RecetaService($this->conexion())),
+            Controllers\SalaEsperaController::class => new Controllers\SalaEsperaController(new Services\SalaEsperaService($this->conexion())),
+            Controllers\PagoDemostracionController::class => new Controllers\PagoDemostracionController(new Services\PagoDemostracionService($this->conexion())),
             Controllers\ConsultaController::class => new Controllers\ConsultaController(new Services\ConsultaService($this->conexion()),new Services\HistoriaClinicaService($this->conexion())),
             Controllers\BitacoraController::class => new Controllers\BitacoraController($this->obtenerBitacoraService()),
             Controllers\EstadoController::class => new Controllers\EstadoController(),
             Controllers\TokenCsrfController::class => new Controllers\TokenCsrfController(),
             Controllers\AutenticacionController::class => new Controllers\AutenticacionController($this->obtenerAutenticacionService()),
+            Controllers\CredencialController::class => new Controllers\CredencialController(new Services\CredencialService($this->conexion())),
+            Controllers\RecuperacionContrasenaController::class => new Controllers\RecuperacionContrasenaController(new Services\RecuperacionContrasenaService($this->conexion(), $this->correo)),
             Controllers\UsuarioController::class => new Controllers\UsuarioController(new Services\UsuarioService($this->conexion())),
             Controllers\PacienteController::class => new Controllers\PacienteController(new Services\PacienteService($this->conexion())),
             Controllers\EspecialidadController::class => new Controllers\EspecialidadController(new Services\EspecialidadService($this->conexion())),

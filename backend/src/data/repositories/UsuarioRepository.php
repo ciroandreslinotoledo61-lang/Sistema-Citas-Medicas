@@ -80,6 +80,36 @@ final class UsuarioRepository
         $consulta->execute();
     }
 
+    /** El servicio mantiene bloqueada la cuenta hasta confirmar cambio y auditoria. */
+    public function actualizarContrasena(int $idUsuario, string $contrasenaHash, bool $temporal = false): void
+    {
+        $expiracion = $temporal ? "clock_timestamp() + INTERVAL '30 minutes'" : 'NULL';
+        $consulta = $this->conexionPostgresql->prepare(
+            'UPDATE usuarios SET contrasena_hash = :contrasenaHash,
+            version_credenciales = version_credenciales + 1,
+            requiere_cambio_contrasena = :temporal, contrasena_temporal_usada = FALSE,
+            contrasena_temporal_expira = ' . $expiracion . ' WHERE id_usuario = :idUsuario'
+        );
+        $consulta->bindValue(':contrasenaHash', $contrasenaHash);
+        $consulta->bindValue(':temporal', $temporal, \PDO::PARAM_BOOL);
+        $consulta->bindValue(':idUsuario', $idUsuario, \PDO::PARAM_INT);
+        $consulta->execute();
+    }
+
+    /** Una clave temporal solo puede abrir una sesion, incluso con peticiones simultaneas. */
+    public function consumirContrasenaTemporal(int $idUsuario, int $versionCredenciales): bool
+    {
+        $consulta = $this->conexionPostgresql->prepare(
+            'UPDATE usuarios SET contrasena_temporal_usada = TRUE,
+            version_credenciales = version_credenciales + 1
+            WHERE id_usuario = :idUsuario AND version_credenciales = :versionCredenciales
+            AND usuario_activo = TRUE AND requiere_cambio_contrasena = TRUE
+            AND contrasena_temporal_usada = FALSE AND contrasena_temporal_expira > clock_timestamp()'
+        );
+        $consulta->execute(['idUsuario' => $idUsuario, 'versionCredenciales' => $versionCredenciales]);
+        return $consulta->rowCount() === 1;
+    }
+
     public function contarAdministradoresActivos(): int
     {
         $consulta = $this->conexionPostgresql->prepare(

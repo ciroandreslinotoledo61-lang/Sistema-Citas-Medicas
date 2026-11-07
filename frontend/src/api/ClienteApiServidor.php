@@ -6,7 +6,7 @@ final class ClienteApiServidor
     public static function obtenerSesionDesdeBackend(): array
     {
         if (!extension_loaded('curl')) {
-            throw new RuntimeException('Activa la extension curl en php.ini.');
+            throw new RuntimeException('Activa la extensión curl en php.ini.');
         }
         $urlApi = rtrim(obtenerConfiguracionFrontend('API_INTERNAL_URL', obtenerConfiguracionFrontend('API_URL', 'http://127.0.0.1:8000/api')), '/');
         $nombreCookie = obtenerConfiguracionFrontend('SESSION_COOKIE_NAME', 'citas_medicas_sesion');
@@ -27,7 +27,7 @@ final class ClienteApiServidor
         $codigoHttp = (int) curl_getinfo($peticion, CURLINFO_HTTP_CODE);
         // curl_close($peticion);
         if ($contenido === false || $codigoHttp >= 500 || $codigoHttp === 0) {
-            throw new RuntimeException('El backend no esta disponible.');
+            throw new RuntimeException('El backend no está disponible.');
         }
         $respuesta = json_decode($contenido, true, 32, JSON_THROW_ON_ERROR);
         return ['codigoHttp' => $codigoHttp, 'datos' => $respuesta['datos'] ?? null];

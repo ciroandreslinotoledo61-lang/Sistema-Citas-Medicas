@@ -17,7 +17,7 @@ final class CargarVariablesEntorno
                 continue;
             }
             if (!preg_match('/^([A-Z][A-Z0-9_]*)=(.*)$/', $linea, $coincidencia)) {
-                throw new \RuntimeException('Linea invalida en .env: ' . ($numeroLinea + 1));
+                throw new \RuntimeException('Línea inválida en .env: ' . ($numeroLinea + 1));
             }
             $nombreVariable = $coincidencia[1];
             $valorVariable = trim($coincidencia[2]);

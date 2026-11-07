@@ -9,13 +9,17 @@ final class ConsultaRepository {
   JOIN turnos t USING(id_turno) JOIN horarios_medicos h USING(id_horario_medico) JOIN medicos m USING(id_medico)
   JOIN usuarios um ON um.id_usuario=m.id_usuario JOIN pacientes p ON p.id_paciente=c.id_paciente JOIN usuarios up ON up.id_usuario=p.id_usuario";
  public function __construct(private readonly \PDO $conexionPostgresql){}
- public function obtenerConsultaPorId(int $idConsulta,bool $bloquear=false):?Consulta {
-  $q=$this->conexionPostgresql->prepare(self::SELECT_CONSULTA.' WHERE co.id_consulta=:id'.($bloquear?' FOR UPDATE OF co':''));$q->execute(['id'=>$idConsulta]);$r=$q->fetch();return $r?new Consulta($r):null;
+ public function obtenerConsultaPorId(int $idConsulta,bool $bloquear=false,?int $idUsuarioPaciente=null,?int $idUsuarioMedico=null):?Consulta {
+  if($idUsuarioPaciente===null&&$idUsuarioMedico===null)throw new \InvalidArgumentException('Falta el alcance de la consulta.');
+  $alcance=$idUsuarioPaciente!==null?'p.id_usuario=:usuario':($bloquear?'m.id_usuario=:usuario':self::RELACION_MEDICA);
+  $q=$this->conexionPostgresql->prepare(self::SELECT_CONSULTA.' WHERE co.id_consulta=:id AND '.$alcance.($bloquear?' FOR UPDATE OF co':''));$q->execute(['id'=>$idConsulta,'usuario'=>$idUsuarioPaciente??$idUsuarioMedico]);$r=$q->fetch();return $r?new Consulta($r):null;
  }
+ private const RELACION_MEDICA="EXISTS (SELECT 1 FROM citas ca JOIN turnos ta USING(id_turno) JOIN horarios_medicos ha USING(id_horario_medico) JOIN medicos ma USING(id_medico) WHERE ca.id_paciente=c.id_paciente AND ma.id_usuario=:usuario AND ca.estado_cita IN ('programada','atendida'))";
  public function obtenerIdConsultaPorCita(int $idCita):?int {$q=$this->conexionPostgresql->prepare('SELECT id_consulta FROM consultas WHERE id_cita=:id');$q->execute(['id'=>$idCita]);$r=$q->fetchColumn();return $r===false?null:(int)$r;}
- public function listarConsultas(array $f,?int $idUsuarioMedico=null,?int $idPaciente=null):array {
+ public function listarConsultas(array $f,?int $idUsuarioMedico=null,?int $idPaciente=null,?int $idUsuarioPaciente=null,?int $idUsuarioMedicoAutorizado=null):array {
   if($idUsuarioMedico===null&&$idPaciente===null)throw new \InvalidArgumentException('Falta el alcance de la consulta.');
   $w=[];$p=[];if($idUsuarioMedico!==null){$w[]='m.id_usuario=:medico';$p['medico']=$idUsuarioMedico;}if($idPaciente!==null){$w[]='c.id_paciente=:paciente';$p['paciente']=$idPaciente;}
+  if($idUsuarioPaciente!==null){$w[]='p.id_usuario=:usuario';$p['usuario']=$idUsuarioPaciente;}elseif($idUsuarioMedicoAutorizado!==null){$w[]=self::RELACION_MEDICA;$p['usuario']=$idUsuarioMedicoAutorizado;}
   if($f['fechaDesde']!==''){$w[]='t.fecha_hora_inicio>=CAST(:desde AS date)';$p['desde']=$f['fechaDesde'];}if($f['fechaHasta']!==''){$w[]="t.fecha_hora_inicio<CAST(:hasta AS date)+INTERVAL '1 day'";$p['hasta']=$f['fechaHasta'];}
   $w[]="concat_ws(' ',up.nombres_usuario,up.apellidos_usuario,p.cedula_identidad) ILIKE :busqueda";$p['busqueda']='%'.$f['busqueda'].'%';
   $q=$this->conexionPostgresql->prepare(self::SELECT_CONSULTA.' WHERE '.implode(' AND ',$w).' ORDER BY t.fecha_hora_inicio DESC,co.id_consulta DESC LIMIT 21 OFFSET :desplazamiento');

@@ -56,15 +56,17 @@ function configurarMenuMovil() {
 }
 
 function configurarVisibilidadClave() {
-    const boton = document.querySelector("#alternar-clave");
-    const campo = document.querySelector("#clave-acceso");
-    if (!boton || !campo) return;
-    boton.hidden = false;
-    boton.addEventListener("click", () => {
-        const mostrarClave = campo.type === "password";
-        campo.type = mostrarClave ? "text" : "password";
-        boton.textContent = mostrarClave ? "Ocultar" : "Mostrar";
-        boton.setAttribute("aria-label", mostrarClave ? "Ocultar clave de acceso" : "Mostrar clave de acceso");
-        boton.setAttribute("aria-pressed", String(mostrarClave));
-    });
+    for (const boton of document.querySelectorAll("#alternar-clave, [data-alternar-clave]")) {
+        const campo = document.getElementById(boton.getAttribute("aria-controls"));
+        if (!(campo instanceof HTMLInputElement)) continue;
+        const nombre = campo.labels?.[0]?.textContent.trim() || "contraseña";
+        boton.hidden = false;
+        boton.addEventListener("click", () => {
+            const mostrarClave = campo.type === "password";
+            campo.type = mostrarClave ? "text" : "password";
+            boton.textContent = mostrarClave ? "Ocultar" : "Mostrar";
+            boton.setAttribute("aria-label", (mostrarClave ? "Ocultar " : "Mostrar ") + nombre);
+            boton.setAttribute("aria-pressed", String(mostrarClave));
+        });
+    }
 }

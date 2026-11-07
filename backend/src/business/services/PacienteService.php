@@ -40,7 +40,7 @@ final class PacienteService
         $contrasenaHash = password_hash($datosValidados['contrasenaUsuario'], PASSWORD_DEFAULT);
         return $this->transaccion->ejecutar(function () use ($datosValidados, $contrasenaHash): Paciente {
             $rolPaciente = $this->rolRepository->obtenerRolPorCodigo(RolesSistema::PACIENTE)
-            ?? throw new ErrorAplicacion('El rol paciente no esta configurado.', 409);
+            ?? throw new ErrorAplicacion('El rol paciente no está configurado.', 409);
             $idUsuario = $this->usuarioRepository->registrarUsuario($datosValidados, $rolPaciente->idRol, $contrasenaHash);
             $idPaciente = $this->pacienteRepository->registrarPaciente($datosValidados, $idUsuario);
             $this->historiaRepository->crearHistoriaClinicaParaPaciente($idPaciente);
@@ -94,7 +94,7 @@ final class PacienteService
             });
         } catch (\Throwable $error) {
             if ($error instanceof \PDOException && (string)$error->getCode() === '23505') {
-                throw new ErrorAplicacion('El correo o la cedula ya estan registrados.', 409);
+                throw new ErrorAplicacion('El correo o la cédula ya están registrados.', 409);
             }
             throw $error;
         }

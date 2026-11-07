@@ -6,11 +6,11 @@ export function mostrarMensaje(elemento, mensaje, esError = false) {
 
 export function mostrarErrorSolicitud(elemento, error) {
     const primerErrorCampo = Object.values(error.erroresCampos || {})[0];
-    mostrarMensaje(elemento, primerErrorCampo || error.message || "Ocurrio un error.", true);
+    mostrarMensaje(elemento, primerErrorCampo || error.message || "Ocurrió un error.", true);
     if (error.codigoHttp === 401 && document.body.dataset.usuario !== "null") {
         const enlace = document.createElement("a");
         enlace.href = "/iniciar-sesion";
-        enlace.textContent = " Iniciar sesion";
+        enlace.textContent = " Iniciar sesión";
         elemento.append(enlace);
     }
 }
@@ -19,7 +19,17 @@ export function obtenerDatosFormulario(formulario) {
     return Object.fromEntries(new FormData(formulario).entries());
 }
 
+const formulariosEnviando = new WeakSet();
+
+export function confirmarCreacion(formulario, respuesta) {
+    formulario.reset();
+    mostrarMensaje(formulario.querySelector("#mensaje-formulario"), respuesta.mensaje || "Registro creado correctamente.");
+    formulario.dispatchEvent(new CustomEvent("registro-creado", { bubbles: true, detail: respuesta.datos }));
+}
+
 export async function ejecutarEnvioFormulario(formulario, operacion) {
+    if (formulariosEnviando.has(formulario)) return;
+    formulariosEnviando.add(formulario);
     const botonEnvio = formulario.querySelector('[type="submit"]');
     const mensajeFormulario = formulario.querySelector("#mensaje-formulario");
     botonEnvio.disabled = true;
@@ -30,6 +40,7 @@ export async function ejecutarEnvioFormulario(formulario, operacion) {
     } catch (error) {
         mostrarErrorSolicitud(mensajeFormulario, error);
     } finally {
+        formulariosEnviando.delete(formulario);
         botonEnvio.disabled = false;
         formulario.removeAttribute("aria-busy");
     }

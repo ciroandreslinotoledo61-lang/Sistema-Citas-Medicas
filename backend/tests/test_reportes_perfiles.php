@@ -81,7 +81,7 @@ try {
     comprobarReporte($reportes->obtenerReporteAdministrativo($administrador,array_replace($filtros,['estado'=>'atendida']))['totales']['pacientesRegistrados']===1,'Registros de pacientes dependen solo de fechas.');
     $pacientes->cambiarEstadoPaciente($administrador,$idPaciente,['pacienteActivo'=>true]);
     putenv('CITA_DURACION_MINUTOS=45'); $otroDia=(new DateTimeImmutable($fecha))->modify('+1 day')->format('Y-m-d');
-    comprobarReporte($horarios->registrarHorario($administrador,['idMedico'=>$idMedico,'fechaAtencion'=>$otroDia,'horaInicio'=>'09:00','horaFin'=>'10:30'])['cantidadTurnos']===2,'Duracion configurable para bloques nuevos.');
+    comprobarReporte($horarios->registrarHorario($administrador,['idMedico'=>$idMedico,'fechaAtencion'=>$otroDia,'horaInicio'=>'09:00','horaFin'=>'10:30'])['cantidadTurnos']===3,'La configuración externa no altera los turnos nuevos de 30 minutos.');
     $conservada=$citas->reservarCita($recepcionista,['idPaciente'=>$idPaciente,'idTurno'=>$turnos[1]['idTurno']]);
     comprobarReporte(strtotime($conservada['fechaHoraFin'])-strtotime($conservada['fechaHoraInicio'])===1800,'Configurar no altera bloques anteriores.');
 } finally {

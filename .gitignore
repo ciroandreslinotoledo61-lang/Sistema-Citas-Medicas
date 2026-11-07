@@ -13,13 +13,14 @@ Thumbs.db
 .idea/
 .vscode/
 coverage/
+/.tmp-auth/
 
 # Respaldos fuera del repositorio
 *.backup
 *.dump
 backups/
 
-# Caches de pruebas Python
+# Caches heredadas: las pruebas actuales se ejecutan con PHP
 __pycache__/
 *.py[cod]
 

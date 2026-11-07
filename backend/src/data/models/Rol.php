@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace CitasMedicas\Data\Models;
 
+use CitasMedicas\Shared\Constants\RolesSistema;
+
 final class Rol
 {
     public function __construct(
@@ -20,6 +22,7 @@ final class Rol
 
     public function obtenerDatosPublicosRol(): array
     {
-        return ['idRol' => $this->idRol, 'codigoRol' => $this->codigoRol, 'nombreRol' => $this->nombreRol];
+        return ['idRol' => $this->idRol, 'codigoRol' => $this->codigoRol,
+            'nombreRol' => RolesSistema::NOMBRES_VISIBLES[$this->codigoRol] ?? $this->nombreRol];
     }
 }

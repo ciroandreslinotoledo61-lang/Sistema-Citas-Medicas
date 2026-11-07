@@ -9,7 +9,7 @@ $fechaPanel = date('d') . ' ' . $meses[(int) date('n') - 1] . ' ' . date('Y');
     <div>
         <p class="sobretitulo"><?= $puedeRegistrar ? 'VISTA GENERAL' : 'MI ESPACIO' ?></p>
         <h1>Panel principal</h1>
-        <p>Hola, <?= escaparTextoHtml($usuarioAutenticado['nombresUsuario']) ?>. Bienvenido a tu espacio de <?= $puedeRegistrar ? 'trabajo' : 'la clinica' ?>.</p>
+        <p>Hola, <?= escaparTextoHtml($usuarioAutenticado['nombresUsuario']) ?>. Bienvenido a tu espacio de <?= $puedeRegistrar ? 'trabajo' : 'la clínica' ?>.</p>
     </div>
     <span class="fecha-panel"><?= mostrarIcono('calendario') ?><time datetime="<?= date('Y-m-d') ?>"><?= escaparTextoHtml($fechaPanel) ?></time></span>
 </section>
@@ -17,7 +17,7 @@ $fechaPanel = date('d') . ' ' . $meses[(int) date('n') - 1] . ' ' . date('Y');
     <div class="contenido-panel">
         <?php if ($modulosDisponibles !== []): ?>
         <section aria-labelledby="titulo-directorio">
-            <div class="cabecera-seccion"><h2 id="titulo-directorio"><?= $puedeRegistrar ? 'Gestion de la clinica' : 'Tu espacio' ?></h2><span>Accesos disponibles</span></div>
+            <div class="cabecera-seccion"><h2 id="titulo-directorio"><?= $puedeRegistrar ? 'Gestión de la clínica' : 'Tu espacio' ?></h2><span>Accesos disponibles</span></div>
             <div class="rejilla-modulos">
                 <?php foreach ($modulosDisponibles as $modulo): ?>
                 <a class="tarjeta-modulo" href="<?= escaparTextoHtml($modulo['ruta']) ?>">
@@ -32,9 +32,9 @@ $fechaPanel = date('d') . ' ' . $meses[(int) date('n') - 1] . ' ' . date('Y');
         <?php else: ?>
         <section class="tarjeta aviso-medico">
             <span class="icono-modulo"><?= mostrarIcono('medicos') ?></span>
-            <h2>Tu acceso medico esta habilitado</h2>
-            <p class="texto-secundario">El registro de consultas aun no esta disponible.</p>
-            <p class="ayuda">Puedes consultar los datos de tu cuenta en este panel. Para corregirlos, comunicate con Administracion.</p>
+            <h2>Tu cuenta está habilitada</h2>
+            <p class="texto-secundario">No hay módulos disponibles para los permisos de esta cuenta.</p>
+            <p class="ayuda">Puedes consultar los datos de tu cuenta en este panel. Para corregirlos, comunícate con Administración.</p>
         </section>
         <?php endif; ?>
         <?php if ($accionesDisponibles !== []): ?>
@@ -48,12 +48,12 @@ $fechaPanel = date('d') . ' ' . $meses[(int) date('n') - 1] . ' ' . date('Y');
         </section>
         <?php endif; ?>
         <?php if ($codigoRol === 'paciente'): ?>
-        <p class="nota-informativa"><?= mostrarIcono('informacion') ?><span>Para actualizar tus datos de contacto, comunicate con recepcion.</span></p>
+        <p class="nota-informativa"><?= mostrarIcono('informacion') ?><span>Para actualizar tus datos de contacto, comunícate con recepción.</span></p>
         <?php endif; ?>
     </div>
-    <aside class="resumen-panel" aria-label="Informacion de la cuenta">
+    <aside class="resumen-panel" aria-label="Información de la cuenta">
         <section class="tarjeta tarjeta-perfil">
-            <p class="sobretitulo">SESION ACTUAL</p>
+            <p class="sobretitulo">SESIÓN ACTUAL</p>
             <span class="avatar avatar-grande" aria-hidden="true"><?= escaparTextoHtml(mb_strtoupper(mb_substr($usuarioAutenticado['nombresUsuario'], 0, 1))) ?></span>
             <h2><?= escaparTextoHtml($usuarioAutenticado['nombresUsuario'] . ' ' . $usuarioAutenticado['apellidosUsuario']) ?></h2>
             <p class="rol-perfil"><?= escaparTextoHtml($usuarioAutenticado['nombreRol']) ?></p>
@@ -62,7 +62,7 @@ $fechaPanel = date('d') . ' ' . $meses[(int) date('n') - 1] . ' ' . date('Y');
         </section>
         <div class="nota-panel">
             <?= mostrarIcono('candado') ?>
-            <div><strong>Tu sesion es personal</strong><p>Al terminar, cierra sesion si compartes este equipo.</p></div>
+            <div><strong>Tu sesión es personal</strong><p>Al terminar, cierra sesión si compartes este equipo.</p></div>
         </div>
     </aside>
 </div>

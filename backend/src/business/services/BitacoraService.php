@@ -8,9 +8,11 @@ use CitasMedicas\Shared\Constants\PermisosSistema;
 final class BitacoraService {
  private readonly BitacoraRepository $bitacoraRepository;
  public function __construct(\PDO $conexionPostgresql){$this->bitacoraRepository=new BitacoraRepository($conexionPostgresql);}
- public function establecerUsuarioResponsable(?Usuario $usuario):void{$this->bitacoraRepository->establecerUsuarioResponsable($usuario?->idUsuario);}
- public function registrarEventoAutenticacion(?Usuario $usuario,string $accion,string $resultado):void{$this->bitacoraRepository->registrarEvento($usuario?->idUsuario,'autenticacion',$accion,$usuario?->idUsuario,$resultado,'Operacion de autenticacion.');}
- public function registrarLecturaClinica(Usuario $usuario,int $idPaciente):void{$this->bitacoraRepository->registrarEvento($usuario->idUsuario,'historias_clinicas','consultar',$idPaciente,'exito','Acceso autorizado al historial clinico.');}
+  public function establecerUsuarioResponsable(?Usuario $usuario):void{$this->bitacoraRepository->establecerUsuarioResponsable($usuario?->idUsuario);}
+  public function registrarAusenciaMedico(Usuario $usuario,int $idCita):void{$this->bitacoraRepository->registrarEvento($usuario->idUsuario,'citas','ausencia_medico',$idCita,'exito','Cancelación por ausencia del médico, sin atribuir inasistencia al paciente.');}
+ public function registrarEventoAutenticacion(?Usuario $usuario,string $accion,string $resultado):void{$this->bitacoraRepository->registrarEvento($usuario?->idUsuario,'autenticacion',$accion,$usuario?->idUsuario,$resultado,'Operación de autenticación.');}
+ public function registrarCambioCredenciales(Usuario $administrador,int $idUsuario,string $accion):void{$this->bitacoraRepository->registrarEvento($administrador->idUsuario,'usuarios',$accion,$idUsuario,'exito','Actualización de credenciales de acceso.');}
+ public function registrarLecturaClinica(Usuario $usuario,int $idPaciente):void{$this->bitacoraRepository->registrarEvento($usuario->idUsuario,'historias_clinicas','consultar',$idPaciente,'exito','Acceso autorizado al historial clínico.');}
  public function listarBitacora(Usuario $usuario,array $datos):array {
   PermisosSistema::exigirPermiso($usuario,'bitacora.consultar');$f=BitacoraValidator::validarFiltrosBitacora($datos);$r=$this->bitacoraRepository->listarEventos($f);
   return ['elementos'=>array_map(static fn($e):array=>$e->obtenerDatosEvento(),array_slice($r,0,20)),'pagina'=>$f['pagina'],'hayPaginaSiguiente'=>count($r)>20];

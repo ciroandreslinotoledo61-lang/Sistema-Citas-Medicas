@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace CitasMedicas\Data\Models;
 
+use CitasMedicas\Shared\Constants\RolesSistema;
+
 final class Usuario
 {
     public function __construct(
@@ -16,7 +18,10 @@ final class Usuario
         public readonly int $versionCredenciales,
         public readonly int $idRol,
         public readonly string $codigoRol,
-        public readonly string $nombreRol
+        public readonly string $nombreRol,
+        public readonly bool $requiereCambioContrasena = false,
+        public readonly ?string $contrasenaTemporalExpira = null,
+        public readonly bool $contrasenaTemporalUsada = false
     ) {
     }
 
@@ -32,7 +37,10 @@ final class Usuario
             (int) $registroUsuario['version_credenciales'],
             (int) $registroUsuario['id_rol'],
             $registroUsuario['codigo_rol'],
-            $registroUsuario['nombre_rol']
+            $registroUsuario['nombre_rol'],
+            in_array($registroUsuario['requiere_cambio_contrasena'] ?? false, [true, 1, '1', 't', 'true'], true),
+            $registroUsuario['contrasena_temporal_expira'] ?? null,
+            in_array($registroUsuario['contrasena_temporal_usada'] ?? false, [true, 1, '1', 't', 'true'], true)
         );
     }
 
@@ -49,7 +57,9 @@ final class Usuario
             'apellidosUsuario' => $this->apellidosUsuario,
             'correoUsuario' => $this->correoUsuario,
             'usuarioActivo' => $this->usuarioActivo,
-            'idRol' => $this->idRol, 'codigoRol' => $this->codigoRol, 'nombreRol' => $this->nombreRol,
+            'requiereCambioContrasena' => $this->requiereCambioContrasena,
+            'idRol' => $this->idRol, 'codigoRol' => $this->codigoRol,
+            'nombreRol' => RolesSistema::NOMBRES_VISIBLES[$this->codigoRol] ?? $this->nombreRol,
         ];
     }
 }

@@ -86,7 +86,7 @@ final class EspecialidadService
             $especialidad = $this->especialidadRepository->obtenerEspecialidadPorId($idEspecialidad, true)
             ?? throw new ErrorAplicacion('La especialidad no existe.', 404);
             if (!$especialidadActiva && $this->especialidadRepository->contarMedicosActivosPorEspecialidad($idEspecialidad) > 0) {
-                throw new ErrorAplicacion('Primero desactiva o reasigna los medicos activos de esta especialidad.', 409);
+                throw new ErrorAplicacion('Primero desactiva o reasigna los médicos activos de esta especialidad.', 409);
             }
             if ($especialidad->especialidadActiva !== $especialidadActiva) {
                 $this->especialidadRepository->cambiarEstadoEspecialidad($idEspecialidad, $especialidadActiva);
@@ -101,7 +101,7 @@ final class EspecialidadService
     {
         if ($this->especialidadRepository->existeEspecialidadConNombre($nombreEspecialidad, $idEspecialidadExcluida)) {
             throw new ErrorAplicacion('Ya existe una especialidad con ese nombre.', 409, [
-                'nombreEspecialidad' => 'El nombre ya esta registrado. Revisa tambien las especialidades inactivas.',
+                'nombreEspecialidad' => 'El nombre ya está registrado. Revisa también las especialidades inactivas.',
             ]);
         }
     }

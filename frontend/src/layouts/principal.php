@@ -9,9 +9,9 @@ $modulosDisponibles = $esVistaPrivada ? obtenerModulosDisponibles($usuarioAutent
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Clinica. Portal de pacientes y gestion del centro medico.">
+    <meta name="description" content="Clínica. Portal de pacientes y gestión del centro médico.">
     <meta name="theme-color" content="#215c4d">
-    <title><?= escaparTextoHtml($tituloPagina) ?> | Clinica</title>
+    <title><?= escaparTextoHtml($tituloPagina) ?> | Clínica</title>
     <link rel="stylesheet" href="/assets/styles/estilos.css">
 </head>
 <body class="<?= $esVistaPrivada ? 'vista-privada' : 'vista-publica' ?>"
@@ -25,7 +25,7 @@ $modulosDisponibles = $esVistaPrivada ? obtenerModulosDisponibles($usuarioAutent
     <?php if ($esVistaPrivada): ?>
     <header class="barra-superior">
         <div class="ruta-superior">
-            <button class="boton-icono boton-menu" id="abrir-navegacion" type="button" aria-label="Abrir menu" aria-controls="navegacion-lateral" aria-expanded="false"><?= mostrarIcono('menu') ?></button>
+            <button class="boton-icono boton-menu" id="abrir-navegacion" type="button" aria-label="Abrir menú" aria-controls="navegacion-lateral" aria-expanded="false"><?= mostrarIcono('menu') ?></button>
             <span><?= escaparTextoHtml($usuarioAutenticado['nombreRol']) ?></span>
             <span class="separador" aria-hidden="true">/</span>
             <strong><?= escaparTextoHtml($tituloPagina) ?></strong>
@@ -38,7 +38,7 @@ $modulosDisponibles = $esVistaPrivada ? obtenerModulosDisponibles($usuarioAutent
         <noscript><p class="mensaje error">Activa JavaScript para usar los formularios del portal.</p></noscript>
         <?php require dirname(__DIR__) . '/features/' . $vista; ?>
     </main>
-    <footer class="pie-pagina"><div class="contenedor"><span>Clinica <span class="separador">/</span> <?= $esVistaPrivada ? 'Gestion del centro medico' : 'Portal de pacientes' ?></span><span>Atencion y cuidado</span></div></footer>
+    <footer class="pie-pagina"><div class="contenedor"><span>Clínica <span class="separador">/</span> <?= $esVistaPrivada ? 'Gestión del centro médico' : 'Portal de pacientes' ?></span><span>Atención y cuidado</span></div></footer>
 </div>
 <script type="module" src="/assets/app/aplicacion.js"></script>
 <?php if ($moduloJavascript !== ''): ?>

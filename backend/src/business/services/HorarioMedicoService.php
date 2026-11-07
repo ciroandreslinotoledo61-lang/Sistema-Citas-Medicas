@@ -56,7 +56,7 @@ final class HorarioMedicoService
             return $this->transaccion->ejecutar(function () use ($datos): array {
                 $this->bloquearMedicoDisponible($datos['idMedico']);
                 if ($this->horarioRepository->existeCruceHorario($datos)) {
-                    throw new ErrorAplicacion('El medico ya tiene un bloque que se cruza con ese horario.', 409);
+                    throw new ErrorAplicacion('El médico ya tiene un bloque que se cruza con ese horario.', 409);
                 }
                 // El bloqueo puede haber esperado: se comprueba de nuevo la hora actual.
                 HorarioMedicoValidator::validarHorario($datos, $this->obtenerAhora());
@@ -64,7 +64,7 @@ final class HorarioMedicoService
             }, Transaccion::LECTURA_CONFIRMADA);
         } catch (\PDOException $error) {
             if (in_array((string) $error->getCode(), ['23505', '40P01'], true)) {
-                throw new ErrorAplicacion('El horario cambio durante la operacion. Actualiza la lista e intenta otra vez.', 409);
+                throw new ErrorAplicacion('El horario cambió durante la operación. Actualiza la lista e intenta otra vez.', 409);
             }
             throw $error;
         }
@@ -81,7 +81,7 @@ final class HorarioMedicoService
             }, Transaccion::LECTURA_CONFIRMADA);
         } catch (\PDOException $error) {
             if (in_array((string) $error->getCode(), ['23505', '40P01', '40001'], true)) {
-                throw new ErrorAplicacion('Otro proceso modifico la agenda. No se guardo este lote; vuelve a generarlo.', 409);
+                throw new ErrorAplicacion('Otro proceso modificó la agenda. No se guardó este lote; vuelve a generarlo.', 409);
             }
             throw $error;
         }
@@ -107,10 +107,10 @@ final class HorarioMedicoService
     {
         // El mismo bloqueo serializa programacion, reservas y cambios del medico.
         $medico = $this->medicoRepository->obtenerMedicoPorId($idMedico, true)
-            ?? throw new ErrorAplicacion('El medico no existe.', 404);
+            ?? throw new ErrorAplicacion('El médico no existe.', 404);
         $especialidad = $this->especialidadRepository->obtenerEspecialidadPorId($medico->idEspecialidad, true);
-        if (!$medico->medicoActivo || !$especialidad?->especialidadActiva) {
-            throw new ErrorAplicacion('El medico y su especialidad deben estar activos.', 409);
+        if ($medico->codigoRol !== RolesSistema::MEDICO || !$medico->medicoActivo || !$especialidad?->especialidadActiva) {
+            throw new ErrorAplicacion('El médico y su especialidad deben estar activos.', 409);
         }
     }
 
@@ -174,13 +174,13 @@ final class HorarioMedicoService
     {
         $detalle = ['fecha' => $bloque['fechaAtencion'], 'turnosCreados' => 0];
         if (new \DateTimeImmutable($bloque['fechaAtencion'] . ' ' . $bloque['horaInicio']) <= $this->obtenerAhora()) {
-            return $detalle + ['estado' => 'omitida', 'mensaje' => 'El inicio ya paso; no se genero el bloque.'];
+            return $detalle + ['estado' => 'omitida', 'mensaje' => 'El inicio ya pasó; no se generó el bloque.'];
         }
         if ($this->horarioRepository->existeHorarioEquivalente($bloque)) {
             return $detalle + ['estado' => 'existente', 'mensaje' => 'El bloque ya existe. Se conservaron sus turnos y citas.'];
         }
         if ($this->horarioRepository->existeCruceHorario($bloque)) {
-            return $detalle + ['estado' => 'conflicto', 'mensaje' => 'Se cruza con otro bloque; se conservo el horario anterior.'];
+            return $detalle + ['estado' => 'conflicto', 'mensaje' => 'Se cruza con otro bloque; se conservó el horario anterior.'];
         }
         $creado = $this->crearHorarioConTurnos($bloque);
         $detalle['turnosCreados'] = $creado['cantidadTurnos'];

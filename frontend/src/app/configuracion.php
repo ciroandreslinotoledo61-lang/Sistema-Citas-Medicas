@@ -8,7 +8,7 @@ function cargarVariablesEntornoFrontend(string $rutaArchivo): void
         $linea = trim($linea);
         if ($linea === '' || str_starts_with($linea, '#')) { continue; }
         if (!preg_match('/^([A-Z][A-Z0-9_]*)=(.*)$/', $linea, $coincidencia)) {
-            throw new RuntimeException('Formato .env no valido.');
+            throw new RuntimeException('Formato .env no válido.');
         }
         $valorVariable = trim($coincidencia[2]);
         if (strlen($valorVariable) > 1 &&
@@ -31,5 +31,7 @@ function escaparTextoHtml(mixed $valor): string
     return htmlspecialchars((string) $valor, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
-cargarVariablesEntornoFrontend(dirname(__DIR__, 2) . '/.env');
+if (getenv('VIDASALUD_TEST_LOCAL') !== '1') {
+    cargarVariablesEntornoFrontend(dirname(__DIR__, 2) . '/.env');
+}
 date_default_timezone_set('America/La_Paz');

@@ -11,8 +11,9 @@ final class MedicoRepository
     private const CONSULTA_MEDICO = 'SELECT medicos.id_medico, medicos.id_usuario, medicos.id_especialidad,
         medicos.telefono_medico, medicos.matricula_profesional, usuarios.nombres_usuario, usuarios.apellidos_usuario,
         usuarios.correo_usuario, usuarios.usuario_activo, especialidades.nombre_especialidad,
-        especialidades.especialidad_activa FROM medicos
+        especialidades.especialidad_activa, roles.codigo_rol FROM medicos
         INNER JOIN usuarios ON usuarios.id_usuario = medicos.id_usuario
+        INNER JOIN roles ON roles.id_rol = usuarios.id_rol
         INNER JOIN especialidades ON especialidades.id_especialidad = medicos.id_especialidad';
 
     public function __construct(private readonly \PDO $conexionPostgresql)
@@ -82,8 +83,9 @@ final class MedicoRepository
             "SELECT medicos.id_medico, concat_ws(' ', usuarios.nombres_usuario, usuarios.apellidos_usuario) AS nombre_medico,
                 especialidades.id_especialidad, especialidades.nombre_especialidad
              FROM medicos JOIN usuarios ON usuarios.id_usuario = medicos.id_usuario
+             JOIN roles ON roles.id_rol = usuarios.id_rol
              JOIN especialidades ON especialidades.id_especialidad = medicos.id_especialidad
-             WHERE usuarios.usuario_activo AND especialidades.especialidad_activa
+             WHERE usuarios.usuario_activo AND especialidades.especialidad_activa AND roles.codigo_rol = 'medico'
              ORDER BY especialidades.nombre_especialidad, nombre_medico, medicos.id_medico"
         );
         return array_map(static fn (array $registro): array => [
@@ -94,9 +96,9 @@ final class MedicoRepository
 
     public function listarMedicosParaAgenda(?int $idUsuarioMedico = null): array
     {
-        $consulta = $this->conexionPostgresql->prepare("SELECT m.id_medico, concat_ws(' ',u.nombres_usuario,u.apellidos_usuario) AS nombre_medico, u.usuario_activo
-            FROM medicos m JOIN usuarios u USING(id_usuario)" . ($idUsuarioMedico !== null ? ' WHERE m.id_usuario=:idUsuario' : '') . ' ORDER BY nombre_medico,m.id_medico');
+        $consulta = $this->conexionPostgresql->prepare("SELECT m.id_medico, concat_ws(' ',u.nombres_usuario,u.apellidos_usuario) AS nombre_medico, u.usuario_activo, e.nombre_especialidad
+            FROM medicos m JOIN usuarios u USING(id_usuario) JOIN especialidades e USING(id_especialidad)" . ($idUsuarioMedico !== null ? ' WHERE m.id_usuario=:idUsuario' : '') . ' ORDER BY nombre_medico,m.id_medico');
         $consulta->execute($idUsuarioMedico !== null ? ['idUsuario' => $idUsuarioMedico] : []);
-        return array_map(static fn(array $fila): array => ['idMedico' => (int)$fila['id_medico'], 'nombreMedico' => $fila['nombre_medico'], 'medicoActivo' => in_array($fila['usuario_activo'], [true,1,'1','t','true'], true)], $consulta->fetchAll());
+        return array_map(static fn(array $fila): array => ['idMedico' => (int)$fila['id_medico'], 'nombreMedico' => $fila['nombre_medico'], 'nombreEspecialidad' => $fila['nombre_especialidad'], 'medicoActivo' => in_array($fila['usuario_activo'], [true,1,'1','t','true'], true)], $consulta->fetchAll());
     }
 }

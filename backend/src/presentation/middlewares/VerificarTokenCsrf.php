@@ -13,7 +13,7 @@ final class VerificarTokenCsrf
     {
         $tokenRecibido = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
         if ($tokenRecibido === '' || !hash_equals(SesionUsuario::obtenerTokenCsrf(), $tokenRecibido)) {
-            throw new ErrorAplicacion('La sesion del formulario vencio. Recarga la pagina.', 419);
+            throw new ErrorAplicacion('La sesión del formulario venció. Recarga la página.', 419);
         }
     }
 }

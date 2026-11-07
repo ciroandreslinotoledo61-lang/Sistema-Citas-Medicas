@@ -223,6 +223,8 @@ tbody tr:hover { background: var(--celeste); }
 
 /* 5. Formularios, perfiles y mensajes */
 .formulario-ancho { max-width: 850px; border-top: 4px solid var(--turquesa); }
+.confirmacion-restablecimiento { flex-direction: row; align-items: flex-start; gap: 12px; margin-top: 20px; }
+.confirmacion-restablecimiento input { width: 20px; min-height: 20px; margin: 1px 0 0; flex: 0 0 20px; }
 label { display: flex; flex-direction: column; gap: 7px; font-size: 12px; font-weight: 600; margin-bottom: 19px; }
 input, select, textarea { width: 100%; min-height: 44px; padding: 11px 12px; border: 1px solid var(--campo-borde); border-radius: 7px; background: var(--papel); color: var(--tinta); font-size: 13px; line-height: 1.5; }
 input::placeholder, textarea::placeholder { color: var(--secundario); font-weight: 400; }
@@ -544,3 +546,34 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 .filtros { display:flex; flex-wrap:wrap; gap:1rem; align-items:end; margin-bottom:1.5rem; }
 .filtros label { flex:1 1 150px; min-width:0; margin:0; }
 .filtros-bitacora { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr)); }
+
+/* Reservas propias: tarjetas y pestanas, sin alterar las tablas del personal. */
+.pestanas-citas { display:flex; gap:8px; margin-bottom:24px; border-bottom:1px solid var(--linea); }
+.pestanas-citas button { min-height:48px; padding:12px 20px; border:0; border-bottom:3px solid transparent; background:transparent; color:var(--secundario); font-weight:600; }
+.pestanas-citas button[aria-selected="true"] { color:var(--turquesa-texto); border-bottom-color:var(--turquesa); }
+.pestanas-citas button:hover { background:var(--turquesa-suave); border-radius:8px 8px 0 0; }
+.rejilla-citas { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr)); gap:20px; }
+.tarjeta-cita { min-width:0; display:flex; flex-direction:column; padding:24px; border-top:3px solid var(--turquesa); }
+.cabecera-tarjeta-cita { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.cabecera-tarjeta-cita h2 { margin-bottom:8px; overflow-wrap:anywhere; }
+.cabecera-tarjeta-cita .insignia { flex-shrink:0; }
+.medico-tarjeta-cita { color:var(--secundario); overflow-wrap:anywhere; }
+.fecha-tarjeta-cita { display:flex; flex-wrap:wrap; gap:20px 40px; padding:16px 0; margin:0; border-top:1px solid var(--linea-suave); }
+.fecha-tarjeta-cita dt { font-size:12px; color:var(--secundario); margin-bottom:4px; }
+.fecha-tarjeta-cita dd { margin:0; font-weight:600; }
+.acciones-tarjeta-cita { gap:10px; padding-top:12px; margin-top:auto; }
+.acciones-tarjeta-cita .boton { flex:1 1 130px; }
+.filtros-historial-citas { display:flex; flex-wrap:wrap; align-items:flex-end; gap:16px; margin-bottom:24px; }
+.filtros-historial-citas label { flex:1 1 180px; margin:0; min-width:0; }
+.citas-vacias { text-align:center; padding:40px 24px; }
+.citas-vacias p { color:var(--secundario); }
+.icono-citas-vacias { display:inline-grid; place-items:center; width:56px; height:56px; margin-bottom:18px; border-radius:50%; color:var(--turquesa-texto); background:var(--turquesa-suave); }
+.icono-citas-vacias .icono { width:26px; height:26px; }
+@media (max-width:480px) {
+    .pestanas-citas { gap:0; }
+    .pestanas-citas button { flex:1; padding-inline:10px; }
+    .tarjeta-cita { padding:20px; }
+    .cabecera-tarjeta-cita { flex-wrap:wrap; }
+    .acciones-tarjeta-cita .boton { flex-basis:100%; }
+    .filtros-historial-citas > .boton { width:100%; }
+}

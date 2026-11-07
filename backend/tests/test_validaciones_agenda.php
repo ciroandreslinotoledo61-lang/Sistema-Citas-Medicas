@@ -18,6 +18,13 @@ function rechazarAgenda(callable $operacion, int $codigo = 422): void {
 $ahora = new DateTimeImmutable('2030-01-01 08:00:00');
 $horario = ['idMedico' => '1', 'fechaAtencion' => '2030-01-02', 'horaInicio' => '08:00', 'horaFin' => '09:00'];
 verificarAgenda(AgendaValidator::validarHorario($horario, $ahora)['idMedico'] === 1, 'Identificador normalizado.');
+$duracionAnterior = getenv('CITA_DURACION_MINUTOS');
+try {
+    foreach (['5', '15', '60', '120', 'invalida'] as $duracionExterna) {
+        putenv('CITA_DURACION_MINUTOS=' . $duracionExterna);
+        verificarAgenda(AgendaValidator::validarHorario($horario + ['duracionCitaMinutos' => 15], $ahora)['duracionCitaMinutos'] === 30, 'La duración externa o HTTP no cambia los 30 minutos.');
+    }
+} finally { putenv($duracionAnterior === false ? 'CITA_DURACION_MINUTOS' : 'CITA_DURACION_MINUTOS=' . $duracionAnterior); }
 foreach ([0, -1, true, [], '1.5', '01', '1 OR 1=1', '9999999999999999999999999'] as $valor) {
     rechazarAgenda(fn() => AgendaValidator::validarIdentificador(['idMedico' => $valor], 'idMedico'));
 }

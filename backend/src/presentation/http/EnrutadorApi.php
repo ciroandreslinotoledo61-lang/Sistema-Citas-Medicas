@@ -42,7 +42,7 @@ final class EnrutadorApi
             throw new ErrorAplicacion('La ruta solicitada no existe.', 404);
         }
         // Se conserva el contrato 404 de la version original para metodos no disponibles.
-        throw new ErrorAplicacion('La ruta o el metodo solicitado no esta disponible.', 404);
+        throw new ErrorAplicacion('La ruta o el método solicitado no está disponible.', 404);
     }
 
     private function autorizarRuta(RutaHttp $ruta): ?Usuario
@@ -51,6 +51,12 @@ final class EnrutadorApi
             return null;
         }
         $usuario = VerificarSesionUsuario::exigirUsuarioAutenticado($this->controladores->obtenerAutenticacionService());
+        if ($usuario->requiereCambioContrasena && !in_array($ruta->ruta, [
+            '/api/autenticacion/sesion', '/api/autenticacion/cambiar-contrasena',
+        ], true)) {
+            throw new ErrorAplicacion('Establece una contraseña personal para continuar.', 403,
+                ['cambioContrasenaRequerido' => 'Establece una contraseña personal para continuar.']);
+        }
         if ($ruta->roles !== []) {
             VerificarRolUsuario::exigirRolPermitido($usuario, $ruta->roles);
         }

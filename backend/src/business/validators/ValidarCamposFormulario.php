@@ -8,6 +8,12 @@ use CitasMedicas\Shared\Errors\ErrorAplicacion;
 
 final class ValidarCamposFormulario
 {
+    public static function exigirCamposPermitidos(array $datos, array $campos): void
+    {
+        if (array_diff(array_keys($datos), $campos)) {
+            throw new ErrorAplicacion('La solicitud contiene campos no permitidos.', 422);
+        }
+    }
     public static function validarTexto(array $datos, string $nombreCampo, string $etiquetaCampo, int $longitudMaxima, bool $obligatorio = true): string
     {
         $valorCampo = $datos[$nombreCampo] ?? '';

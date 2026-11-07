@@ -58,5 +58,19 @@
   {"metodo": "GET", "ruta": "/api/usuarios/{idUsuario}", "controlador": "CitasMedicas\\Presentation\\Controllers\\UsuarioController", "accion": "obtenerUsuarioPorId", "roles": ["administrador"], "argumentos": ["idUsuario"]},
   {"metodo": "PATCH", "ruta": "/api/usuarios/{idUsuario}", "controlador": "CitasMedicas\\Presentation\\Controllers\\UsuarioController", "accion": "actualizarDatosUsuario", "roles": ["administrador"], "argumentos": ["idUsuario"]},
   {"metodo": "PATCH", "ruta": "/api/usuarios/{idUsuario}/estado", "controlador": "CitasMedicas\\Presentation\\Controllers\\UsuarioController", "accion": "cambiarEstadoUsuario", "roles": ["administrador"], "argumentos": ["idUsuario", "usuario"]},
-  {"metodo": "POST", "ruta": "/api/usuarios/{idUsuario}/restablecer-contrasena", "controlador": "CitasMedicas\\Presentation\\Controllers\\CredencialController", "accion": "restablecerContrasena", "roles": ["administrador"], "argumentos": ["idUsuario"]}
+  {"metodo": "POST", "ruta": "/api/usuarios/{idUsuario}/restablecer-contrasena", "controlador": "CitasMedicas\\Presentation\\Controllers\\CredencialController", "accion": "restablecerContrasena", "roles": ["administrador"], "argumentos": ["idUsuario"]},
+  {"metodo":"GET","ruta":"/api/recetas","controlador":"CitasMedicas\\Presentation\\Controllers\\RecetaController","accion":"listar","roles":[],"argumentos":["usuario"]},
+  {"metodo":"POST","ruta":"/api/recetas","controlador":"CitasMedicas\\Presentation\\Controllers\\RecetaController","accion":"emitir","roles":[],"argumentos":["usuario"]},
+  {"metodo":"GET","ruta":"/api/recetas/{idReceta}","controlador":"CitasMedicas\\Presentation\\Controllers\\RecetaController","accion":"obtener","roles":[],"argumentos":["usuario","idReceta"]},
+  {"metodo":"GET","ruta":"/api/recetas/{idReceta}/pdf","controlador":"CitasMedicas\\Presentation\\Controllers\\RecetaController","accion":"pdf","roles":[],"argumentos":["usuario","idReceta"]},
+  {"metodo":"PATCH","ruta":"/api/recetas/{idReceta}/anulacion","controlador":"CitasMedicas\\Presentation\\Controllers\\RecetaController","accion":"anular","roles":[],"argumentos":["usuario","idReceta"]},
+  {"metodo":"GET","ruta":"/api/sala-espera","controlador":"CitasMedicas\\Presentation\\Controllers\\SalaEsperaController","accion":"listar","roles":[],"argumentos":["usuario"]},
+  {"metodo":"PATCH","ruta":"/api/sala-espera/{idCita}","controlador":"CitasMedicas\\Presentation\\Controllers\\SalaEsperaController","accion":"cambiar","roles":[],"argumentos":["usuario","idCita"]},
+  {"metodo":"GET","ruta":"/api/sala-espera/{idCita}/historial","controlador":"CitasMedicas\\Presentation\\Controllers\\SalaEsperaController","accion":"historial","roles":[],"argumentos":["usuario","idCita"]},
+  {"metodo":"GET","ruta":"/api/pagos-demo","controlador":"CitasMedicas\\Presentation\\Controllers\\PagoDemostracionController","accion":"listar","roles":[],"argumentos":["usuario"]},
+  {"metodo":"GET","ruta":"/api/pagos-demo/configuracion","controlador":"CitasMedicas\\Presentation\\Controllers\\PagoDemostracionController","accion":"configuracion","roles":[],"argumentos":["usuario"]},
+  {"metodo":"GET","ruta":"/api/pagos-demo/reporte","controlador":"CitasMedicas\\Presentation\\Controllers\\PagoDemostracionController","accion":"reporte","roles":[],"argumentos":["usuario"]},
+  {"metodo":"POST","ruta":"/api/pagos-demo","controlador":"CitasMedicas\\Presentation\\Controllers\\PagoDemostracionController","accion":"crear","roles":[],"argumentos":["usuario"]},
+  {"metodo":"GET","ruta":"/api/pagos-demo/{idPago}","controlador":"CitasMedicas\\Presentation\\Controllers\\PagoDemostracionController","accion":"obtener","roles":[],"argumentos":["usuario","idPago"]},
+  {"metodo":"PATCH","ruta":"/api/pagos-demo/{idPago}","controlador":"CitasMedicas\\Presentation\\Controllers\\PagoDemostracionController","accion":"finalizar","roles":[],"argumentos":["usuario","idPago"]}
 ]

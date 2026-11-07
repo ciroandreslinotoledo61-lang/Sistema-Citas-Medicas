@@ -63,12 +63,12 @@ async function solicitud(ruta, metodo = "GET", datos) {
         return (await solicitarApi(${JSON.stringify(ruta)}, ${JSON.stringify(metodo)}, ${JSON.stringify(datos)})).datos;
     })()`);
 }
-async function login(correo) {
+async function login(correo, claveAcceso = clave) {
     await ir("/iniciar-sesion", "#formulario-iniciar-sesion");
     await evaluar(`(() => {
         const f = document.querySelector('#formulario-iniciar-sesion');
         f.elements.correoUsuario.value = ${JSON.stringify(correo)};
-        f.elements.contrasenaUsuario.value = ${JSON.stringify(clave)};
+        f.elements.contrasenaUsuario.value = ${JSON.stringify(claveAcceso)};
         f.requestSubmit();
     })()`);
     await esperar("location.pathname === '/panel' && document.readyState === 'complete'", "inicio de sesion por formulario");
@@ -85,6 +85,43 @@ async function responsive(nombre) {
         const captura = await comando("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
         await writeFile(path.join(artefactos, nombre + "-" + ancho + ".png"), Buffer.from(captura.data, "base64"));
     }
+}
+
+async function probarModulosNuevos() {
+    const fixture = JSON.parse(process.env.MODULOS_FIXTURE || "[]");
+    assert.equal(fixture.length, 2, "Faltan identidades sintéticas de módulos.");
+    await login(fixture[0].correoMedico, "ClaveDePruebaAgenda123");
+    await ir("/recetas/nueva?idConsulta=" + fixture[0].idConsulta, "#formulario-receta");
+    await esperar("!document.querySelector('#campos-receta').disabled", "consulta propia para receta");
+    await evaluar("document.querySelectorAll('[data-campo]').forEach(c => c.value = 'Dato ficticio de presentación'); document.querySelector('#formulario-receta').requestSubmit()");
+    await esperar("!document.querySelector('#ver-receta-emitida').hidden", "emisión desde formulario real");
+    await comprobar("document.querySelector('[data-campo=medicamento]').value === '' && document.querySelector('#campos-receta').disabled", "receta limpia sin segundo envío");
+    const enlace = await evaluar("document.querySelector('#ver-receta-emitida').getAttribute('href')");
+    await ir(enlace, "#detalle-receta"); await esperar("!document.querySelector('#detalle-receta').hidden", "detalle clínico emitido");
+    await comprobar("document.querySelector('#medicamentos-emitidos').innerText.includes('Dato ficticio') && !document.querySelector('#descargar-receta').disabled", "medicamentos y PDF disponibles");
+    await responsive("receta-modulo");
+    await evaluar("document.querySelector('#formulario-anular-receta').elements.motivo.value = 'Corrección ficticia'; document.querySelector('#formulario-anular-receta').requestSubmit()");
+    await esperar("!document.querySelector('#corregir-receta').hidden", "anulación motivada y corrección enlazada"); verificaciones++;
+    await logout();
+    await login(fixture[1].correoPaciente, "ClaveDePruebaAgenda123");
+    await ir("/pagos-demo/nuevo?idCita=" + fixture[1].idCitaAtendida, "#formulario-pago");
+    await esperar("!document.querySelector('#campos-pago').disabled", "tarifa sintética configurable");
+    await evaluar("document.querySelector('#formulario-pago').elements.metodo.value = 'paypal_demo'; document.querySelector('#formulario-pago').requestSubmit()");
+    await esperar("!document.querySelector('#ver-pagos').hidden", "preparación PayPal simulada");
+    await comprobar("document.body.innerText.includes('No se realizan cobros reales') && document.querySelector('#pagar-ahora').hidden", "aclaración visible y doble envío bloqueado");
+    await ir("/pagos-demo", "#filas-pagos"); await esperar("document.querySelector('#filas-pagos button') !== null", "pago pendiente propio");
+    await evaluar("window.confirm = () => true; document.querySelector('#filas-pagos button').click()");
+    await esperar("!document.querySelector('#filas-pagos').hasAttribute('aria-busy') && document.querySelector('#filas-pagos').innerText.includes('pagado')", "confirmación simulada actualiza listado"); verificaciones++;
+    await responsive("pagos-modulo"); await logout();
+    await login("recepcionista@vidasalud.test");
+    const cita = await solicitud("/citas/" + fixture[1].idCitaProxima);
+    await ir("/sala-espera", "#filas-sala");
+    await evaluar(`document.querySelector('#formulario-busqueda').elements.fecha.value = ${JSON.stringify(cita.fechaHoraInicio.slice(0,10))}; document.querySelector('#formulario-busqueda').requestSubmit()`);
+    await esperar("Array.from(document.querySelectorAll('#filas-sala button')).some(b => b.textContent === 'Registrar llegada')", "llegada autorizada en sala");
+    await evaluar("Array.from(document.querySelectorAll('#filas-sala button')).find(b => b.textContent === 'Registrar llegada').click()");
+    await esperar("!document.querySelector('#filas-sala').hasAttribute('aria-busy') && document.querySelector('#filas-sala').innerText.includes('En espera')", "llegada actualiza sala"); verificaciones++;
+    await comprobar("!document.querySelector('#filas-sala').innerText.includes('Diagnostico privado')", "recepción sin contenido clínico");
+    await responsive("sala-modulo");
 }
 
 try {
@@ -110,6 +147,10 @@ try {
     });
     await comando("Page.enable");
     await comando("Runtime.enable");
+
+    if (process.env.VIDASALUD_BROWSER_SOLO_MODULOS === "1") {
+        await probarModulosNuevos();
+    } else {
 
     // Los cuatro roles conservan su formulario personal y las pantallas de citas del personal.
     for (const rol of ["recepcionista", "medico", "paciente", "administrador"]) {
@@ -186,6 +227,7 @@ try {
     await esperar("!document.querySelector('#historia-clinica').hidden", "historial clinico propio");
     await comprobar("document.body.innerText.includes('María Muñoz') && !document.querySelector('[name=busqueda]') && !document.querySelector('[name=idPaciente]')", "identidad propia con acentos y sin buscador de pacientes");
     await responsive("historial-clinico");
+    }
     assert.deepEqual(erroresJavascript, [], "No debe haber excepciones JavaScript.");
     verificaciones++;
     console.log(`OK: ${verificaciones} comprobaciones Edge con frontend/API/PostgreSQL reales; vistas a 320, 390 y 1440 px.`);

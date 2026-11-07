@@ -8,6 +8,8 @@ Las nuevas citas y turnos duran **exactamente 30 minutos**, sin configuración e
 
 ## Novedades
 
+- Recetas médicas con PDF privado, anulación motivada y correcciones enlazadas; sala de espera con historial y alcance por médico; pagos **solo simulados** QR/PayPal y reporte separado. Requieren migraciones **011 → 012 → 013**. [Guía y límites](docs/uso/recetas-sala-pagos.md).
+- Formularios de creación limpios tras éxito, datos conservados al fallar/editar y bloqueo de doble envío. Se mantienen los selectores e identificadores médicos `(#ID)`.
 - Selector de médicos por ID, especialidad y fecha en bloques; vista propia del médico sin selector ajeno. Disponibilidad con rol, perfil y estados válidos. Nuevas reservas/reprogramaciones de 30 minutos; seed idempotente de seis cuentas solo para pruebas locales.
 - Recuperacion por correo con Resend configurable, token con hash, vencimiento y uso unico; requiere la migracion incremental 010. Pruebas locales con correo simulado, sin envio real. Consulta [el informe de actualizacion](docs/uso/actualizacion-privacidad-recuperacion.md).
 - Mis citas del paciente con tarjetas, Proximas citas e Historial, filtros y paginacion en servidor. El personal conserva sus tablas y herramientas.
@@ -38,6 +40,9 @@ Las nuevas citas y turnos duran **exactamente 30 minutos**, sin configuración e
 | Historial clinico | No | No | Paciente asignado | Solo propio |
 | Editar sangre, alergias y antecedentes | No | No | Paciente asignado | No |
 | Reportes y bitacora | Si | No | No | No |
+| Recetas y PDF | No | No | Emite/anula/consulta propias | Consulta propias |
+| Sala de espera | Consulta operativa | Registra llegada y consulta | Inicia/finaliza sus citas | No |
+| Pagos simulados | Consulta/reporte | Consulta/reporte | No | Simula y consulta propios |
 
 La autorizacion se verifica en backend, ademas de ocultar opciones. Una cuenta tiene rol fijo. Desactivar conserva los registros y citas anteriores.
 
@@ -50,7 +55,7 @@ La autorizacion se verifica en backend, ademas de ocultar opciones. Una cuenta t
 | `backend/src/data/` | Modelos, repositories SQL, conexion, migraciones y seeder |
 | `backend/src/shared/` | Configuracion, errores, permisos, sesion y utilidades |
 | `backend/scripts/` y `backend/tests/` | Instalacion, respaldo y verificaciones |
-| `frontend/src/features/` | auth, panel, usuarios, pacientes, medicos, especialidades, horarios, citas, reportes, consultas y bitacora |
+| `frontend/src/features/` | Módulos existentes y nuevos `recetas/`, `sala-espera/` y `pagos/`, con `pages/` y `services/` |
 | `frontend/src/components/` | Navegacion, formularios, iconos y paginacion compartidos |
 | `frontend/src/api/`, `app/`, `layouts/`, `routes/` | Transporte, vistas, plantilla y proteccion |
 | `frontend/src/styles/estilos.css` | Paleta centralizada y estilos responsive |
@@ -93,11 +98,14 @@ php backend/scripts/actualizar-programacion-mensual.php
 php backend/scripts/actualizar-consultas-bitacora.php
 php backend/scripts/actualizar-seguridad-credenciales.php --aplicar
 php backend/scripts/actualizar-recuperacion-contrasena.php --aplicar
+php backend/scripts/actualizar-recetas-sala-pagos.php
 php backend/scripts/cargar-datos-iniciales.php
 php backend/scripts/verificar-entorno.php --conexion
 ```
 
 El actualizador de consultas instala 006-008; el de seguridad agrega 009 en otra transaccion y solo admite una base local terminada en `_pruebas`. La autenticacion actual necesita 009 y la recuperacion por correo necesita 010. El seeder es solo para una base nueva/local: cuatro roles, tres especialidades y una cuenta por rol. Cuentas: `administrador@vidasalud.test`, `recepcionista@vidasalud.test`, `medico@vidasalud.test` y `paciente@vidasalud.test`. Usan la clave elegida en tu `.env`.
+
+El comando nuevo de recetas/sala/pagos mostrado arriba es **solo vista previa**. Antes de abrir esos módulos, configura por proceso la conexión local de pruebas y aplica 011–013 con `--aplicar` siguiendo [su guía](docs/uso/recetas-sala-pagos.md); ese actualizador no lee `.env` ni acepta producción.
 
 Para añadir Médico 1-3 y Paciente 1-3 sin sustituir esas cuentas, usa el [seed de demostración independiente](docs/uso/correcciones-agenda-demostracion.md). Exige base local `_pruebas`, habilitación explícita y una clave externa; no admite producción ni cambia cuentas existentes.
 
@@ -117,7 +125,7 @@ Abre <http://127.0.0.1:8080>. `php -S` es para desarrollo. No publiques la raiz 
 
 ## Actualizar una base existente
 
-Trabaja primero en una copia local terminada en `_pruebas`. Las migraciones actuales son 001-010: esquema base; unicidad; responsabilidades de citas; agenda/perfiles; programación/cita activa; estado programada; bitácora; historial/consultas; seguridad de credenciales; recuperación. Para una base anterior, sigue las guías de [seguridad de credenciales](docs/uso/usuarios-autenticacion.md) y [actualización](docs/uso/actualizacion-privacidad-recuperacion.md), verificando antes qué está instalado. **009 y 010 ya fueron trabajadas en Neon: no repetirlas allí.** Estas correcciones no requieren migraciones nuevas. No repitas migración inicial ni seeder en bases existentes. Conserva tus `.env` y un respaldo. La migración de Neon y el despliegue no forman parte de esta entrega.
+Trabaja primero en una copia local terminada en `_pruebas`. Conserva 001-010: esquema base, unicidad, responsabilidades, agenda/perfiles, programación/cita activa, estado programada, bitácora, consultas/historial, credenciales y recuperación. **009 y 010 ya fueron trabajadas en Neon: no repetirlas allí.** La ampliación requiere **011 recetas, 012 sala y 013 pagos de demostración**, en ese orden y sin conversión de registros previos. El [actualizador nuevo](docs/uso/recetas-sala-pagos.md) exige conexión local explícita mediante variables de proceso y rechaza producción. No repitas migración inicial ni seeder en bases existentes. Conserva tus `.env` y un respaldo. No se migró Neon ni se realizó despliegue.
 
 ## Reglas principales
 
@@ -136,7 +144,7 @@ Atendida se permite desde el inicio; Inasistencia, desde el fin. Registrar una c
 
 ## Verificacion y limites
 
-Sin BD: `php backend/tests/ejecutar-pruebas.php`. La suite `php backend/tests/ejecutar-pruebas.php --completo --pg-bin "C:/Program Files/PostgreSQL/18/bin"` crea su propio cluster local desechable, aplica 001-010 y ejecuta privacidad, autenticacion, recuperacion con correo simulado, suites PHP, contrato HTTP anterior y configuracion de despliegue. Requiere PHP con cURL, pdo_pgsql y mbstring, y los binarios de PostgreSQL; no necesita Python ni usa la conexion de Neon. Agrega `--navegador` para los recorridos JavaScript en Edge (solo esta opcion requiere Node 22+ y Edge). Consulta [las instrucciones y equivalencias de pruebas PHP](docs/uso/pruebas-php.md) y [la guia de autenticacion](docs/uso/usuarios-autenticacion.md).
+Sin BD: configura `$env:VIDASALUD_TEST_LOCAL='1'` y ejecuta `php backend/tests/ejecutar-pruebas.php` para omitir la lectura de `.env`. La suite `php backend/tests/ejecutar-pruebas.php --completo --pg-bin "C:/Program Files/PostgreSQL/18/bin"` crea su propio clúster local desechable, aplica 001-013 y ejecuta privacidad, autenticación, recuperación con correo simulado, módulos nuevos, suites PHP, contrato HTTP anterior y configuración de despliegue. Requiere PHP con cURL, pdo_pgsql y mbstring y binarios PostgreSQL; no necesita Python ni usa Neon o los `.env`. Agrega `--navegador` para los recorridos existentes de Edge. Ejecuta también `node --experimental-vm-modules backend/tests/test_formularios.mjs` y `node --experimental-vm-modules backend/tests/test_filtros_listados.mjs`. Consulta [pruebas locales](docs/uso/pruebas-php.md) y [la guía de nuevos módulos](docs/uso/recetas-sala-pagos.md).
 
 La revision de credenciales del 31/10/2026 verifico Windows nativo, PHP 8.5.11 y PostgreSQL 18.6: pasaron 18 suites PHP (incluida concurrencia), 330 comprobaciones HTTP de autenticacion, 137 del contrato HTTP anterior y 10 de configuracion. Edge comprobo los formularios con API simulada a 390 y 1440 px. El detalle y los limites estan en [la guia de autenticacion](docs/uso/usuarios-autenticacion.md).
 

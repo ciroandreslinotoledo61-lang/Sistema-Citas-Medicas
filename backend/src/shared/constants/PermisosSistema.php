@@ -10,6 +10,14 @@ use CitasMedicas\Shared\Errors\ErrorAplicacion;
 final class PermisosSistema
 {
     public const ROLES_POR_OPERACION = [
+        'recetas.consultar' => [RolesSistema::MEDICO, RolesSistema::PACIENTE],
+        'recetas.emitir' => [RolesSistema::MEDICO],
+        'sala.consultar' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA, RolesSistema::MEDICO],
+        'sala.llegada' => [RolesSistema::RECEPCIONISTA],
+        'sala.atender' => [RolesSistema::MEDICO],
+        'pagos.consultar' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA, RolesSistema::PACIENTE],
+        'pagos.simular' => [RolesSistema::PACIENTE],
+        'pagos.reportar' => [RolesSistema::ADMINISTRADOR, RolesSistema::RECEPCIONISTA],
         'historial.consultar'=>[RolesSistema::MEDICO,RolesSistema::PACIENTE],
         'consultas.escribir'=>[RolesSistema::MEDICO],
         'bitacora.consultar' => [RolesSistema::ADMINISTRADOR],

@@ -37,6 +37,14 @@ La fuente de verdad es `PermisosSistema.php` y las restricciones de los servicio
 | Médico | Horarios y citas propios; consultas propias e historial de pacientes con relación de atención autorizada. No programa bloques ni reprograma citas. |
 | Paciente | Perfil, citas e historial propios; disponibilidad para reservar. No administra bloques. |
 
+### Nuevos módulos de atención
+
+- `recetas`: solo el médico autor de una consulta emite/anula; el autor y el paciente titular consultan y descargan. Administración/Recepción no reciben acceso clínico. Contenido y datos de emisión inmutables; corrección = anulación motivada + nueva receta enlazada. No es firma digital certificada.
+- `sala-espera`: Administración/Recepción consultan datos operativos sin contenido clínico; solo Recepción registra llegada; solo el médico asignado inicia/finaliza atención. Control de versión y bloqueos por cita. La migración 012 sincroniza finalizaciones desde citas/consultas y conserva eventos.
+- `pagos`: exclusivamente demostración; paciente crea/confirma/cancela intentos propios, Administración/Recepción consultan y reportan. Sin APIs externas, bancos ni credenciales PayPal. Tarifa `DEMO_TARIFA_BOB` explícita; si falta, no se crean pagos. Montos en centavos enteros BOB, referencia `DEMO-`, estados finales inmutables y un pago pendiente/pagado por cita.
+- Conservar exactamente las etiquetas de médicos `(#1)`, `(#2)`, etc. y sus selectores. Nunca usar el nombre como identificador.
+- Creaciones exitosas limpian y muestran mensaje; errores y ediciones conservan valores. `ejecutarEnvioFormulario` bloquea envíos repetidos mediante `WeakSet`; `confirmarCreacion` emite `registro-creado` para listados locales.
+
 - Toda cita nueva dura exactamente **30 minutos**. `ConfiguracionAgenda` ignora `CITA_DURACION_MINUTOS`; no convertir registros históricos. Reservas y reprogramaciones rechazan turnos de otra duración.
 - Respetar apertura/cierre y límites del bloque. Los descansos se representan dejando intervalos sin bloques; no inventar un descanso general.
 - Solo una cita `programada` activa por paciente, incluidas las pendientes de resultado tras su hora; conservar excepciones legadas previstas por SQL.
@@ -57,7 +65,7 @@ La fuente de verdad es `PermisosSistema.php` y las restricciones de los servicio
 1. Reutilizar servicio, repositorio, validador y componentes existentes del módulo.
 2. Aplicar permisos y alcance de sesión antes de devolver o modificar datos; mantener paginación y filtros.
 3. Usar SQL parametrizado, transacciones y control de concurrencia. No modificar migraciones históricas aplicadas: preparar una incremental separada si es necesaria.
-4. Migraciones actuales: 001-010. 009 y 010 ya fueron trabajadas en Neon: **no repetirlas allí**. Este conjunto de correcciones no requiere nuevas migraciones.
+4. Migraciones: conservar 001-010 intactas; 009 y 010 ya fueron trabajadas en Neon: **no repetirlas allí**. Los módulos nuevos requieren **011 recetas → 012 sala → 013 pagos**, antes de publicar el código. Script `backend/scripts/actualizar-recetas-sala-pagos.php`: vista previa sin conexión por defecto, `--aplicar` solo en base local `_pruebas` explícita. Nunca migrar Neon sin autorización específica.
 5. Añadir regresiones y actualizar solo documentación afectada; conservar el diseño CSS y rutas existentes.
 
 ## Pruebas locales
@@ -66,8 +74,10 @@ No adaptar el código a PHP 8.0 de XAMPP. Usar PHP compatible (por ejemplo `C:/p
 
 ```powershell
 # Sin conexiones a BD
+$env:VIDASALUD_TEST_LOCAL = '1' # Impide cargar archivos .env durante estas pruebas.
 & C:/php85/php.exe backend/tests/ejecutar-pruebas.php
 node --experimental-vm-modules backend/tests/test_filtros_listados.mjs
+node --experimental-vm-modules backend/tests/test_formularios.mjs
 
 # Clúster nuevo desechable, puertos libres y migraciones SOLO locales
 & C:/php85/php.exe backend/tests/ejecutar-pruebas.php --completo --pg-bin "C:/Program Files/PostgreSQL/18/bin"
@@ -80,5 +90,7 @@ git status --short
 ```
 
 El modo `--integracion` usa la conexión configurada: no ejecutarlo sin verificar aislamiento. Preferir `--completo`, que fija las conexiones a su propio PostgreSQL local y usa correo simulado. El seed `backend/scripts/cargar-demostracion.php` requiere host local, base `_pruebas`, `APP_ENV=local/test`, puerto explícito y `DEMO_SEED_ENABLE=1`; clave mediante `DEMO_SEED_PASSWORD`. Instrucciones en [la guía de correcciones](docs/uso/correcciones-agenda-demostracion.md).
+
+El indicador `VIDASALUD_TEST_LOCAL=1` es exclusivo de procesos aislados: backend y frontend omiten sus `.env` y exigen variables de proceso. No habilitarlo en producción. Reglas, límites y configuración de nuevos módulos en [recetas, sala y pagos](docs/uso/recetas-sala-pagos.md).
 
 Informar resultados reales, limitaciones y comprobaciones manuales pendientes. No afirmar que una prueba pasó si no se ejecutó.

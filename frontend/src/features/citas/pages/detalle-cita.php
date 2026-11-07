@@ -4,6 +4,7 @@
 <section class="tarjeta formulario-ancho" id="detalle-cita" aria-busy="true">
     <div class="cabecera-detalle"><h2 id="titulo-cita">Cargando cita...</h2><span id="estado-cita"></span></div>
     <dl class="datos-paciente" id="datos-cita"></dl>
+    <?php if ($usuarioAutenticado['codigoRol']==='paciente'): ?><p class="nota-informativa">Pagos exclusivamente de demostración: no se realizan cobros reales.</p><a class="boton" id="pagar-cita" hidden>Pagar ahora · Demostración</a><?php endif; ?>
     <a class="enlace" id="enlace-cita-origen" hidden></a>
     <p id="explicacion-acciones" class="nota-informativa"></p>
     <div class="acciones" id="acciones-cita" hidden>

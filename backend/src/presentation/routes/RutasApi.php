@@ -20,7 +20,10 @@ final class RutasApi
             RutasMedicos::definir(),
             RutasAgenda::definir(),
             RutasBitacora::definir(),
-            RutasConsultas::definir()
+            RutasConsultas::definir(),
+            RutasRecetas::definir(),
+            RutasSalaEspera::definir(),
+            RutasPagosDemostracion::definir()
         );
     }
 }

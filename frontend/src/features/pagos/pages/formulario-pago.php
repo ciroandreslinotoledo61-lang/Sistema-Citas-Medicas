@@ -1,0 +1,5 @@
+<a class="enlace-volver" href="/citas">&larr; Mis citas</a><section class="titulo-vista"><div><p class="sobretitulo">PAGO DE DEMOSTRACIÓN</p><h1>Pagar ahora</h1><p>No se realizan cobros reales. No se conecta a QR bancario ni a PayPal.</p></div></section>
+<p id="resumen-pago" class="nota-informativa">Verificando cita y tarifa de demostración...</p>
+<form id="formulario-pago" class="tarjeta formulario-ancho"><fieldset id="campos-pago" disabled><legend>Simulación</legend><label>Método<select name="metodo" required><option value="qr_demo">QR de demostración</option><option value="paypal_demo">PayPal de demostración</option></select></label><p id="vista-metodo" class="nota-informativa">QR DEMO · Representación no escaneable, sin cuenta bancaria.</p></fieldset>
+<p id="mensaje-formulario" class="mensaje" role="status" hidden></p><button class="boton" type="submit" id="pagar-ahora" disabled>Pagar ahora · Solo demostración</button></form>
+<a id="ver-pagos" class="boton boton-secundario" href="/pagos-demo" hidden>Ver pago pendiente y confirmar simulación</a>

@@ -27,8 +27,8 @@ if ($opcion === 'preparar') {
     $conexion = $conectar($base);
     $archivos = glob(dirname(__DIR__) . '/src/data/migrations/*.sql');
     sort($archivos);
-    if (count($archivos) !== 10) {
-        throw new RuntimeException('Se requieren exactamente las migraciones 001-010.');
+    if (count($archivos) !== 13) {
+        throw new RuntimeException('Se requieren exactamente las migraciones 001-013.');
     }
     foreach ($archivos as $archivo) {
         $conexion->beginTransaction();

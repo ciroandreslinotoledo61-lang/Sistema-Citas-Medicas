@@ -8,7 +8,7 @@ require_once __DIR__ . '/http/ClienteHttpPruebas.php';
 /** Crea PostgreSQL efimero; no carga .env ni utiliza conexiones del proyecto. */
 function ejecutarPruebasHttpAisladas(array $argumentos): void
 {
-    $opciones = getopt('', ['pg-bin:', 'regresion', 'completo', 'navegador', 'solo-recuperacion', 'help']);
+    $opciones = getopt('', ['pg-bin:', 'regresion', 'completo', 'navegador', 'solo-recuperacion', 'solo-modulos', 'solo-interfaz', 'help']);
     if (isset($opciones['help']) || !isset($opciones['pg-bin'])) {
         echo "Uso: php backend/tests/ejecutar-pruebas.php --completo --pg-bin RUTA [--navegador]\n";
         if (!isset($opciones['help'])) { throw new RuntimeException('Indica la carpeta de binarios PostgreSQL locales.'); }
@@ -34,7 +34,8 @@ function ejecutarPruebasHttpAisladas(array $argumentos): void
         'APP_DEBUG' => 'false', 'SESSION_SECURE' => 'false', 'SESSION_COOKIE_NAME' => 'vidasalud_auth_pruebas',
         'SESSION_IDLE_SECONDS' => '1800', 'SEED_USERS_PASSWORD' => $clave, 'API_URL' => $base,
         'API_INTERNAL_URL' => $base, 'FRONTEND_URL' => $front, 'VIDASALUD_TEST_LOCAL' => '1',
-        'CITA_DURACION_MINUTOS' => '30', 'MAIL_PROVIDER' => 'resend', 'MAIL_FROM' => '', 'RESEND_API_KEY' => '',
+         'CITA_DURACION_MINUTOS' => '30', 'MAIL_PROVIDER' => 'resend', 'MAIL_FROM' => '', 'RESEND_API_KEY' => '',
+         'DEMO_TARIFA_BOB' => '12.34', // Valor exclusivamente sintético, nunca una tarifa oficial.
     ]);
     $entornoCorreo = array_replace($entorno, ['API_URL' => $baseCorreo, 'API_INTERNAL_URL' => $baseCorreo,
         'FRONTEND_URL' => $frontCorreo, 'RECUPERACION_BUZON_PRUEBAS' => $buzon]);
@@ -55,7 +56,7 @@ function ejecutarPruebasHttpAisladas(array $argumentos): void
         $iniciado = true;
         echo "OK: cluster PostgreSQL nuevo local, sin conexion a Neon.\n";
         $cuentas = json_decode($soporte('preparar'), true, 512, JSON_THROW_ON_ERROR);
-        echo "OK: migraciones 001-010 y datos sinteticos aplicados al cluster local.\n";
+        echo "OK: migraciones 001-013 y datos sinteticos aplicados al cluster local.\n";
         foreach ([['backend', $puertoApi, 'src/server.php', $entorno, 'backend'],
             ['frontend', $puertoFront, 'src/server.php', $entorno, 'frontend'],
             ['backend', $puertoCorreo, 'tests/servidor_recuperacion_aislado.php', $entornoCorreo, 'backend-correo'],
@@ -66,6 +67,31 @@ function ejecutarPruebasHttpAisladas(array $argumentos): void
             SoporteProcesosPrueba::esperarServidor($proceso, $puerto);
         }
         $secretos = [$clave];
+        if (isset($opciones['solo-modulos'])) {
+            require_once __DIR__ . '/test_modulos_http.php';
+            $fixture = json_decode($ejecutar([PHP_BINARY, 'backend/tests/privacidad_aislada.php']), true, 512, JSON_THROW_ON_ERROR);
+            probarModulosHttp($base, $front, $clave, $fixture);
+            if (isset($opciones['navegador'])) {
+                echo $ejecutar(['node', 'backend/tests/test_paciente_navegador.mjs'], array_replace($entorno, [
+                    'VIDASALUD_BROWSER_SOLO_MODULOS' => '1', 'MODULOS_FIXTURE' => json_encode($fixture, JSON_THROW_ON_ERROR),
+                ]));
+            }
+            if (isset($opciones['solo-interfaz'])) {
+                echo "OK: interfaz y HTTP de módulos nuevos verificados; no se repitieron las suites PHP.\n";
+                return;
+            }
+            $modulos = array_replace($entorno, ['DB_NAME' => 'vidasalud_modulos_pruebas']);
+            $ejecutar([PHP_BINARY, 'backend/tests/autenticacion_aislada.php', 'preparar', 'solo-seeder'], $modulos);
+            foreach (['test_modulos_validacion.php','test_modulos_atencion.php','test_modulos_migraciones.php','test_modulos_concurrencia.php'] as $prueba) {
+                echo $ejecutar([PHP_BINARY, 'backend/tests/' . $prueba], $modulos);
+            }
+            $contrato = array_replace($entorno, ['DB_NAME' => 'vidasalud_http_pruebas']);
+            $ejecutar([PHP_BINARY, 'backend/tests/autenticacion_aislada.php', 'preparar', 'solo-seeder'], $contrato);
+            echo $ejecutar([PHP_BINARY, 'backend/tests/test_contrato_http.php'], $contrato);
+            echo $ejecutar([PHP_BINARY, 'deploy/tests/test_configuracion.php']);
+            echo "OK: verificación focalizada de módulos nuevos en cluster desechable.\n";
+            return;
+        }
         if (!isset($opciones['solo-recuperacion'])) {
             require_once __DIR__ . '/test_privacidad_http.php';
             $fixture = json_decode($ejecutar([PHP_BINARY, 'backend/tests/privacidad_aislada.php']), true, 512, JSON_THROW_ON_ERROR);
@@ -75,6 +101,11 @@ function ejecutarPruebasHttpAisladas(array $argumentos): void
                 echo $ejecutar(['node', 'backend/tests/test_paciente_navegador.mjs']);
                 $soporte('reiniciar-limites');
             }
+        }
+        if (!isset($opciones['solo-recuperacion'])) {
+            require_once __DIR__ . '/test_modulos_http.php';
+            probarModulosHttp($base, $front, $clave, $fixture);
+            $soporte('reiniciar-limites');
         }
         require_once __DIR__ . '/test_recuperacion_http.php';
         $secretos = array_merge($secretos, probarRecuperacionHttp($baseCorreo, $frontCorreo, $clave, $soporteCorreo,

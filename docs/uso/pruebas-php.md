@@ -14,6 +14,7 @@ Desde la raiz del repositorio:
 
 ```powershell
 # Validaciones sin base de datos
+$env:VIDASALUD_TEST_LOCAL = '1' # No cargar archivos .env
 & C:/php85/php.exe backend/tests/ejecutar-pruebas.php
 
 # Todas las suites PHP y HTTP, PostgreSQL local aislado y correo simulado
@@ -27,13 +28,20 @@ Desde la raiz del repositorio:
 
 # Filtros y paginación JavaScript sin red ni dependencias
 node --experimental-vm-modules backend/tests/test_filtros_listados.mjs
+node --experimental-vm-modules backend/tests/test_formularios.mjs
+
+# Solo módulos nuevos, con otro clúster desechable (HTTP, PDF, migraciones y concurrencia)
+& C:/php85/php.exe backend/tests/ejecutar-pruebas.php --completo --solo-modulos --pg-bin "C:/Program Files/PostgreSQL/18/bin"
+
+# HTTP + formularios nuevos en Edge, sin repetir las suites PHP
+& C:/php85/php.exe backend/tests/ejecutar-pruebas.php --completo --solo-modulos --solo-interfaz --navegador --pg-bin "C:/Program Files/PostgreSQL/18/bin"
 ```
 
 Los comandos no necesitan paquetes Composer ni instalar Python. El modo
 completo crea un cluster PostgreSQL local nuevo en `.tmp-auth/`, selecciona
 puertos libres y prepara tres bases con nombres terminados en `_pruebas`.
-Aplica 001-010 a esas bases sinteticas sin modificar los archivos SQL. Fija
-las conexiones a `127.0.0.1`; no lee la conexion de Neon para estas pruebas.
+Aplica 001-013 a esas bases sintéticas, conservando los archivos 001-010. Fija
+las conexiones a `127.0.0.1`; backend y frontend omiten sus `.env` en este entorno y no leen la conexión de Neon.
 No envia correos reales: el flujo de recuperacion usa el transporte simulado.
 Al finalizar detiene los servidores PHP y su propio cluster PostgreSQL.
 
@@ -43,7 +51,7 @@ aisla ademas el contrato HTTP anterior en otra base del mismo cluster.
 
 La revisión de agenda agrega `test_demostracion_validacion.php` (sin conexión),
 `test_correcciones_agenda.php` y `test_demostracion_seed.php` (solo con el
-ejecutor aislado). El conjunto actual tiene 25 suites PHP. Las cifras de la
+ejecutor aislado). Aquella revisión tenía 25 suites PHP; con los cuatro ensayos de recetas/sala/pagos el conjunto tiene 29. Las cifras de la
 sección histórica siguiente describen la ejecución del 05/11, no estos cambios.
 
 ## Verificación de correcciones del 07/11/2026
@@ -119,6 +127,11 @@ revocacion, limites persistentes, sesiones invalidadas, acceso por roles,
 origen, CSRF, privacidad de respuestas y rollback ante fallos de auditoria.
 
 ## Verificacion de la sustitucion
+
+Los resultados de la ampliación posterior de recetas, sala y pagos (29 suites,
+75 solicitudes HTTP nuevas, 20 comprobaciones Edge nuevas y pruebas de
+formularios) están en [su guía e inventario](recetas-sala-pagos.md#resultados-de-esta-ampliación).
+Las cifras de las secciones históricas siguientes se conservan como antecedentes.
 
 Verificado el 2026-11-05 sobre `integracion-credenciales-render`, conservando
 los cambios locales anteriores. Entorno: Windows, PHP 8.5.11, PostgreSQL 18,

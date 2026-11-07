@@ -47,3 +47,17 @@ export async function solicitarApi(rutaApi, metodoHttp = "GET", datosSolicitud =
     }
     return enviarSolicitudHttp(rutaApi, opciones);
 }
+
+export async function descargarArchivoApi(rutaApi, nombre) {
+    const respuesta = await fetch(urlApi + rutaApi, { credentials: "include", signal: AbortSignal.timeout(15000), headers: { Accept: "application/pdf" } });
+    if (!respuesta.ok) {
+        const error = await respuesta.json().catch(() => ({}));
+        throw new ErrorSolicitudApi(error.mensaje || "No se pudo descargar la receta.", respuesta.status, error.erroresCampos);
+    }
+    if (!respuesta.headers.get("Content-Type")?.includes("application/pdf")) throw new Error("El archivo recibido no es una receta PDF.");
+    const url = URL.createObjectURL(await respuesta.blob());
+    const enlace = document.createElement("a"); enlace.href = url; enlace.download = nombre;
+    document.body.append(enlace); enlace.click(); enlace.remove();
+    // Dar tiempo al navegador para iniciar la descarga antes de liberar el Blob.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}

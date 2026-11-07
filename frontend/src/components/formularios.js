@@ -19,7 +19,17 @@ export function obtenerDatosFormulario(formulario) {
     return Object.fromEntries(new FormData(formulario).entries());
 }
 
+const formulariosEnviando = new WeakSet();
+
+export function confirmarCreacion(formulario, respuesta) {
+    formulario.reset();
+    mostrarMensaje(formulario.querySelector("#mensaje-formulario"), respuesta.mensaje || "Registro creado correctamente.");
+    formulario.dispatchEvent(new CustomEvent("registro-creado", { bubbles: true, detail: respuesta.datos }));
+}
+
 export async function ejecutarEnvioFormulario(formulario, operacion) {
+    if (formulariosEnviando.has(formulario)) return;
+    formulariosEnviando.add(formulario);
     const botonEnvio = formulario.querySelector('[type="submit"]');
     const mensajeFormulario = formulario.querySelector("#mensaje-formulario");
     botonEnvio.disabled = true;
@@ -30,6 +40,7 @@ export async function ejecutarEnvioFormulario(formulario, operacion) {
     } catch (error) {
         mostrarErrorSolicitud(mensajeFormulario, error);
     } finally {
+        formulariosEnviando.delete(formulario);
         botonEnvio.disabled = false;
         formulario.removeAttribute("aria-busy");
     }

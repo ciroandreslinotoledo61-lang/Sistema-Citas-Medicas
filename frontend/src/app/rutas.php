@@ -30,6 +30,11 @@ $moduloJavascript = '';
 $vista = '';
 
 $rutasVistas = [
+    '/recetas' => ['recetas','Recetas médicas','recetas/pages/lista-recetas.php','recetas/pages/listar-recetas.js',['medico','paciente']],
+    '/recetas/nueva' => ['receta-nueva','Emitir receta','recetas/pages/formulario-receta.php','recetas/pages/formulario-receta.js',['medico']],
+    '/sala-espera' => ['sala-espera','Sala de espera','sala-espera/pages/sala-espera.php','sala-espera/pages/sala-espera.js',['administrador','recepcionista','medico']],
+    '/pagos-demo' => ['pagos-demo','Pagos de demostración','pagos/pages/pagos.php','pagos/pages/pagos.js',['administrador','recepcionista','paciente']],
+    '/pagos-demo/nuevo' => ['pago-demo-nuevo','Pagar ahora · Demostración','pagos/pages/formulario-pago.php','pagos/pages/formulario-pago.js',['paciente']],
     '/recuperar-contrasena' => ['recuperar-contrasena', 'Recuperación de contraseña', 'auth/pages/recuperar-contrasena.php', 'auth/pages/recuperar-contrasena.js', null],
     '/recuperar-contrasena/confirmar' => ['confirmar-recuperacion', 'Nueva contraseña', 'auth/pages/confirmar-recuperacion.php', 'auth/pages/confirmar-recuperacion.js', null],
     '/' => ['inicio', 'Portal de pacientes', 'inicio/inicio.php', '', null],
@@ -60,6 +65,9 @@ $rutasVistas = [
 try {
     if (isset($rutasVistas[$rutaActual])) {
         [$paginaActual, $tituloPagina, $vista, $moduloJavascript, $rolesPermitidos] = $rutasVistas[$rutaActual];
+    } elseif(preg_match('#^/recetas/([1-9][0-9]*)$#',$rutaActual,$coincidencia)){
+        $idRegistro=(int)$coincidencia[1];
+        [$paginaActual,$tituloPagina,$vista,$moduloJavascript,$rolesPermitidos]=['receta-detalle','Receta médica','recetas/pages/detalle-receta.php','recetas/pages/detalle-receta.js',['medico','paciente']];
     } elseif(preg_match('#^/consultas/([1-9][0-9]*)(/editar)?$#',$rutaActual,$coincidencia)){
         $idRegistro=(int)$coincidencia[1];
         [$paginaActual,$tituloPagina,$vista,$moduloJavascript,$rolesPermitidos]=isset($coincidencia[2])

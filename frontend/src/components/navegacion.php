@@ -80,6 +80,9 @@ $especialidadesActivo = str_starts_with($paginaActual, 'especialidad');
         <?php endif; ?>
         <?php if($rolMenu==='medico'): ?><a href="/consultas" <?= str_starts_with($paginaActual,'consulta')?'aria-current="page"':'' ?>><?= mostrarIcono('medicos') ?><span>Consultas e historial</span></a>
         <?php elseif($esPaciente): ?><a href="/historial-clinico" <?= $paginaActual==='historial-clinico'?'aria-current="page"':'' ?>><?= mostrarIcono('informacion') ?><span>Mi historial clínico</span></a><?php endif; ?>
+        <?php if ($rolMenu==='medico' || $esPaciente): ?><a href="/recetas" <?= str_starts_with($paginaActual,'receta')?'aria-current="page"':'' ?>><?= mostrarIcono('informacion') ?><span>Mis recetas</span></a><?php endif; ?>
+        <?php if (!$esPaciente): ?><a href="/sala-espera" <?= $paginaActual==='sala-espera'?'aria-current="page"':'' ?>><?= mostrarIcono('pacientes') ?><span>Sala de espera</span></a><?php endif; ?>
+        <?php if ($rolMenu!=='medico'): ?><a href="/pagos-demo" <?= str_starts_with($paginaActual,'pago')?'aria-current="page"':'' ?>><?= mostrarIcono('informacion') ?><span>Pagos · Demostración</span></a><?php endif; ?>
         <?php if (!$esAdmin): ?>
         <span class="etiqueta-menu">MI CUENTA</span>
         <a href="/cambiar-contrasena" <?= $paginaActual === 'cambiar-contrasena' ? 'aria-current="page"' : '' ?>><?= mostrarIcono('candado') ?><span>Cambiar contraseña</span></a>

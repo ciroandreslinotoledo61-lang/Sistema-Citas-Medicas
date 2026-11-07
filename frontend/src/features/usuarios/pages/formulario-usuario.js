@@ -1,5 +1,5 @@
 import { obtenerUsuarioPorId, registrarUsuarioAdministrativo, actualizarDatosUsuario } from "../services/usuarios-api.js";
-import { ejecutarEnvioFormulario, completarCamposFormulario, mostrarErrorSolicitud, mostrarMensaje } from "../../../components/formularios.js";
+import { ejecutarEnvioFormulario, completarCamposFormulario, mostrarErrorSolicitud, mostrarMensaje, confirmarCreacion } from "../../../components/formularios.js";
 import { configurarValidacionContrasenas, marcarErroresContrasena } from "../../../components/contrasenas.js";
 
 const formulario = document.querySelector("#formulario-usuario");
@@ -29,8 +29,7 @@ formulario.addEventListener("submit", (evento) => {
                 mostrarMensaje(mensaje, respuesta.mensaje);
             } else {
                 const respuesta = await registrarUsuarioAdministrativo(datosUsuario);
-                formulario.reset();
-                window.location.assign("/usuarios/" + respuesta.datos.idUsuario + "/editar");
+                confirmarCreacion(formulario, respuesta);
             }
         } catch (error) {
             marcarErroresContrasena(formulario, error);

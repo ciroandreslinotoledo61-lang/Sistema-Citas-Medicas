@@ -5,6 +5,8 @@ function texto(t,v,c){const h=document.createElement("h3"),p=document.createElem
 function mostrarTratamientos(filas,c,historico=false){if(!filas.length){const p=document.createElement("p");p.textContent="Sin tratamientos registrados.";c.append(p);}for(const t of filas){const a=document.createElement("article");a.className="tratamiento-resumen";const v=k=>t[historico?k+"_tratamiento":k];texto(v("medicamento"),`${v("dosis")} | ${v("frecuencia")} | ${v("duracion")}`,a);texto("Indicaciones",v("indicaciones"),a);c.append(a);}}
 async function cargar(){try{
  const d=(await obtenerConsulta(Number(document.body.dataset.idRegistro))).datos;
+ document.querySelector("#ver-recetas").href="/recetas?idConsulta="+d.idConsulta;
+ const emitir=document.querySelector("#emitir-receta");emitir.hidden=!d.puedeEditar;emitir.href="/recetas/nueva?idConsulta="+d.idConsulta;
  mostrarResumenCampos(document.querySelector("#resumen-consulta"),[["Paciente",d.nombrePaciente],["Médico",d.nombreMedico],["Cita","#"+d.idCita],["Fecha de atención",formatearFecha(d.fechaAtencion)+" "+d.fechaAtencion.slice(11,16)],["Versión",d.versionConsulta]]);
  for(const [t,v] of [["Motivo",d.motivoConsulta],["Diagnóstico",d.diagnostico],["Observaciones",d.observaciones]])texto(t,v,document.querySelector("#contenido-consulta"));
  mostrarTratamientos(d.tratamientos,document.querySelector("#tratamientos-consulta"));const editar=document.querySelector("#editar-consulta");editar.hidden=!d.puedeEditar;editar.href="/consultas/"+d.idConsulta+"/editar";document.querySelector("#ver-historial").href=JSON.parse(document.body.dataset.usuario||"null")?.codigoRol==="paciente"?"/historial-clinico":"/historial-clinico/"+d.idPaciente;

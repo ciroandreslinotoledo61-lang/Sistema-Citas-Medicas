@@ -15,5 +15,8 @@ spl_autoload_register(static function (string $nombreClase): void {
     }
 });
 
-\CitasMedicas\Shared\Config\CargarVariablesEntorno::cargarArchivoEntorno(dirname(__DIR__) . '/.env');
+// El ejecutor aislado proporciona todas sus variables y no debe leer secretos locales.
+if (getenv('VIDASALUD_TEST_LOCAL') !== '1') {
+    \CitasMedicas\Shared\Config\CargarVariablesEntorno::cargarArchivoEntorno(dirname(__DIR__) . '/.env');
+}
 date_default_timezone_set(\CitasMedicas\Shared\Config\ConfiguracionAgenda::ZONA_HORARIA_BOLIVIA);

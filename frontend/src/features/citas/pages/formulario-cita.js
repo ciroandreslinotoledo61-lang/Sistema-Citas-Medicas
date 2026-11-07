@@ -126,6 +126,8 @@ formulario.addEventListener("submit", async evento => {
         try {
             const respuesta = idCita ? await reprogramarCita(idCita, { idTurno: datos.idTurno }) : await reservarCita(datos);
             reservaConfirmada = true;
+            if (!idCita) formulario.reset();
+            mostrarMensaje(document.querySelector("#mensaje-formulario"), respuesta.mensaje);
             window.location.assign("/citas/" + respuesta.datos.idCita);
         } catch (error) {
             if (error.codigoHttp === 409) await Promise.all([cargarTurnos(), comprobarCitaActiva()]);

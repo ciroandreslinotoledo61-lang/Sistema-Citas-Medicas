@@ -8,7 +8,7 @@ Configura URL reales, HTTPS, SESSION_SECURE=true, APP_ENV distinto de local, cre
 
 1. Revisar `git diff`, permisos, rutas y resultados locales; ejecutar `git diff --check` y las pruebas aisladas de [pruebas-php.md](pruebas-php.md). No usar la conexión productiva para probar escrituras.
 2. Verificar un respaldo y su restauración en una base aislada. Mantener secretos fuera del repositorio y de la imagen.
-3. Revisar diferencias de esquema por separado: estas correcciones no agregan migraciones. **009 y 010 ya se trabajaron en Neon; no repetirlas.** Cualquier migración futura requiere autorización, respaldo y ventana controlada.
+3. Los nuevos módulos requieren **011 recetas → 012 sala → 013 pagos**, después de 001–010. Revisar y probar esas migraciones en una base aislada antes de aprobar su instalación y la publicación del código. No hay ejecución automática. **009 y 010 ya se trabajaron en Neon; no repetirlas.** Toda operación productiva requiere autorización, respaldo y ventana controlada; [guía de módulos](recetas-sala-pagos.md).
 4. Solo con aprobación del propietario, guardar/publicar los cambios revisados y desplegar en Render. No ejecutar `cargar-demostracion.php` ni otros seeds como parte del despliegue.
 5. Con autorización, hacer un smoke test por rol: sesión/CSRF, cookies HTTPS, assets, selectores de médicos, paginación, bloque propio, privacidad y mensajes de conflicto. No usar pacientes reales para ensayos.
 

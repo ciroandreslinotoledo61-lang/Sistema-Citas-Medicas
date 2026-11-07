@@ -1,6 +1,6 @@
 import { registrarCuentaPaciente } from "../../auth/services/autenticacion-api.js";
 import { registrarPacienteDesdeRecepcion } from "../services/pacientes-api.js";
-import { ejecutarEnvioFormulario, mostrarMensaje } from "../../../components/formularios.js";
+import { ejecutarEnvioFormulario, mostrarMensaje, confirmarCreacion } from "../../../components/formularios.js";
 
 const formulario = document.querySelector("#formulario-registro-paciente");
 const registroPublico = document.body.dataset.usuario === "null";
@@ -13,11 +13,11 @@ formulario.addEventListener("submit", (evento) => {
         const respuesta = registroPublico
             ? await registrarCuentaPaciente(datosPaciente)
             : await registrarPacienteDesdeRecepcion(datosPaciente);
-        registroCompletado = true;
         if (!registroPublico) {
-            window.location.assign("/pacientes/" + respuesta.datos.idPaciente);
+            confirmarCreacion(formulario, respuesta);
             return;
         }
+        registroCompletado = true;
         formulario.reset();
         formulario.querySelectorAll("fieldset").forEach((campo) => { campo.disabled = true; });
         const mensaje = document.querySelector("#mensaje-formulario");

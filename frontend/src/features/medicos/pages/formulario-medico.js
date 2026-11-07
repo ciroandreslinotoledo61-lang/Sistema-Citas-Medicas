@@ -1,6 +1,6 @@
 import { listarEspecialidadesActivas } from "../../especialidades/services/especialidades-api.js";
 import { obtenerMedicoPorId, registrarMedicoConUsuario, actualizarDatosMedico } from "../services/medicos-api.js";
-import { ejecutarEnvioFormulario, completarCamposFormulario, mostrarErrorSolicitud, mostrarMensaje } from "../../../components/formularios.js";
+import { ejecutarEnvioFormulario, completarCamposFormulario, mostrarErrorSolicitud, mostrarMensaje, confirmarCreacion } from "../../../components/formularios.js";
 
 const formulario = document.querySelector("#formulario-medico");
 const idMedico = Number(document.body.dataset.idRegistro);
@@ -58,7 +58,7 @@ formulario.addEventListener("submit", (evento) => {
             mostrarMensaje(mensajeFormulario, respuesta.mensaje);
         } else {
             const respuesta = await registrarMedicoConUsuario(datosMedico);
-            window.location.assign("/medicos/" + respuesta.datos.idMedico + "/editar");
+            confirmarCreacion(formulario, respuesta);
         }
     });
 });

@@ -31,5 +31,7 @@ function escaparTextoHtml(mixed $valor): string
     return htmlspecialchars((string) $valor, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
-cargarVariablesEntornoFrontend(dirname(__DIR__, 2) . '/.env');
+if (getenv('VIDASALUD_TEST_LOCAL') !== '1') {
+    cargarVariablesEntornoFrontend(dirname(__DIR__, 2) . '/.env');
+}
 date_default_timezone_set('America/La_Paz');

@@ -17,8 +17,8 @@ function comprobarArquitectura(bool $condicion, string $mensaje): void
 }
 
 $rutas = RutasApi::definir();
-// Contrato revisado: incluye las 58 rutas anteriores y las dos POST publicas de
-// recuperacion. No se regenera automaticamente: un cambio exige revisar permisos.
+// Contrato revisado: 60 rutas anteriores más 14 privadas de recetas/sala/pagos.
+// No se regenera automáticamente: un cambio exige revisar permisos.
 $esperadas = json_decode(file_get_contents(__DIR__ . '/contratos/rutas.json'), true, 512, JSON_THROW_ON_ERROR);
 $porContrato = [];
 foreach ($esperadas as $esperada) {

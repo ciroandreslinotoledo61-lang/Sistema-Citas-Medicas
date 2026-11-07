@@ -8,6 +8,7 @@ const formulario = document.querySelector("#formulario-anulacion");
 const acciones = document.querySelector("#acciones-cita");
 const detalle = document.querySelector("#detalle-cita");
 function mostrarCita(cita) {
+    const pagar=document.querySelector("#pagar-cita");if(pagar){pagar.hidden=!["programada","atendida"].includes(cita.estadoCita);pagar.href="/pagos-demo/nuevo?idCita="+cita.idCita;}
     document.querySelector("#titulo-cita").textContent = "Reserva #" + cita.idCita;
     document.querySelector("#estado-cita").replaceChildren(crearEstadoCita(cita));
     mostrarResumenCampos(document.querySelector("#datos-cita"), [

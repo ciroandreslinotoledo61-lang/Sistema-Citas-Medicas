@@ -67,7 +67,7 @@ final class ClienteHttpPruebas
     }
 
     public function obtenerRespuesta(string $metodo, string $url, array $headers = [], ?string $body = null,
-        bool $seguir = false): array
+        bool $seguir = false, bool $binario = false): array
     {
         comprobarHttp(parse_url($url, PHP_URL_HOST) === '127.0.0.1' && parse_url($url, PHP_URL_SCHEME) === 'http',
             'Se rechazo una URL fuera del entorno local.');
@@ -92,7 +92,11 @@ final class ClienteHttpPruebas
         ]);
         $contenido = curl_exec($this->conexion);
         comprobarHttp(is_string($contenido), 'No se pudo contactar el servidor local de pruebas.');
-        comprobarHttp(mb_check_encoding($contenido, 'UTF-8'), 'Una respuesta HTTP contiene UTF-8 invalido.');
+        if ($binario) {
+            comprobarHttp(str_contains($cabeceras['content-type'] ?? '', 'application/pdf') && str_starts_with($contenido, '%PDF-'), 'La descarga no es PDF.');
+        } else {
+            comprobarHttp(mb_check_encoding($contenido, 'UTF-8'), 'Una respuesta HTTP contiene UTF-8 invalido.');
+        }
         foreach ($this->secretos as $secreto) {
             comprobarHttp($secreto === '' || !str_contains($contenido, $secreto), 'Una respuesta expuso una credencial.');
         }

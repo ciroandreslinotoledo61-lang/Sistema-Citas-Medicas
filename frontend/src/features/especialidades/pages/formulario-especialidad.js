@@ -1,5 +1,5 @@
 import { obtenerEspecialidadPorId, registrarEspecialidad, actualizarDatosEspecialidad } from "../services/especialidades-api.js";
-import { ejecutarEnvioFormulario, completarCamposFormulario, mostrarErrorSolicitud, mostrarMensaje } from "../../../components/formularios.js";
+import { ejecutarEnvioFormulario, completarCamposFormulario, mostrarErrorSolicitud, mostrarMensaje, confirmarCreacion } from "../../../components/formularios.js";
 
 const formulario = document.querySelector("#formulario-especialidad");
 const idEspecialidad = Number(document.body.dataset.idRegistro);
@@ -29,7 +29,7 @@ formulario.addEventListener("submit", (evento) => {
             mostrarMensaje(mensajeFormulario, respuesta.mensaje);
         } else {
             const respuesta = await registrarEspecialidad(datosEspecialidad);
-            window.location.assign("/especialidades/" + respuesta.datos.idEspecialidad + "/editar");
+            confirmarCreacion(formulario, respuesta);
         }
     });
 });

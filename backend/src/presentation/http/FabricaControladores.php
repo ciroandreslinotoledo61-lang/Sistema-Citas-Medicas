@@ -30,6 +30,9 @@ final class FabricaControladores
     public function obtener(string $clase): object
     {
         return match ($clase) {
+            Controllers\RecetaController::class => new Controllers\RecetaController(new Services\RecetaService($this->conexion())),
+            Controllers\SalaEsperaController::class => new Controllers\SalaEsperaController(new Services\SalaEsperaService($this->conexion())),
+            Controllers\PagoDemostracionController::class => new Controllers\PagoDemostracionController(new Services\PagoDemostracionService($this->conexion())),
             Controllers\ConsultaController::class => new Controllers\ConsultaController(new Services\ConsultaService($this->conexion()),new Services\HistoriaClinicaService($this->conexion())),
             Controllers\BitacoraController::class => new Controllers\BitacoraController($this->obtenerBitacoraService()),
             Controllers\EstadoController::class => new Controllers\EstadoController(),

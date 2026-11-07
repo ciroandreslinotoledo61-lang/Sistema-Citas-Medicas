@@ -62,12 +62,20 @@ formulario.addEventListener("submit", async evento => {
         if (!porDia && !diasSemana.length) throw new Error("Selecciona al menos un día de trabajo.");
         campos.disabled = true;
         try {
+            let fechasCreadas = 1;
             if (porDia) {
                 const creada = (await registrarHorario({ idMedico: datos.idMedico, fechaAtencion: datos.fechaInicial, horaInicio: datos.horaInicio, horaFin: datos.horaFin })).datos;
                 mostrarResultado({ fechasProcesadas: 1, fechasCreadas: 1, turnosCreados: creada.cantidadTurnos, fechasExistentes: 0, conflictosDetectados: 0, fechasPasadas: 0, diasNoSeleccionados: 0,
                     detalle: [{ fecha: datos.fechaInicial, estado: "creada", turnosCreados: creada.cantidadTurnos, mensaje: "Turnos consecutivos generados." }] });
             } else {
-                mostrarResultado((await programarHorariosPorPeriodo({ ...datos, diasSemana })).datos);
+                const resumen = (await programarHorariosPorPeriodo({ ...datos, diasSemana })).datos;
+                fechasCreadas = resumen.fechasCreadas;
+                mostrarResultado(resumen);
+            }
+            if (fechasCreadas > 0) {
+                formulario.reset();
+                formulario.elements.horaFin.value = configuracion.horaCierre;
+                actualizarPrevision();
             }
         } finally { campos.disabled = false; }
     });

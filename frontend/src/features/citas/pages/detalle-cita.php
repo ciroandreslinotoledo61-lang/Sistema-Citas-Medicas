@@ -4,19 +4,22 @@
 <section class="tarjeta formulario-ancho" id="detalle-cita" aria-busy="true">
     <div class="cabecera-detalle"><h2 id="titulo-cita">Cargando cita...</h2><span id="estado-cita"></span></div>
     <dl class="datos-paciente" id="datos-cita"></dl>
-    <?php if ($usuarioAutenticado['codigoRol']==='paciente'): ?><p class="nota-informativa">Pagos exclusivamente de demostración: no se realizan cobros reales.</p><a class="boton" id="pagar-cita" hidden>Pagar ahora · Demostración</a><?php endif; ?>
+    <?php if ($usuarioAutenticado['codigoRol']==='paciente'): ?><a class="boton" id="pagar-cita" hidden>Pagar ahora</a><?php endif; ?>
     <a class="enlace" id="enlace-cita-origen" hidden></a>
     <p id="explicacion-acciones" class="nota-informativa"></p>
+    <p id="motivo-no-cancelacion" class="ayuda" hidden></p>
     <div class="acciones" id="acciones-cita" hidden>
         <a class="boton boton-secundario" id="reprogramar-cita" hidden>Reprogramar</a>
-        <button class="boton boton-peligro" type="button" id="mostrar-anulacion" hidden>Cancelar cita</button>
+        <button class="boton boton-peligro" type="button" id="mostrar-anulacion" aria-describedby="motivo-no-cancelacion" disabled>Cancelar cita</button>
+        <button class="boton boton-secundario" type="button" id="ausencia-medico" hidden>Registrar ausencia del médico y cancelar</button>
         <button class="boton" type="button" id="registrar-asistencia" hidden>Marcar atendida</button>
         <button class="boton boton-secundario" type="button" id="registrar-inasistencia" hidden>Registrar inasistencia</button>
     </div>
     <p id="resultado-reprogramacion" class="nota-informativa" hidden></p>
     <div class="acciones margen-superior" id="acciones-clinicas" hidden><a class="boton" id="registrar-consulta" hidden>Registrar consulta</a><a class="boton" id="ver-consulta" hidden>Ver consulta</a><a class="boton boton-secundario" id="ver-historia" hidden>Historial clínico</a></div>
     <form id="formulario-anulacion" class="separacion-formulario" method="post" hidden>
-        <h3>Cancelar esta cita</h3><p>El turno quedará libre. La cita cancelada se conserva en el historial.</p>
+        <h3 id="titulo-cancelacion">Cancelar esta cita</h3><p id="ayuda-cancelacion">El turno quedará libre. La cita cancelada se conserva en el historial.</p>
+        <input type="hidden" name="tipoCancelacion" value="ordinaria">
         <dl class="datos-paciente" id="resumen-cancelacion"></dl>
         <label><span id="etiqueta-motivo-cancelacion">Motivo de cancelación</span><textarea name="motivoCancelacion" rows="2" maxlength="300"></textarea></label>
         <p id="mensaje-formulario" class="mensaje" role="status" hidden></p>

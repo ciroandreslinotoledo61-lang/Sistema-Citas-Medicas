@@ -106,12 +106,14 @@ async function probarModulosNuevos() {
     await login(fixture[1].correoPaciente, "ClaveDePruebaAgenda123");
     await ir("/pagos-demo/nuevo?idCita=" + fixture[1].idCitaAtendida, "#formulario-pago");
     await esperar("!document.querySelector('#campos-pago').disabled", "tarifa sintética configurable");
-    await evaluar("document.querySelector('#formulario-pago').elements.metodo.value = 'paypal_demo'; document.querySelector('#formulario-pago').requestSubmit()");
+    await comprobar("document.querySelector('#pagar-ahora').textContent === 'Pagar ahora' && Array.from(document.querySelectorAll('[name=metodo] option')).map(o=>o.textContent).join(',') === 'QR,PayPal'", "pago con etiquetas profesionales");
+    await evaluar("document.querySelector('#formulario-pago').elements.metodo.value = 'paypal_demo'; document.querySelector('#formulario-pago').elements.metodo.dispatchEvent(new Event('change')); document.querySelector('#formulario-pago').requestSubmit()");
     await esperar("!document.querySelector('#ver-pagos').hidden", "preparación PayPal simulada");
-    await comprobar("document.body.innerText.includes('No se realizan cobros reales') && document.querySelector('#pagar-ahora').hidden", "aclaración visible y doble envío bloqueado");
+    await comprobar("document.querySelector('#aclaracion-prueba').innerText.includes('no se realizarán cargos reales') && document.querySelector('#pagar-ahora').hidden", "aclaración discreta visible y doble envío bloqueado");
     await ir("/pagos-demo", "#filas-pagos"); await esperar("document.querySelector('#filas-pagos button') !== null", "pago pendiente propio");
     await evaluar("window.confirm = () => true; document.querySelector('#filas-pagos button').click()");
-    await esperar("!document.querySelector('#filas-pagos').hasAttribute('aria-busy') && document.querySelector('#filas-pagos').innerText.includes('pagado')", "confirmación simulada actualiza listado"); verificaciones++;
+    await esperar("!document.querySelector('#filas-pagos').hasAttribute('aria-busy') && document.querySelector('#filas-pagos').innerText.includes('Pagado')", "confirmación de prueba actualiza listado"); verificaciones++;
+    await comprobar("document.querySelector('#filas-pagos').innerText.includes('PayPal') && !document.querySelector('#filas-pagos').innerText.includes('Simulado') && !document.querySelector('#filas-pagos').innerText.includes('paypal_demo')", "métodos, importes y estados sin etiquetas técnicas repetidas");
     await responsive("pagos-modulo"); await logout();
     await login("recepcionista@vidasalud.test");
     const cita = await solicitud("/citas/" + fixture[1].idCitaProxima);
@@ -212,7 +214,7 @@ try {
     await esperar("!!document.querySelector('#formulario-anulacion') && !document.querySelector('#formulario-anulacion').hidden", "confirmacion de cancelacion");
     await evaluar("document.querySelector('#formulario-anulacion').elements.motivoCancelacion.value = 'Cambio de planes'; document.querySelector('#formulario-anulacion').requestSubmit()");
     await esperar("document.querySelector('#estado-cita').innerText.includes('Cancelada')", "cancelacion guardada");
-    await comprobar("document.querySelector('#mostrar-anulacion').hidden", "no cancelar dos veces");
+    await comprobar("!document.querySelector('#mostrar-anulacion').hidden && document.querySelector('#mostrar-anulacion').disabled && document.querySelector('#motivo-no-cancelacion').textContent.includes('resultado final')", "cancelación final deshabilitada con motivo visible");
     await ir("/citas", "#citas-paciente");
     await esperar("!document.querySelector('#tarjetas-citas').hasAttribute('aria-busy')", "proximas vacias tras cancelar");
     await comprobar("document.querySelectorAll('.tarjeta-cita').length === 0", "cancelada fuera de proximas");

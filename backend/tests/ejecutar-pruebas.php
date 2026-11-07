@@ -28,6 +28,7 @@ $pruebas = [
     'test_validaciones_actualizacion.php',
     'test_demostracion_validacion.php',
     'test_modulos_validacion.php',
+    'test_validaciones_cierre.php',
 ];
 if (in_array('--integracion', $argv, true)) {
     if (!str_ends_with(CargarVariablesEntorno::obtenerVariableEntorno('DB_NAME'), '_pruebas')) {
@@ -54,6 +55,7 @@ if (in_array('--integracion', $argv, true)) {
         'test_modulos_atencion.php',
         'test_modulos_migraciones.php',
         'test_modulos_concurrencia.php',
+        'test_citas_vencidas.php',
     ]);
 }
 $proyecto = dirname(__DIR__, 2);

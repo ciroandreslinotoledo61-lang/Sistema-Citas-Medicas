@@ -23,6 +23,14 @@ final class Cita
     public function obtenerDatosPublicosCita(): array
     {
         $registro = $this->registro;
+        $historial = is_array($registro['historial_cambios'] ?? null) ? $registro['historial_cambios'] : json_decode($registro['historial_cambios'] ?? '[]', true, 512, JSON_THROW_ON_ERROR);
+        foreach ($historial as &$evento) {
+            if (($evento['idUsuario'] ?? null) === null && empty($evento['nombreUsuario'])) {
+                $evento['nombreUsuario'] = 'Sistema';
+                $evento['rolUsuario'] = 'sistema';
+            }
+        }
+        unset($evento);
         return [
             'idCita' => (int) $registro['id_cita'], 'idPaciente' => (int) $registro['id_paciente'],
             'idTurno' => (int) $registro['id_turno'], 'idMedico' => (int) $registro['id_medico'],
@@ -33,7 +41,7 @@ final class Cita
             'estadoCita' => $registro['estado_cita'], 'motivoCita' => $registro['motivo_cita'],
             'asistenciaRegistrada' => $registro['asistencia_registrada'],
             'motivoCancelacion' => $registro['motivo_cancelacion'],
-            'historialCambios' => is_array($registro['historial_cambios'] ?? null) ? $registro['historial_cambios'] : json_decode($registro['historial_cambios'] ?? '[]', true, 512, JSON_THROW_ON_ERROR),
+            'historialCambios' => $historial,
             'idCitaOrigen' => $registro['id_cita_origen'] === null ? null : (int) $registro['id_cita_origen'],
         ];
     }

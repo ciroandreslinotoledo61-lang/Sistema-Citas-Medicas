@@ -16,7 +16,7 @@ spl_autoload_register(static function (string $nombreClase): void {
 });
 
 // El ejecutor aislado proporciona todas sus variables y no debe leer secretos locales.
-if (getenv('VIDASALUD_TEST_LOCAL') !== '1') {
+if (getenv('VIDASALUD_TEST_LOCAL') !== '1' && !(PHP_SAPI === 'cli' && defined('VIDASALUD_ENTORNO_PROCESO') && VIDASALUD_ENTORNO_PROCESO === true)) {
     \CitasMedicas\Shared\Config\CargarVariablesEntorno::cargarArchivoEntorno(dirname(__DIR__) . '/.env');
 }
 date_default_timezone_set(\CitasMedicas\Shared\Config\ConfiguracionAgenda::ZONA_HORARIA_BOLIVIA);

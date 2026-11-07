@@ -29,6 +29,7 @@ final class CitaService
     private readonly MedicoRepository $medicoRepository;
     private readonly EspecialidadRepository $especialidadRepository;
     private readonly Transaccion $transaccion;
+    private readonly BitacoraService $bitacora;
 
     public function __construct(\PDO $conexionPostgresql, private readonly ?\DateTimeImmutable $momentoReferencia = null)
     {
@@ -39,6 +40,7 @@ final class CitaService
         $this->medicoRepository = new MedicoRepository($conexionPostgresql);
         $this->especialidadRepository = new EspecialidadRepository($conexionPostgresql);
         $this->transaccion = new Transaccion($conexionPostgresql);
+        $this->bitacora = new BitacoraService($conexionPostgresql);
     }
 
     public function listarCitas(Usuario $usuario, array $parametros): array
@@ -93,11 +95,25 @@ final class CitaService
     public function cancelarCita(Usuario $usuario, int $idCita, array $datos): array
     {
         PermisosSistema::exigirPermiso($usuario, 'citas.cancelar');
-        $motivo = ValidarCamposFormulario::validarTexto($datos, 'motivoCancelacion', 'El motivo de cancelación', 300, $usuario->codigoRol === RolesSistema::MEDICO);
-        return $this->ejecutarTransaccion(function () use ($usuario, $idCita, $motivo): array {
+        ValidarCamposFormulario::exigirCamposPermitidos($datos, ['motivoCancelacion','tipoCancelacion']);
+        $tipo = $datos['tipoCancelacion'] ?? 'ordinaria';
+        if (!in_array($tipo, ['ordinaria','medico_ausente'], true)) throw new ErrorAplicacion('Tipo de cancelación inválido.',422);
+        $incidencia = $tipo === 'medico_ausente';
+        if ($incidencia) PermisosSistema::exigirPermiso($usuario,'citas.incidencia_medico');
+        $prefijo = $incidencia ? 'Ausencia del médico: ' : '';
+        $motivo = $prefijo . ValidarCamposFormulario::validarTexto($datos, 'motivoCancelacion', 'El motivo de cancelación', 300-mb_strlen($prefijo), $incidencia || $usuario->codigoRol === RolesSistema::MEDICO);
+        return $this->ejecutarTransaccion(function () use ($usuario, $idCita, $motivo, $incidencia): array {
             $cita = $this->exigirCitaAutorizada($usuario, $idCita, true);
-            $this->exigirCitaModificable($cita);
+            $this->exigirAtencionNoIniciada($idCita);
+            if ($incidencia) {
+                $d = $cita->obtenerDatosPublicosCita();
+                if ($d['estadoCita'] !== 'programada' || $d['asistenciaRegistrada'] !== 'pendiente') {
+                    throw new ErrorAplicacion('Solo una cita programada sin atención puede cancelarse por ausencia del médico. Los resultados finales requieren revisión administrativa.',409);
+                }
+            } else $this->exigirCitaModificable($cita);
+            $this->bitacora->establecerUsuarioResponsable($usuario);
             $this->citaRepository->actualizarEstadoCita($idCita, 'cancelada', $usuario->idUsuario, $motivo);
+            if ($incidencia) $this->bitacora->registrarAusenciaMedico($usuario,$idCita);
             return $this->obtenerCita($usuario, $idCita);
         });
     }
@@ -109,6 +125,7 @@ final class CitaService
         return $this->ejecutarTransaccion(function () use ($usuario, $idCita, $idTurno): array {
             $cita = $this->exigirCitaAutorizada($usuario, $idCita, true);
             $this->exigirCitaModificable($cita);
+            $this->exigirAtencionNoIniciada($idCita);
             $datosCita = $cita->obtenerDatosPublicosCita();
             if ($datosCita['idTurno'] === $idTurno) {
                 throw new ErrorAplicacion('Selecciona un turno diferente.', 422);
@@ -183,6 +200,12 @@ final class CitaService
             if ($this->obtenerAhora() < $limite) {
                 throw new ErrorAplicacion($asistencia === 'asistio' ? 'Registra la asistencia desde el inicio del turno.' : 'Registra la inasistencia cuando termine el turno.', 409);
             }
+            if ($asistencia === 'no_asistio') {
+                $contexto = $this->citaRepository->obtenerContextoAtencion($idCita);
+                if ($contexto['estadoSala'] !== null || $contexto['consultaIniciada']) {
+                    throw new ErrorAplicacion('Hay llegada o consulta registrada. Revisa la atención pendiente; no corresponde atribuir ausencia al paciente.',409);
+                }
+            }
             $estado = $asistencia === 'no_asistio' ? 'no_asistio' : 'atendida';
             $this->citaRepository->registrarAsistencia($idCita, $asistencia, $estado, $usuario->idUsuario);
             return $this->obtenerCita($usuario, $idCita);
@@ -213,6 +236,14 @@ final class CitaService
             $datos['asistenciaRegistrada'] !== 'pendiente' || new \DateTimeImmutable($datos['fechaHoraInicio']) <= $this->obtenerAhora()
         ) {
             throw new ErrorAplicacion('Solo se pueden cancelar o reprogramar citas vigentes antes del inicio del turno.', 409);
+        }
+    }
+
+    private function exigirAtencionNoIniciada(int $idCita): void
+    {
+        $contexto = $this->citaRepository->obtenerContextoAtencion($idCita);
+        if ($contexto['consultaIniciada'] || in_array($contexto['estadoSala'], ['en_consulta','atendido'],true)) {
+            throw new ErrorAplicacion('La consulta ya comenzó o finalizó; no puede cancelarse ni reprogramarse.',409);
         }
     }
 
@@ -290,16 +321,25 @@ final class CitaService
         $inicio = new \DateTimeImmutable($datos['fechaHoraInicio']);
         $fin = new \DateTimeImmutable($datos['fechaHoraFin']);
         $ahora = $this->obtenerAhora();
-        $datos['puedeCancelar'] = $vigente && $inicio > $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.cancelar');
-        $datos['puedeReprogramar'] = $vigente && $inicio > $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.reprogramar');
+        $contexto = $vigente ? $this->citaRepository->obtenerContextoAtencion($datos['idCita']) : ['consultaIniciada'=>false,'estadoSala'=>null];
+        $enAtencion = $contexto['consultaIniciada'] || in_array($contexto['estadoSala'],['en_consulta','atendido'],true);
+        $datos['puedeCancelar'] = $vigente && !$enAtencion && $inicio > $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.cancelar');
+        $datos['puedeReprogramar'] = $vigente && !$enAtencion && $inicio > $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.reprogramar');
+        $datos['puedeCancelarPorAusenciaMedico'] = $vigente && !$enAtencion && PermisosSistema::tienePermiso($usuario->codigoRol,'citas.incidencia_medico');
+        $datos['motivoNoCancelacion'] = !$vigente ? 'La cita tiene un resultado final y conserva su historial. Si hubo un error, solicita revisión administrativa; no puede cancelarse nuevamente.'
+            : ($enAtencion ? 'La consulta ya comenzó o finalizó; no puede cancelarse.'
+                : ($inicio <= $ahora ? 'La hora de inicio del turno ya pasó. No se permite la cancelación ordinaria.'
+                    : (!$datos['puedeCancelar'] ? 'Tu cuenta no tiene permiso para cancelar esta cita.' : '')));
         $datos['puedeMarcarAtendida'] = $vigente && $inicio <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.atender');
         $datos['puedeRegistrarAsistencia'] = $vigente && $inicio <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.asistencia');
-        $datos['puedeRegistrarInasistencia'] = $vigente && $fin <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.inasistencia');
+        $datos['puedeRegistrarInasistencia'] = $vigente && !$enAtencion && $contexto['estadoSala'] === null && $fin <= $ahora && PermisosSistema::tienePermiso($usuario->codigoRol, 'citas.inasistencia');
         $datos['requiereMotivoCancelacion'] = $usuario->codigoRol === RolesSistema::MEDICO;
-        $datos['explicacionAcciones'] = !$vigente ? 'Esta cita es final y conserva su historial.'
-            : ($inicio > $ahora ? 'Puedes cancelar antes del inicio. La atención se registra desde el inicio del turno y la inasistencia desde su final.'
-                : ($fin > $ahora ? 'El turno ya comenzó. La inasistencia se habilita al terminar; ya no se puede cancelar.'
-                    : 'El turno terminó. Un usuario autorizado debe registrar el resultado; no se cambia automáticamente.'));
+        $datos['explicacionAcciones'] = !$vigente ? $datos['motivoNoCancelacion']
+            : ($enAtencion ? 'La consulta está iniciada. El médico debe finalizar la atención; no puede cancelarse ni marcarse como ausencia.'
+                : ($inicio > $ahora ? 'Puedes cancelar antes del inicio según tus permisos. La cancelación conserva el motivo y el historial.'
+                    : ($fin > $ahora ? 'El turno está en curso. Recepción puede registrar la llegada y el médico iniciar la atención. Si el médico no se presentó, Administración o Recepción pueden registrar la incidencia y cancelar sin atribuir ausencia al paciente.'
+                        : ($contexto['estadoSala'] === 'en_espera' ? 'El paciente registró su llegada y sigue esperando. Administración o Recepción deben revisar la atención pendiente; no se marcará ausencia automáticamente. Si faltó el médico, pueden registrar la incidencia y cancelar.'
+                            : 'El turno terminó. La tarea programada revisará la ausencia tras el margen de tolerancia, solo si no hay llegada ni consulta. Si registraste tu llegada o faltó el médico, solicita revisión a Recepción antes del cierre.'))));
         return $datos;
     }
 

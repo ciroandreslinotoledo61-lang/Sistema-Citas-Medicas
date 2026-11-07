@@ -36,11 +36,11 @@ final class PagoDemostracionService
         PermisosSistema::exigirPermiso($u,'pagos.simular');ValidarCamposFormulario::exigirCamposPermitidos($p,['idCita','metodo']);
         $id=ValidarCamposFormulario::validarIdentificador($p,'idCita');$metodo=$p['metodo']??null;
         if(!is_string($metodo)||!in_array($metodo,['qr_demo','paypal_demo'],true))throw new ErrorAplicacion('Selecciona QR o PayPal de demostración.',422);
-        $monto=ConfiguracionPagosDemo::obtenerCentavos()??throw new ErrorAplicacion('No hay tarifa de demostración configurada. No se realizará ningún cobro.',409);
+        $monto=ConfiguracionPagosDemo::obtenerCentavos()??throw new ErrorAplicacion('La tarifa aún no fue configurada por Administración.',409);
         return $this->transaccion->ejecutar(function()use($u,$id,$metodo,$monto):array{
-            $c=$this->bloquearCitaPropia($u,$id);if(!in_array($c['estadoCita'],['programada','atendida'],true))throw new ErrorAplicacion('La cita no admite pagos simulados.',409);
+            $c=$this->bloquearCitaPropia($u,$id);if(!in_array($c['estadoCita'],['programada','atendida'],true))throw new ErrorAplicacion('La cita no admite pagos.',409);
             $activo=$this->pagos->activo($id)?->obtenerDatos();
-            if($activo){if($activo['estado']==='pendiente')return $activo;throw new ErrorAplicacion('Esta cita ya tiene un pago simulado confirmado.',409);}
+            if($activo){if($activo['estado']==='pendiente')return $activo;throw new ErrorAplicacion('Esta cita ya tiene un pago confirmado.',409);}
             return $this->obtener($u,$this->pagos->crear($id,$u->idUsuario,$monto,$metodo,'DEMO-'.bin2hex(random_bytes(16))));
         },Transaccion::LECTURA_CONFIRMADA);
     }
@@ -54,7 +54,7 @@ final class PagoDemostracionService
             $c=$this->bloquearCitaPropia($u,$inicial['idCita']);
             $actual=$this->pagos->obtener($id,$u->idUsuario,true)?->obtenerDatos();
             if($actual['estado']!=='pendiente')throw new ErrorAplicacion('El pago ya fue finalizado; no puede confirmarse dos veces.',409);
-            if($accion==='confirmar'&&!in_array($c['estadoCita'],['programada','atendida'],true))throw new ErrorAplicacion('La cita ya no permite confirmar el pago simulado.',409);
+            if($accion==='confirmar'&&!in_array($c['estadoCita'],['programada','atendida'],true))throw new ErrorAplicacion('La cita ya no permite confirmar el pago.',409);
             $this->pagos->finalizar($id,$accion==='confirmar');return $this->obtener($u,$id);
         },Transaccion::LECTURA_CONFIRMADA);
     }

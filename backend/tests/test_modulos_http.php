@@ -51,5 +51,10 @@ function probarModulosHttp(string $base,string $front,string $clave,array $fixtu
     $p[0]->request('GET','/pagos-demo/reporte',esperado:403);$recepcion->request('GET','/pagos-demo/reporte');
     foreach([$admin,$recepcion] as $a){$a->vista($front,'/sala-espera');$a->vista($front,'/pagos-demo');}
     $p[0]->vista($front,'/pagos-demo/nuevo?idCita='.$cid);$m[0]->vista($front,'/recetas/nueva?idConsulta='.$fixture[0]['idConsulta']);
+    $p[0]->request('PATCH',"/citas/$cid/cancelacion",['tipoCancelacion'=>'medico_ausente','motivoCancelacion'=>'Prueba'],403);
+    $recepcion->request('PATCH',"/citas/$cid/cancelacion",['tipoCancelacion'=>'medico_ausente','motivoCancelacion'=>'No se presentó el profesional'],419,csrf:false);
+    $cancelada=$recepcion->request('PATCH',"/citas/$cid/cancelacion",['tipoCancelacion'=>'medico_ausente','motivoCancelacion'=>'No se presentó el profesional'])['datos'];
+    comprobarHttp($cancelada['estadoCita']==='cancelada'&&$cancelada['asistenciaRegistrada']==='pendiente'&&str_starts_with($cancelada['motivoCancelacion'],'Ausencia del médico:'),'La incidencia no debe atribuir ausencia al paciente.');
+    $recepcion->request('PATCH',"/citas/$cid/cancelacion",['tipoCancelacion'=>'medico_ausente','motivoCancelacion'=>'Repetición'],409);
     echo 'OK: '.count($resultados)." solicitudes HTTP de recetas/PDF, sala, pagos, IDs, roles y CSRF; solo entorno aislado.\n";
 }

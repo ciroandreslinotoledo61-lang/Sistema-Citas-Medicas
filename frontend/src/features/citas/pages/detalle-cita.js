@@ -7,7 +7,9 @@ const mensaje = document.querySelector("#mensaje-detalle");
 const formulario = document.querySelector("#formulario-anulacion");
 const acciones = document.querySelector("#acciones-cita");
 const detalle = document.querySelector("#detalle-cita");
+let citaActual;
 function mostrarCita(cita) {
+    citaActual = cita;
     const pagar=document.querySelector("#pagar-cita");if(pagar){pagar.hidden=!["programada","atendida"].includes(cita.estadoCita);pagar.href="/pagos-demo/nuevo?idCita="+cita.idCita;}
     document.querySelector("#titulo-cita").textContent = "Reserva #" + cita.idCita;
     document.querySelector("#estado-cita").replaceChildren(crearEstadoCita(cita));
@@ -29,12 +31,17 @@ function mostrarCita(cita) {
     if (cita.idCitaOrigen && JSON.parse(document.body.dataset.usuario).codigoRol !== "medico") {
         enlaceOrigen.href = "/citas/" + cita.idCitaOrigen;
     }
-    document.querySelector("#mostrar-anulacion").hidden = !cita.puedeCancelar;
+    const cancelar = document.querySelector("#mostrar-anulacion");
+    cancelar.hidden = false; cancelar.disabled = !cita.puedeCancelar;
+    cancelar.title = cita.motivoNoCancelacion || "Cancelar esta cita";
+    const motivo = document.querySelector("#motivo-no-cancelacion");
+    motivo.textContent = cita.motivoNoCancelacion || ""; motivo.hidden = !motivo.textContent;
+    document.querySelector("#ausencia-medico").hidden = !cita.puedeCancelarPorAusenciaMedico;
     document.querySelector("#reprogramar-cita").hidden = !cita.puedeReprogramar;
     document.querySelector("#reprogramar-cita").href = "/citas/" + cita.idCita + "/reprogramar";
     document.querySelector("#registrar-asistencia").hidden = !cita.puedeMarcarAtendida;
     document.querySelector("#registrar-inasistencia").hidden = !cita.puedeRegistrarInasistencia;
-    acciones.hidden = !(cita.puedeCancelar || cita.puedeReprogramar || cita.puedeMarcarAtendida || cita.puedeRegistrarInasistencia);
+    acciones.hidden = false;
     document.querySelector("#explicacion-acciones").textContent = cita.explicacionAcciones;
     formulario.elements.motivoCancelacion.required = cita.requiereMotivoCancelacion;
     document.querySelector("#etiqueta-motivo-cancelacion").textContent = "Motivo de cancelación " + (cita.requiereMotivoCancelacion ? "(obligatorio)" : "(opcional)");
@@ -50,6 +57,7 @@ function mostrarCita(cita) {
     }
     if (!historial.children.length) { const item = document.createElement("li"); item.textContent = "Registro anterior a esta actualización. No se reconstruyen cambios que no fueron registrados."; historial.append(item); }
     formulario.hidden = true;
+    formulario.elements.tipoCancelacion.value = "ordinaria";
     detalle.removeAttribute("aria-busy");
 }
 async function cargarCita() {
@@ -64,7 +72,18 @@ async function cargarCita() {
     catch (error) { document.querySelector("#titulo-cita").textContent = "Cita no disponible"; mostrarErrorSolicitud(mensaje, error); detalle.removeAttribute("aria-busy"); acciones.hidden = true; }
 }
 cargarCita();
-document.querySelector("#mostrar-anulacion").addEventListener("click", () => { formulario.hidden = false; formulario.elements.motivoCancelacion.focus(); });
+function abrirCancelacion(tipo = "ordinaria") {
+    const ausencia = tipo === "medico_ausente";
+    if (!citaActual || !(ausencia ? citaActual.puedeCancelarPorAusenciaMedico : citaActual.puedeCancelar)) return;
+    formulario.elements.tipoCancelacion.value = tipo;
+    formulario.elements.motivoCancelacion.required = ausencia || citaActual.requiereMotivoCancelacion;
+    document.querySelector("#titulo-cancelacion").textContent = ausencia ? "Cancelar por ausencia del médico" : "Cancelar esta cita";
+    document.querySelector("#ayuda-cancelacion").textContent = ausencia ? "Registra lo ocurrido. La cancelación quedará atribuida a la ausencia del médico, sin marcar inasistencia del paciente." : "El turno quedará libre. La cita cancelada se conserva en el historial.";
+    document.querySelector("#etiqueta-motivo-cancelacion").textContent = "Motivo de cancelación " + (formulario.elements.motivoCancelacion.required ? "(obligatorio)" : "(opcional)");
+    formulario.hidden = false; formulario.elements.motivoCancelacion.focus();
+}
+document.querySelector("#mostrar-anulacion").addEventListener("click", () => abrirCancelacion());
+document.querySelector("#ausencia-medico").addEventListener("click", () => abrirCancelacion("medico_ausente"));
 document.querySelector("#mantener-cita").addEventListener("click", () => { formulario.hidden = true; document.querySelector("#mostrar-anulacion").focus(); });
 formulario.addEventListener("submit", evento => {
     evento.preventDefault();

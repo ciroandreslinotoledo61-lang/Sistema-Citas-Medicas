@@ -8,6 +8,7 @@ use CitasMedicas\Data\Models\Cita;
 
 final class CitaRepository
 {
+    private ?bool $salaDisponible = null;
     private const CONSULTA_CITA = "SELECT citas.*, turnos.fecha_hora_inicio, turnos.fecha_hora_fin,
         medicos.id_medico, pacientes.id_usuario AS id_usuario_paciente, medicos.id_usuario AS id_usuario_medico,
         concat_ws(' ', usuario_paciente.nombres_usuario, usuario_paciente.apellidos_usuario) AS nombre_paciente,
@@ -42,6 +43,17 @@ final class CitaRepository
         $consulta->execute($parametros);
         $registro = $consulta->fetch();
         return $registro ? new Cita($registro) : null;
+    }
+
+    /** Solo metadatos operativos; nunca devuelve contenido de consultas. */
+    public function obtenerContextoAtencion(int $idCita): array
+    {
+        $this->salaDisponible ??= (bool) $this->conexionPostgresql->query("SELECT to_regclass('public.sala_espera')")->fetchColumn();
+        $sqlSala = $this->salaDisponible ? '(SELECT estado FROM sala_espera WHERE id_cita=:sala)' : 'NULL::text';
+        $q = $this->conexionPostgresql->prepare('SELECT EXISTS(SELECT 1 FROM consultas WHERE id_cita=:consulta) AS consulta_iniciada, ' . $sqlSala . ' AS estado_sala');
+        $q->execute($this->salaDisponible ? ['consulta'=>$idCita,'sala'=>$idCita] : ['consulta'=>$idCita]);
+        $r = $q->fetch();
+        return ['consultaIniciada'=>in_array($r['consulta_iniciada'],[true,1,'1','t','true'],true), 'estadoSala'=>$r['estado_sala']];
     }
 
     public function listarCitas(array $filtros, string $ahora, ?int $idUsuarioPaciente = null, ?int $idUsuarioMedico = null): array

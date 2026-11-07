@@ -1,5 +1,7 @@
 # Recetas, sala de espera y pagos de demostración
 
+**Actualización posterior:** la presentación de pagos, la cancelación por incidencia médica y la tarea programada de citas vencidas están documentadas en [cancelación, pagos y automatización](citas-vencidas-pagos.md). Se conservan los módulos y migraciones de esta entrega; sus resultados históricos de pruebas se mantienen como antecedentes.
+
 ## Alcance y permisos
 
 | Módulo | Médico | Paciente | Recepción | Administración |

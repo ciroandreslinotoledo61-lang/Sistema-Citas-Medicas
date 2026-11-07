@@ -8,6 +8,7 @@ Las nuevas citas y turnos duran **exactamente 30 minutos**, sin configuración e
 
 ## Novedades
 
+- Cancelación visible con motivo de bloqueo, incidencia de ausencia del médico para Administración/Recepción y tarea CLI independiente para revisar vencidas sin llegada/consulta (30 minutos de tolerancia por defecto). **Requiere configurar un Cron Job en Render después de autorizar la publicación; no se activó producción.** Pagos con interfaz simplificada y aclaración discreta al confirmar. [Configuración y reglas](docs/uso/citas-vencidas-pagos.md).
 - Recetas médicas con PDF privado, anulación motivada y correcciones enlazadas; sala de espera con historial y alcance por médico; pagos **solo simulados** QR/PayPal y reporte separado. Requieren migraciones **011 → 012 → 013**. [Guía y límites](docs/uso/recetas-sala-pagos.md).
 - Formularios de creación limpios tras éxito, datos conservados al fallar/editar y bloqueo de doble envío. Se mantienen los selectores e identificadores médicos `(#ID)`.
 - Selector de médicos por ID, especialidad y fecha en bloques; vista propia del médico sin selector ajeno. Disponibilidad con rol, perfil y estados válidos. Nuevas reservas/reprogramaciones de 30 minutos; seed idempotente de seis cuentas solo para pruebas locales.
@@ -129,7 +130,7 @@ Trabaja primero en una copia local terminada en `_pruebas`. Conserva 001-010: es
 
 ## Reglas principales
 
-Un paciente puede tener una sola Programada, incluso si paso su hora y falta registrar resultado; las excepciones legadas de 005 se conservan. Reservar revalida disponibilidad dentro de la transaccion. Cancelar libera el turno sin borrar la cita. Reprogramar enlaza otra Programada y revierte todo si falla.
+Un paciente puede tener una sola Programada; las excepciones legadas de 005 se conservan. Tras fin+tolerancia, el cron configurado cierra como No asistió únicamente las citas sin llegada ni consulta. Los pacientes presentes y sin atención quedan para revisión administrativa, no como ausentes. Reservar revalida disponibilidad dentro de la transacción. Cancelar conserva motivo e historial; la excepción de ausencia médica exige Administración/Recepción y consulta no iniciada. Reprogramar enlaza otra Programada y revierte todo si falla. [Reglas completas](docs/uso/citas-vencidas-pagos.md).
 
 Atendida se permite desde el inicio; Inasistencia, desde el fin. Registrar una consulta tambien marca Atendida. Marcar Atendida por si solo no inventa un diagnostico. Las correcciones clinicas exigen version actual y conservan contenido/tratamientos anteriores.
 

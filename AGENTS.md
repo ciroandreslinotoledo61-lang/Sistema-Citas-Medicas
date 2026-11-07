@@ -47,9 +47,11 @@ La fuente de verdad es `PermisosSistema.php` y las restricciones de los servicio
 
 - Toda cita nueva dura exactamente **30 minutos**. `ConfiguracionAgenda` ignora `CITA_DURACION_MINUTOS`; no convertir registros históricos. Reservas y reprogramaciones rechazan turnos de otra duración.
 - Respetar apertura/cierre y límites del bloque. Los descansos se representan dejando intervalos sin bloques; no inventar un descanso general.
-- Solo una cita `programada` activa por paciente, incluidas las pendientes de resultado tras su hora; conservar excepciones legadas previstas por SQL.
+- Solo una cita `programada` activa por paciente; conservar excepciones legadas previstas por SQL. La tarea CLI programada puede pasar vencidas sin llegada/consulta a `no_asistio` tras fin+tolerancia (30 min por defecto). Presentes en espera se conservan para revisión; estados finales y consultas iniciadas nunca cambian automáticamente.
 - Reservas con bloqueos/transacción y defensa SQL. Reprogramar debe revertirse por completo si falla; nunca borrar el origen.
-- Cancelación/reprogramación antes del inicio según permisos; asistencia desde el inicio e inasistencia desde el fin.
+- Cancelación/reprogramación ordinarias antes del inicio y nunca con consulta iniciada. El botón no desaparece: se deshabilita con motivo y orientación. Administración/Recepción pueden cancelar una cita aún programada por ausencia del médico, con motivo obligatorio, incluso tras el horario si no hubo consulta; no atribuir ausencia al paciente ni reescribir resultados finales.
+- `backend/scripts/revisar-citas-vencidas.php` debe ejecutarse mediante Cron Job independiente, no desde visitas web. Sin `--aplicar` no conecta; exige habilitación explícita y variables de proceso. No lee `.env` ni ejecuta migraciones. Usa bloqueos, transacción y auditoría de sistema; ver [configuración de Render y límites](docs/uso/citas-vencidas-pagos.md). No configurar servicios productivos sin autorización.
+- Pagos: etiquetas visibles «Pagar ahora», «QR», «PayPal», «Pendiente/Pagado/Cancelado»; una aclaración discreta de prueba sin cargos al confirmar. Mantener códigos/tablas de demostración y separación de ingresos reales, sin APIs de cobro.
 - Usuarios, pacientes, médicos y horarios se relacionan por IDs, nunca por nombres. Homónimos no equivalen a duplicados. No imponer exclusión entre perfiles médico/paciente; una cuenta tiene un rol asignado.
 - La disponibilidad nueva requiere perfil médico, rol `medico`, cuenta activa y especialidad activa. Los selectores de consulta histórica pueden incluir perfiles inactivos.
 
@@ -78,6 +80,7 @@ $env:VIDASALUD_TEST_LOCAL = '1' # Impide cargar archivos .env durante estas prue
 & C:/php85/php.exe backend/tests/ejecutar-pruebas.php
 node --experimental-vm-modules backend/tests/test_filtros_listados.mjs
 node --experimental-vm-modules backend/tests/test_formularios.mjs
+node --experimental-vm-modules backend/tests/test_cancelacion_pagos.mjs
 
 # Clúster nuevo desechable, puertos libres y migraciones SOLO locales
 & C:/php85/php.exe backend/tests/ejecutar-pruebas.php --completo --pg-bin "C:/Program Files/PostgreSQL/18/bin"

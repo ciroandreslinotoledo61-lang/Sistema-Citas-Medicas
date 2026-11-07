@@ -29,6 +29,7 @@ $env:VIDASALUD_TEST_LOCAL = '1' # No cargar archivos .env
 # Filtros y paginación JavaScript sin red ni dependencias
 node --experimental-vm-modules backend/tests/test_filtros_listados.mjs
 node --experimental-vm-modules backend/tests/test_formularios.mjs
+node --experimental-vm-modules backend/tests/test_cancelacion_pagos.mjs
 
 # Solo módulos nuevos, con otro clúster desechable (HTTP, PDF, migraciones y concurrencia)
 & C:/php85/php.exe backend/tests/ejecutar-pruebas.php --completo --solo-modulos --pg-bin "C:/Program Files/PostgreSQL/18/bin"
@@ -51,10 +52,12 @@ aisla ademas el contrato HTTP anterior en otra base del mismo cluster.
 
 La revisión de agenda agrega `test_demostracion_validacion.php` (sin conexión),
 `test_correcciones_agenda.php` y `test_demostracion_seed.php` (solo con el
-ejecutor aislado). Aquella revisión tenía 25 suites PHP; con los cuatro ensayos de recetas/sala/pagos el conjunto tiene 29. Las cifras de la
+ejecutor aislado). Aquella revisión tenía 25 suites PHP; la ampliación de recetas/sala/pagos llegó a 29 y la revisión de citas vencidas añade dos, para **31 suites PHP**. Las cifras de la
 sección histórica siguiente describen la ejecución del 05/11, no estos cambios.
 
 ## Verificación de correcciones del 07/11/2026
+
+La revisión posterior de cancelación, presentación de pagos y cierre automático está en [su guía](citas-vencidas-pagos.md). Incluye escenarios de asistencia y dos procesos reales; no usa Neon ni modifica migraciones.
 
 Entorno real: Windows, PHP 8.5.11 nativo y PostgreSQL 18 local; Node y Edge para
 JavaScript/navegador. No se utilizó PHP 8.0, Docker ni una conexión a Neon.
